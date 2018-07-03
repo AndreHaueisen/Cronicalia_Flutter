@@ -1,0 +1,123 @@
+{
+  "project_info": {
+    "project_number": "872347975270",
+    "firebase_url": "https://cronicalia-b9a25.firebaseio.com",
+    "project_id": "cronicalia-b9a25",
+    "storage_bucket": "cronicalia-b9a25.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872347975270:android:1d9e13ccc04c8ad2",
+        "android_client_info": {
+          "package_name": "com.andrehaueisen.cronicalia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872347975270-96s2l41f0b88kl84k9kjrgicdhso4c4p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andrehaueisen.cronicalia",
+            "certificate_hash": "f93bcf87ffab8fc3ca1b3a3dc855f5d6090c5bc9"
+          }
+        },
+        {
+          "client_id": "872347975270-qtlgrgg8piormck187uilpvs2df0gi3b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andrehaueisen.cronicalia",
+            "certificate_hash": "b8504565d0918950af82daa1519fb83ae8aca361"
+          }
+        },
+        {
+          "client_id": "872347975270-befvt5af0uaonmi5mllg5nuqv901smdu.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "872347975270-befvt5af0uaonmi5mllg5nuqv901smdu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACbFCvgGAgUsxZX-bEgw8QP3OclWICDcU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872347975270-befvt5af0uaonmi5mllg5nuqv901smdu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872347975270:android:eedb2f61024d773b",
+        "android_client_info": {
+          "package_name": "com.andrehaueisen.cronicaliaflutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872347975270-fkoci2v7f14cnbed4747t5vl1g12o6gj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andrehaueisen.cronicaliaflutter",
+            "certificate_hash": "b8504565d0918950af82daa1519fb83ae8aca361"
+          }
+        },
+        {
+          "client_id": "872347975270-ju85blbg1bf9u5hcd4l3tlbpp7r5kuaj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andrehaueisen.cronicaliaflutter",
+            "certificate_hash": "f93bcf87ffab8fc3ca1b3a3dc855f5d6090c5bc9"
+          }
+        },
+        {
+          "client_id": "872347975270-befvt5af0uaonmi5mllg5nuqv901smdu.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "872347975270-befvt5af0uaonmi5mllg5nuqv901smdu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACbFCvgGAgUsxZX-bEgw8QP3OclWICDcU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872347975270-befvt5af0uaonmi5mllg5nuqv901smdu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

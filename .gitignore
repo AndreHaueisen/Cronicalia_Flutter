@@ -1,0 +1,14 @@
+.DS_Store
+.dart_tool/
+
+.packages
+.pub/
+
+build/
+
+cronicalia_flutter/android/app/google-services.json
+
+.flutter-plugins
+.idea/
+.gradle/
+.vscode/
