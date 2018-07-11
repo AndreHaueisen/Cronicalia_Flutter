@@ -16,9 +16,8 @@ import 'package:documents_picker/documents_picker.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 class CreateMyBookScreen extends StatefulWidget {
-  Flushbar _flushbar;
 
-  CreateMyBookScreen(this._flushbar);
+  CreateMyBookScreen();
 
   @override
   State createState() {

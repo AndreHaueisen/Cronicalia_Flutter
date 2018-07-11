@@ -16,9 +16,7 @@ enum ImageType { BACKGROUND, PROFILE }
 enum TextClickCategory { NAME, TWITTER_PROFILE, ABOUT_ME }
 
 class ProfileScreen extends StatefulWidget {
-  ProfileScreen(this.flushbar);
-
-  final Flushbar flushbar;
+  ProfileScreen();
 
   @override
   State createState() {
@@ -183,7 +181,6 @@ class ProfileScreenState extends State<ProfileScreen>
         ),
       ),
       _outsiderButton(context),
-      widget.flushbar
     ]);
   }
 

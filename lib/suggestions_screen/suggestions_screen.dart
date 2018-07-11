@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flushbar/flushbar.dart';
 
-class SuggestionsScreen extends StatelessWidget{
+class SuggestionsScreen extends StatelessWidget {
+  SuggestionsScreen();
 
-  SuggestionsScreen(this.flushbar);
-
-  final Flushbar flushbar;
 
   @override
   Widget build(BuildContext context) {
-    return new Stack(children: [
-      new Text("Suggestions Screen"),
-      flushbar
-    ]);
-
+    return new Container(
+      child: new Text("Suggestions Screen"),
+    );
   }
 }

@@ -1,15 +1,13 @@
 import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/utils/flushbar_helper.dart';
+import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 
 class NewUserLoginWidget extends StatefulWidget {
-  NewUserLoginWidget({@required this.loginHandler, @required this.email, @required this.flushbar});
+  NewUserLoginWidget({@required this.loginHandler, @required this.email});
 
   final LoginHandler loginHandler;
-  final Flushbar flushbar;
   final String email;
 
   @override
@@ -37,7 +35,7 @@ class NewUserLoginWidgetState extends State<NewUserLoginWidget> {
           child: MaterialButton(
             onPressed: () {
               FlushbarHelper
-                  .morphIntoInput(widget.flushbar,
+                  .createInput(
                       textForm: new Form(
                         key: _newUserPasswordFormKey,
                         child: new TextFormField(
@@ -69,9 +67,8 @@ class NewUserLoginWidgetState extends State<NewUserLoginWidget> {
                               labelStyle: TextStyle(color: TextColorDarkBackground.tertiary)),
                         ),
                       ))
-                  .commitChanges();
-              widget.flushbar.show();
-              //widget._loginHandler.signIntoFirebaseWithEmailAndPassword("andrehaueisen@gmail.com", "haueisen10");
+                  .show(context);
+
             },
             child: Text("LOGIN WITH EMAIL"),
             textColor: Colors.white,

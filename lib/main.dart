@@ -1,10 +1,8 @@
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/login_screen/login_screen.dart';
-import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:cronicalia_flutter/bookmarks_screen/bookmarks_screen.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_books_screen.dart';
 import 'package:cronicalia_flutter/profile_screen/profile_screen.dart';
@@ -59,10 +57,7 @@ class CronicaliaState extends State<Cronicalia> with SingleTickerProviderStateMi
   TabController _tabController;
   int _index = 0;
 
-  Flushbar flushbar = Flushbar(
-    backgroundColor: Colors.grey[600],
-    shadowColor: Colors.grey[900],
-  );
+  
 
   @override
   void initState() {
@@ -110,7 +105,7 @@ class CronicaliaState extends State<Cronicalia> with SingleTickerProviderStateMi
     return new MaterialApp(
       routes: <String, WidgetBuilder>{
         Constants.ROUTE_LOGIN_SCREEN: (BuildContext context) =>
-            new LoginScreen(firebaseAuth, firestore, flushbar, context)
+            new LoginScreen(firebaseAuth, firestore, context)
       },
       theme: new ThemeData(
         brightness: Brightness.dark,
@@ -127,11 +122,11 @@ class CronicaliaState extends State<Cronicalia> with SingleTickerProviderStateMi
       title: 'Cronicalia',
       home: new Scaffold(
         body: new TabBarView(children: <Widget>[
-          new SuggestionsScreen(flushbar),
-          new SearchScreen(flushbar),
-          new BookmarksScreen(flushbar),
-          new MyBooksScreen(flushbar),
-          new ProfileScreen(flushbar)
+          new SuggestionsScreen(),
+          new SearchScreen(),
+          new BookmarksScreen(),
+          new MyBooksScreen(),
+          new ProfileScreen()
         ], controller: _tabController),
         bottomNavigationBar: new BottomNavigationBar(
             type: BottomNavigationBarType.shifting,

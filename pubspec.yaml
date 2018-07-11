@@ -11,13 +11,13 @@ dependencies:
   flushbar: '>=0.3.0'
 
   #firebase
-  firebase_auth: "^0.5.11"
+  firebase_auth: "^0.5.12"
   cloud_firestore: "^0.7.3"
-  firebase_storage: "^0.3.7"
+  firebase_storage: "^1.0.0"
   firebase_core: "^0.2.4"
 
   #login
-  google_sign_in: "^3.0.3+1"
+  google_sign_in: "^3.0.4"
   flutter_twitter_login: "^1.1.0"
   flutter_facebook_login: "^1.1.1"
 

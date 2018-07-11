@@ -15,9 +15,8 @@ enum ImageOrigin { CAMERA, GALLERY }
 
 class EditMyBookScreen extends StatefulWidget {
   String bookKey;
-  Flushbar flushbar;
-
-  EditMyBookScreen(this.bookKey, this.flushbar);
+  
+  EditMyBookScreen(this.bookKey);
 
   @override
   State createState() {
@@ -189,8 +188,6 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
           ]),
         ),
       ),
-
-      widget.flushbar
     ]);
   }
 

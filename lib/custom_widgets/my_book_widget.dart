@@ -11,9 +11,9 @@ class MyBookWidget extends StatelessWidget {
   final String _bookKey;
   final int _index;
   final int _totalBookNumber;
-  final Flushbar _flushbar;
 
-  MyBookWidget(this._book, this._bookKey, this._index, this._totalBookNumber, this._flushbar);
+
+  MyBookWidget(this._book, this._bookKey, this._index, this._totalBookNumber);
 
   Widget _backLineWidget() {
     return Positioned(
@@ -166,7 +166,7 @@ class MyBookWidget extends StatelessWidget {
               onPressed: () {
                 Navigator
                     .of(context)
-                    .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey, _flushbar)));
+                    .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey)));
                 print("show edit mode");
               },
               icon: Icon(Icons.edit),

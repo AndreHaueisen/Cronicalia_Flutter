@@ -52,7 +52,7 @@ class DataRepository {
       "remoteProfilePictureUri": remoteProfileImageUri
     };
 
-    return await reference.updateData(valuesToUpdate);
+    return reference.updateData(valuesToUpdate);
   }
 
   Future<void> updateUserBackgroundPictureReferences(
@@ -63,7 +63,7 @@ class DataRepository {
       "remoteBackgroundPictureUri": remoteBackgroundImageUri
     };
 
-    return await reference.updateData(valuesToUpdate);
+    return reference.updateData(valuesToUpdate);
   }
 
   Future<void> updateUserName(User user) async {
@@ -74,7 +74,7 @@ class DataRepository {
       valuesToUpdate.putIfAbsent("books.$key.authorName", () => user.name);
     });
 
-    return await referenceUser.updateData(valuesToUpdate);
+    return referenceUser.updateData(valuesToUpdate);
   }
 
   Future<void> updateUserTwitterProfile(User user) async {
@@ -85,14 +85,14 @@ class DataRepository {
       valuesToUpdate.putIfAbsent("books.$key.twitterProfile", () => user.twitterProfile);
     });
 
-    return await referenceUser.updateData(valuesToUpdate);
+    return referenceUser.updateData(valuesToUpdate);
   }
 
   Future<void> updateUserAboutMe(User user) async {
     DocumentReference reference = _firestore.collection(Constants.COLLECTION_USERS).document(user.encodedEmail);
     Map<String, dynamic> valuesToUpdate = {"aboutMe": user.aboutMe};
 
-    return await reference.updateData(valuesToUpdate);
+    return reference.updateData(valuesToUpdate);
   }
 
   //BOOK

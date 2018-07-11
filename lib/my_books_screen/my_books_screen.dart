@@ -6,9 +6,8 @@ import 'package:flushbar/flushbar.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 class MyBooksScreen extends StatefulWidget {
-  final Flushbar flushbar;
 
-  MyBooksScreen(this.flushbar);
+  MyBooksScreen();
 
   @override
   State createState() {
@@ -40,8 +39,7 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
                 _userStore.user.books.values.elementAt(index),
                 _userStore.user.books.keys.elementAt(index),
                 index,
-                _userStore.user.books.length,
-                widget.flushbar);
+                _userStore.user.books.length);
           },
         ),
       ),
@@ -53,13 +51,13 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
             onPressed: () {
               Navigator
                   .of(context)
-                  .push(MaterialPageRoute(builder: (context) => new CreateMyBookScreen(widget.flushbar)));
+                  .push(MaterialPageRoute(builder: (context) => new CreateMyBookScreen()));
             },
             child: Icon(Icons.add),
           ),
         ),
       ),
-      widget.flushbar
+    
     ]);
   }
 }
