@@ -3,8 +3,15 @@ import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 
 class Constants{
 
+  static const BOTTOM_NAV_TAG = 'app_bottom_nav';
+
   static const ROUTE_LOGIN_SCREEN = '/loginScreen';
   static const ROUTE_EDIT_BOOK_SCREEN = '/editBookScreen';
+  static const ROUTE_SUGGESTIONS_SCREEN = '/suggestionsScreen';
+  static const ROUTE_SEARCH_SCREEN = '/searchScreen';
+  static const ROUTE_BOOKMARKS_SCREEN = '/bookmarksScreen';
+  static const ROUTE_MY_BOOKS_SCREEN = '/myBooksScreen';
+  static const ROUTE_PROFILE_SCREEN = '/profileScreen';
 
   static const DOCUMENT_UID_MAPPINGS = "UID_mappings";
   static const DOCUMENT_MESSAGE_TOKENS = "Message_tokens";

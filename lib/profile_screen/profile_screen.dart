@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cronicalia_flutter/custom_widgets/outsider_button_widget.dart';
+import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/profile_screen/profile_model.dart';
@@ -24,8 +25,7 @@ class ProfileScreen extends StatefulWidget {
   }
 }
 
-class ProfileScreenState extends State<ProfileScreen>
-    with SingleTickerProviderStateMixin, StoreWatcherMixin<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin, StoreWatcherMixin<ProfileScreen> {
   UserStore _userStore;
   bool _isEditModeOn = false;
   AnimationController _wiggleController;
@@ -80,108 +80,119 @@ class ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    return new Stack(children: [
-      new Container(
-        height: double.infinity,
-        child: Image(
-          image: ProfileModel.getBackgroundImageProvider(
-              _userStore.user.localBackgroundPictureUri, _userStore.user.remoteBackgroundPictureUri),
-          alignment: Alignment.topCenter,
-        ),
-        foregroundDecoration: new BoxDecoration(
-          gradient: new LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
-          ),
-        ),
-      ),
-      new Center(
-        child: new SingleChildScrollView(
-          padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
-          child: new Stack(children: [
-            Card(
-              child: new FractionallySizedBox(
-                widthFactor: 0.90,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    new Align(
-                      child: new Padding(
-                        padding: const EdgeInsets.only(top: 8.0, right: 8.0, left: 8.0),
-                        child: MaterialButton(
-                          child: Text(
-                            "CHANGE POSTER",
-                            style: TextStyle(fontSize: 13.0),
-                          ),
-                          onPressed: () {
-                            if (_userStore.isLoggedIn) {
-                              print("User logged in");
-                              _showImageOriginDialog(ImageType.BACKGROUND);
-                            } else {
-                              Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                            }
-                          },
-                          textColor: Theme.of(context).accentTextTheme.button.color,
-                          color: Theme.of(context).accentColor,
-                        ),
-                      ),
-                      alignment: Alignment.centerRight,
-                    ),
-                    new Align(
-                      child: new Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: MaterialButton(
-                          child: Text(
-                            "CHANGE PROFILE",
-                            style: TextStyle(fontSize: 13.0),
-                          ),
-                          onPressed: () {
-                            if (_userStore.isLoggedIn) {
-                              print("User logged in");
-                              _showImageOriginDialog(ImageType.PROFILE);
-                            } else {
-                              Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                            }
-                          },
-                          textColor: Theme.of(context).accentTextTheme.button.color,
-                          color: Theme.of(context).accentColor,
-                        ),
-                      ),
-                      alignment: Alignment.centerRight,
-                    ),
-                    new Padding(
-                      padding: const EdgeInsets.only(top: 48.0, left: 16.0, right: 16.0, bottom: 8.0),
-                      child: new GestureDetector(
-                        onTap: () {
-                          if (_isEditModeOn) {
-                            _showAboutMeTextInputDialog();
-                            _isEditModeOn = false;
-                          }
-                        },
-                        child: new Transform.rotate(
-                          angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
-                          child: new Text(
-                            _userStore.user.aboutMe,
-                            textAlign: TextAlign.justify,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 8,
-                          ),
-                        ),
-                      ),
-                    ),
-                    _userStatsWidget(context)
-                  ],
+    return Scaffold(
+      body: Column(children: [
+        Expanded(
+          child: new Stack(
+            children: [
+              new Container(
+                height: double.infinity,
+                child: Image(
+                  image: ProfileModel.getBackgroundImageProvider(
+                      _userStore.user.localBackgroundPictureUri, _userStore.user.remoteBackgroundPictureUri),
+                  alignment: Alignment.topCenter,
+                ),
+                foregroundDecoration: new BoxDecoration(
+                  gradient: new LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
+                  ),
                 ),
               ),
-            ),
-            userIdentificationWidget(context),
-          ]),
+              new Center(
+                child: new SingleChildScrollView(
+                  padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
+                  child: new Stack(children: [
+                    Card(
+                      child: new FractionallySizedBox(
+                        widthFactor: 0.90,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            new Align(
+                              child: new Padding(
+                                padding: const EdgeInsets.only(top: 8.0, right: 8.0, left: 8.0),
+                                child: MaterialButton(
+                                  child: Text(
+                                    "CHANGE POSTER",
+                                    style: TextStyle(fontSize: 13.0),
+                                  ),
+                                  onPressed: () {
+                                    if (_userStore.isLoggedIn) {
+                                      print("User logged in");
+                                      _showImageOriginDialog(ImageType.BACKGROUND);
+                                    } else {
+                                      Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                                    }
+                                  },
+                                  textColor: Theme.of(context).accentTextTheme.button.color,
+                                  color: Theme.of(context).accentColor,
+                                ),
+                              ),
+                              alignment: Alignment.centerRight,
+                            ),
+                            new Align(
+                              child: new Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: MaterialButton(
+                                  child: Text(
+                                    "CHANGE PROFILE",
+                                    style: TextStyle(fontSize: 13.0),
+                                  ),
+                                  onPressed: () {
+                                    if (_userStore.isLoggedIn) {
+                                      print("User logged in");
+                                      _showImageOriginDialog(ImageType.PROFILE);
+                                    } else {
+                                      Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                                    }
+                                  },
+                                  textColor: Theme.of(context).accentTextTheme.button.color,
+                                  color: Theme.of(context).accentColor,
+                                ),
+                              ),
+                              alignment: Alignment.centerRight,
+                            ),
+                            new Padding(
+                              padding: const EdgeInsets.only(top: 48.0, left: 16.0, right: 16.0, bottom: 8.0),
+                              child: new GestureDetector(
+                                onTap: () {
+                                  if (_isEditModeOn) {
+                                    _showAboutMeTextInputDialog();
+                                    _isEditModeOn = false;
+                                  }
+                                },
+                                child: new Transform.rotate(
+                                  angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
+                                  child: new Text(
+                                    _userStore.user.aboutMe,
+                                    textAlign: TextAlign.justify,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 8,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _userStatsWidget(context)
+                          ],
+                        ),
+                      ),
+                    ),
+                    userIdentificationWidget(context),
+                  ]),
+                ),
+              ),
+              _outsiderButton(context),
+            ],
+          ),
         ),
-      ),
-      _outsiderButton(context),
-    ]);
+        PersistentBottomBar(
+          selectedItemIdex: 4,
+        ),
+      ]),
+    );
   }
 
   Future<Null> _showImageOriginDialog(ImageType imageType) async {
@@ -285,9 +296,8 @@ class ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<Null> _showTwitterTextInputDialog() async {
-    _textController.text = (_userStore.user.twitterProfile.startsWith('@')
-        ? _userStore.user.twitterProfile.substring(1)
-        : _userStore.user.twitterProfile);
+    _textController.text =
+        (_userStore.user.twitterProfile.startsWith('@') ? _userStore.user.twitterProfile.substring(1) : _userStore.user.twitterProfile);
 
     const Text title = Text(
       "Edit twitter profile",
@@ -543,14 +553,11 @@ class ProfileScreenState extends State<ProfileScreen>
       width: 120.0,
       height: 120.0,
       foregroundDecoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(color: Theme.of(context).primaryColor, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)
-        ],
+        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)],
         border: Border.all(color: Theme.of(context).accentColor),
         shape: BoxShape.circle,
         image: DecorationImage(
-          image: ProfileModel.getProfileImageProvider(
-              _userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
+          image: ProfileModel.getProfileImageProvider(_userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
         ),
       ),
     );

@@ -15,7 +15,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
-
 class TextColorDarkBackground {
   static final Color primary = Colors.white;
   static final Color secondary = Colors.grey[400];
@@ -43,106 +42,51 @@ void main() {
   runApp(new Cronicalia());
 }
 
-class Cronicalia extends StatefulWidget {
-  @override
-  CronicaliaState createState() => new CronicaliaState();
-}
-
-class CronicaliaState extends State<Cronicalia> with SingleTickerProviderStateMixin, StoreWatcherMixin<Cronicalia> {
-
-  UserStore userStore;
+class Cronicalia extends StatelessWidget {
   FirebaseStorage firebaseStorage;
   Firestore firestore;
   FirebaseAuth firebaseAuth;
-  TabController _tabController;
-  int _index = 0;
 
-  
-
-  @override
-  void initState() {
-    super.initState();
-
+  Cronicalia() {
     _initializeFirebase();
-
-    userStore = listenToStore(userStoreToken);
-    userStore.isLoggedInAsync().then((isLoggedIn){
-      if(isLoggedIn){
-        getUserFromServerAction([userStore.userEmail, ""]);
-      }
-    });
-
-    _tabController = new TabController(length: 5, vsync: this);
-    _tabController.addListener(() {
-      _onChangeViewRequested(_tabController.index, false);
-    });
   }
 
   
-  final _bottomNavigationItems = [_starredItem, _searchItem, _bookmarksItem, _myBooksItem, _profileItem];
-
-  static BottomNavigationBarItem _starredItem = new BottomNavigationBarItem(
-      icon: new Icon(Icons.star), title: new Text("Starred"), backgroundColor: Colors.grey[850]);
-  static BottomNavigationBarItem _searchItem = new BottomNavigationBarItem(
-      icon: new Icon(Icons.search), title: new Text("Search"), backgroundColor: Colors.grey[850]);
-  static BottomNavigationBarItem _bookmarksItem = new BottomNavigationBarItem(
-      icon: new Icon(Icons.collections_bookmark), title: new Text("Bookmarks"), backgroundColor: Colors.grey[850]);
-  static BottomNavigationBarItem _myBooksItem = new BottomNavigationBarItem(
-      icon: new Icon(Icons.library_books), title: new Text("My Books"), backgroundColor: Colors.grey[850]);
-  static BottomNavigationBarItem _profileItem = new BottomNavigationBarItem(
-      icon: new Icon(Icons.person), title: new Text("Profile"), backgroundColor: Colors.grey[850]);
-
-  void _onChangeViewRequested(int newIndex, bool shouldRequestViewChangeOnController) {
-    setState(() {
-      _index = newIndex;
-
-      if (shouldRequestViewChangeOnController) _tabController.animateTo(_index);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
       routes: <String, WidgetBuilder>{
-        Constants.ROUTE_LOGIN_SCREEN: (BuildContext context) =>
-            new LoginScreen(firebaseAuth, firestore, context)
+        Constants.ROUTE_LOGIN_SCREEN: (BuildContext context) => new LoginScreen(firebaseAuth, firestore, context),
+        Constants.ROUTE_SUGGESTIONS_SCREEN: (BuildContext context) => new SuggestionsScreen(),
+        Constants.ROUTE_SEARCH_SCREEN: (BuildContext context) => new SearchScreen(),
+        Constants.ROUTE_BOOKMARKS_SCREEN: (BuildContext context) => new BookmarksScreen(),
+        Constants.ROUTE_MY_BOOKS_SCREEN: (BuildContext context) => new MyBooksScreen(),
+        Constants.ROUTE_PROFILE_SCREEN: (BuildContext context) => new ProfileScreen()
       },
       theme: new ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: AppThemeColors.primaryColor,
-        primaryColorDark: AppThemeColors.primaryColorDark,
-        primaryColorLight: AppThemeColors.primaryColorLight,
-        accentColor: AppThemeColors.accentColor,
-        errorColor: AppThemeColors.errorColor,
-        backgroundColor: AppThemeColors.backgroundColor,
-        canvasColor: AppThemeColors.canvasColor,
-        cardColor: AppThemeColors.cardColor,
-        toggleableActiveColor: AppThemeColors.accentColor
-      ),
+          brightness: Brightness.dark,
+          primaryColor: AppThemeColors.primaryColor,
+          primaryColorDark: AppThemeColors.primaryColorDark,
+          primaryColorLight: AppThemeColors.primaryColorLight,
+          accentColor: AppThemeColors.accentColor,
+          errorColor: AppThemeColors.errorColor,
+          backgroundColor: AppThemeColors.backgroundColor,
+          canvasColor: AppThemeColors.canvasColor,
+          cardColor: AppThemeColors.cardColor,
+          toggleableActiveColor: AppThemeColors.accentColor),
       title: 'Cronicalia',
-      home: new Scaffold(
-        body: new TabBarView(children: <Widget>[
-          new SuggestionsScreen(),
-          new SearchScreen(),
-          new BookmarksScreen(),
-          new MyBooksScreen(),
-          new ProfileScreen()
-        ], controller: _tabController),
-        bottomNavigationBar: new BottomNavigationBar(
-            type: BottomNavigationBarType.shifting,
-            onTap: (int index) {
-              _onChangeViewRequested(index, true);
-            },
-            items: _bottomNavigationItems,
-            fixedColor: Colors.amberAccent,
-            currentIndex: _index),
-      ),
+      home: Try(),
     );
   }
+}
+
+class Try extends StatelessWidget{
+ 
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return SuggestionsScreen();
   }
+
 }
