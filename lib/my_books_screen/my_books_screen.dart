@@ -3,7 +3,6 @@ import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/my_books_screen/create_my_book_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 class MyBooksScreen extends StatefulWidget {

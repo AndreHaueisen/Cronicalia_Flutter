@@ -2,16 +2,14 @@ import 'package:cronicalia_flutter/custom_widgets/outsider_button_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
-import 'package:cronicalia_flutter/utils/constants.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class MyBookWidget extends StatelessWidget {
   final Book _book;
   final String _bookKey;
   final int _index;
   final int _totalBookNumber;
-
 
   MyBookWidget(this._book, this._bookKey, this._index, this._totalBookNumber);
 
@@ -45,6 +43,10 @@ class MyBookWidget extends StatelessWidget {
   }
 
   Widget _bookInfoCard(BuildContext context) {
+
+    final DateFormat publicationDateFormat = DateFormat("MM/dd/yyyy");
+    final String readableDate = publicationDateFormat.format(DateTime.fromMillisecondsSinceEpoch(_book.publicationDate));
+
     return Card(
       child: SizedBox(
         height: 215.0,
@@ -59,12 +61,11 @@ class MyBookWidget extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-              child: Text(
-                _book.synopsis,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.justify,
-              ),
+              child: Text(_book.synopsis,
+                  style: TextStyle(color: TextColorDarkBackground.secondary),
+                  textAlign: TextAlign.justify,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 8),
             ),
             _bookStatsWidget(),
             Align(
@@ -72,7 +73,7 @@ class MyBookWidget extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 4.0),
                 child: Text(
-                  "Publication ${_book.publicationDate}",
+                  "Publication  $readableDate",
                   style: TextStyle(fontSize: 12.0),
                 ),
               ),
@@ -95,43 +96,43 @@ class MyBookWidget extends StatelessWidget {
 
   Widget _bookStatsWidget() {
     return Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                      child: Icon(Icons.remove_red_eye),
-                    ),
-                    Text(_book.readingsNumber.toString())
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 6.0),
-                      child: Icon(Icons.star),
-                    ),
-                    Text(_book.rating.toString())
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(Icons.attach_money),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Text(_book.income.toString()),
-                    )
-                  ],
-                )
-              ],
-            ),
-          );
+      padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                child: Icon(Icons.remove_red_eye),
+              ),
+              Text(_book.readingsNumber.toString())
+            ],
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 6.0),
+                child: Icon(Icons.star),
+              ),
+              Text(_book.rating.toString())
+            ],
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(Icons.attach_money),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Text(_book.income.toString()),
+              )
+            ],
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -164,9 +165,7 @@ class MyBookWidget extends StatelessWidget {
             translation: Offset(0.2, 7.1),
             child: OutsiderButton(
               onPressed: () {
-                Navigator
-                    .of(context)
-                    .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey)));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey)));
                 print("show edit mode");
               },
               icon: Icon(Icons.edit),

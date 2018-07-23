@@ -12,14 +12,14 @@ import 'package:flutter/material.dart';
 class MyBookImagePicker {
   static void pickImageFromGallery(
       ImageType imageType, User user, String bookKey, String bookUID) async {
-    File image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
-    if (image != null) {
+    if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
         File posterPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
-        Utility.saveFileToLocalCache(image, posterPicFile);
+        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
 
         updateBookPosterImageAction([bookKey, posterPicFile.path]);
         _updateLocalPosterUri(user, bookKey, posterPicFile);
@@ -28,7 +28,7 @@ class MyBookImagePicker {
         File coverPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
-        Utility.saveFileToLocalCache(image, coverPicFile);
+        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
         updateBookCoverImageAction([bookKey, coverPicFile.path]);
         _updateLocalCoverUri(user, bookKey, coverPicFile);
@@ -40,14 +40,14 @@ class MyBookImagePicker {
 
   static void pickImageFromCamera(
       ImageType imageType, User user, String bookKey, String bookUID) async {
-    File image = await ImagePicker.pickImage(source: ImageSource.camera);
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
-    if (image != null) {
+    if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
         File posterPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
-        Utility.saveFileToLocalCache(image, posterPicFile);
+        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
 
         updateBookPosterImageAction([bookKey, posterPicFile.path]);
         _updateLocalPosterUri(user, bookKey, posterPicFile);
@@ -56,7 +56,7 @@ class MyBookImagePicker {
         File coverPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
-        Utility.saveFileToLocalCache(image, coverPicFile);
+        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
         updateBookCoverImageAction([bookKey, coverPicFile.path]);
         _updateLocalCoverUri(user, bookKey, coverPicFile);
@@ -69,20 +69,20 @@ class MyBookImagePicker {
   //TODO remember to delete temporary files
   static Future<String> pickImageFromCameraForNewBook(
       ImageType imageType) async {
-    File image = await ImagePicker.pickImage(source: ImageSource.camera);
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
-    if (image != null) {
+    if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
         File posterPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
-        await Utility.saveFileToLocalCacheSync(image, posterPicFile);
+        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
         return posterPicFile.path;
       } else {
         File coverPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
-        await Utility.saveFileToLocalCacheSync(image, coverPicFile);
+        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
         return coverPicFile.path;
       }
     }
@@ -93,20 +93,20 @@ class MyBookImagePicker {
   //TODO remember to delete temporary files
   static Future<String> pickImageFromGalleryForNewBook(
       ImageType imageType) async {
-    File image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
-    if (image != null) {
+    if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
         File posterPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
-        await Utility.saveFileToLocalCacheSync(image, posterPicFile);
+        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
         return posterPicFile.path;
       } else {
         File coverPicFile = await Utility.createUserFile(
             Constants.FOLDER_NAME_BOOKS,
             "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
-        await Utility.saveFileToLocalCacheSync(image, coverPicFile);
+        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
         return coverPicFile.path;
       }
     }
@@ -126,13 +126,6 @@ class MyBookImagePicker {
         if (remotePosterPictureUri != null) {
           imageProvider = NetworkImage(remotePosterPictureUri);
 
-          /*FirebaseStorage.instance.ref().child(Constants.STORAGE_USERS)
-              .child(userStore.user.encodedEmail)
-              .child("profile_picture.jpg ").getData(Constants.ONE_MB_IN_BYTES).then((encodedImage) {
-            Utility.createUserDirectory("profile", Constants.FILE_NAME_PROFILE_PICTURE).then((file) {
-              file.writeAsBytes(encodedImage.toList(growable: false));
-            });
-          });*/
         }
       }
     } else if (remotePosterPictureUri != null) {
@@ -156,13 +149,6 @@ class MyBookImagePicker {
         if (remoteCoverPictureUri != null) {
           imageProvider = NetworkImage(remoteCoverPictureUri);
 
-          /*FirebaseStorage.instance.ref().child(Constants.STORAGE_USERS)
-              .child(userStore.user.encodedEmail)
-              .child("profile_picture.jpg ").getData(Constants.ONE_MB_IN_BYTES).then((encodedImage) {
-            Utility.createUserDirectory("profile", Constants.FILE_NAME_PROFILE_PICTURE).then((file) {
-              file.writeAsBytes(encodedImage.toList(growable: false));
-            });
-          });*/
         }
       }
     } else if (remoteCoverPictureUri != null) {

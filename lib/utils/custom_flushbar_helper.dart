@@ -7,7 +7,7 @@ class FlushbarHelper {
     return Flushbar()
       ..title = title
       ..message = message
-      ..backgroundColor = Colors.grey[600]
+      ..backgroundColor = Colors.black
       ..shadowColor = Colors.grey[900]
       ..icon = Icon(
         Icons.check_circle,
@@ -24,7 +24,7 @@ class FlushbarHelper {
     return Flushbar()
       ..title = title
       ..message = message
-      ..backgroundColor = Colors.grey[600]
+      ..backgroundColor = Colors.black
       ..shadowColor = Colors.grey[900]
       ..icon = Icon(
         Icons.info_outline,
@@ -42,7 +42,7 @@ class FlushbarHelper {
     return Flushbar()
       ..title = title
       ..message = message
-      ..backgroundColor = Colors.grey[600]
+      ..backgroundColor = Colors.black
       ..shadowColor = Colors.grey[900]
       ..icon = Icon(
         Icons.warning,
@@ -61,7 +61,7 @@ class FlushbarHelper {
     return Flushbar()
       ..title = title
       ..message = message
-      ..backgroundColor = Colors.grey[600]
+      ..backgroundColor = Colors.black
       ..shadowColor = Colors.grey[900]
       ..icon = null
       ..duration = duration
@@ -79,7 +79,7 @@ class FlushbarHelper {
     return Flushbar()
       ..title = title
       ..message = message
-      ..backgroundColor = Colors.grey[600]
+      ..backgroundColor = Colors.black
       ..shadowColor = Colors.grey[900]
       ..icon = Icon(
         Icons.cloud_upload,

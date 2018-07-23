@@ -360,7 +360,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         }));
 
     if (userInput != null && userInput.length >= 3) {
-      updateBookTitleAction([_book.generateBookKey(), userInput]);
+      updateBookTitleAction([_book.uID, userInput]);
     }
   }
 
@@ -432,7 +432,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         }));
 
     if (userInput != null) {
-      updateBookSynopsisAction([_book.generateBookKey(), userInput]);
+      updateBookSynopsisAction([_book.uID, userInput]);
     }
   }
 

@@ -9,7 +9,6 @@ import 'package:cronicalia_flutter/profile_screen/profile_model.dart';
 
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 enum ImageOrigin { CAMERA, GALLERY }

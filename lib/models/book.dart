@@ -51,30 +51,91 @@ class Book {
       this.publicationDate,
       this.genre,
       this.bookPosition,
-      this.rating,
-      this.ratingCounter,
-      this.income,
-      this.readingsNumber,
-      this.language,
+      this.rating = 0.0,
+      this.ratingCounter = 0,
+      this.income = 0.0,
+      this.readingsNumber = 0,
+      this.language = BookLanguage.UNDEFINED,
       this.localFullBookUri,
       this.remoteFullBookUri,
       this.localCoverUri,
       this.localPosterUri,
       this.remoteCoverUri,
       this.remotePosterUri,
-      this.isLaunchedComplete,
-      this.isCurrentlyComplete,
-      this.periodicity,
+      this.isLaunchedComplete = true,
+      this.isCurrentlyComplete = true,
+      this.periodicity = ChapterPeriodicity.NONE,
       this.synopsis});
 
-  String generateBookKey(){
-    return "${authorEmailId}_${uID}_$language";
+  String generateStorageFolder(){
+    return "${authorEmailId}_${title.replaceAll(' ', '_')}_${convertLanguageToString(language).toUpperCase()}";
+  }
+
+  static String convertPeriodicityToString(ChapterPeriodicity chapterPeriodicity) {
+    switch (chapterPeriodicity) {
+      case ChapterPeriodicity.NONE:
+        return "None";
+      case ChapterPeriodicity.EVERY_DAY:
+        return "Every day";
+      case ChapterPeriodicity.EVERY_3_DAYS:
+        return "Every three days";
+      case ChapterPeriodicity.EVERY_7_DAYS:
+        return "Every week";
+      case ChapterPeriodicity.EVERY_14_DAYS:
+        return "Every two weaks";
+      case ChapterPeriodicity.EVERY_30_DAYS:
+        return "Every month";
+      case ChapterPeriodicity.EVERY_42_DAYS:
+        return "Every 42 days";
+      default:
+        return "Every day";
+    }
+  }
+
+  static String convertGenreToString(BookGenre bookGenre) {
+    switch (bookGenre) {
+      case BookGenre.ACTION:
+        return "Action";
+      case BookGenre.ADVENTURE:
+        return "Adventure";
+      case BookGenre.COMEDY:
+        return "Comedy";
+      case BookGenre.DRAMA:
+        return "Drama";
+      case BookGenre.FANTASY:
+        return "Fantasy";
+      case BookGenre.FICTION:
+        return "Fiction";
+      case BookGenre.HORROR:
+        return "Horror";
+      case BookGenre.MYTHOLOGY:
+        return "Mythology";
+      case BookGenre.ROMANCE:
+        return "Romance";
+      case BookGenre.SATIRE:
+        return "Satire";
+      default:
+        return "Undefined";
+    }
+  }
+
+  static String convertLanguageToString(BookLanguage bookLanguage) {
+    switch (bookLanguage) {
+      case BookLanguage.ENGLISH:
+        return "English";
+      case BookLanguage.PORTUGUESE:
+        return "Portuguese";
+      case BookLanguage.DEUTSCH:
+        return "German";
+      default:
+        return "Undefined";
+    }
   }
 
   Book.fromLinkedMap(LinkedHashMap linkedMap) {
     this.rating = linkedMap['rating'];
     this.authorTwitterProfile = linkedMap['authorTwitterProfile'];
-    this.isCurrentlyComplete = linkedMap['currentlyComplete'];
+    this.isCurrentlyComplete = linkedMap['isCurrentlyComplete'];
     this.remotePosterUri = linkedMap['remotePosterUri'];
     this.publicationDate = linkedMap['publicationDate'];
     this.uID = linkedMap['uID'];
@@ -83,7 +144,7 @@ class Book {
     this.ratingCounter = linkedMap['ratingCounter'];
     this.authorName = linkedMap['authorName'];
     this.remoteCoverUri = linkedMap['remoteCoverUri'];
-    this.isLaunchedComplete = linkedMap['launchedComplete'];
+    this.isLaunchedComplete = linkedMap['isLaunchedComplete'];
     this.authorEmailId = linkedMap['authorEmailId'];
     this.localFullBookUri = linkedMap['localFullBookUri'];
     this.title = linkedMap['title'];
@@ -98,13 +159,44 @@ class Book {
 
     this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
       return periodicity.toString() == "ChapterPeriodicity.${linkedMap['periodicity']}";
-    }, orElse: ()=> null);
+    }, orElse: () => null);
     this.genre = BookGenre.values.firstWhere((genre) {
       return genre.toString() == "BookGenre.${linkedMap['genre']}";
-    }, orElse: ()=> null);
-    this.language = BookLanguage.values.firstWhere((bookLanguage){
+    }, orElse: () => null);
+    this.language = BookLanguage.values.firstWhere((bookLanguage) {
       return bookLanguage.toString() == "BookLanguage.${linkedMap['language']}";
-    }, orElse: ()=> null);
+    }, orElse: () => null);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "rating": this.rating,
+      "authorTwitterProfile": this.authorTwitterProfile,
+      "isCurrentlyComplete": this.isCurrentlyComplete,
+      "remotePosterUri": this.remotePosterUri,
+      "publicationDate": this.publicationDate,
+      "uID": this.uID,
+      "income": this.income,
+      "localPosterUri": this.localPosterUri,
+      "ratingCounter": this.ratingCounter,
+      "authorName": this.authorName,
+      "remoteCoverUri": this.remoteCoverUri,
+      "isLaunchedComplete": this.isLaunchedComplete,
+      "authorEmailId": this.authorEmailId,
+      "localFullBookUri": this.localFullBookUri,
+      "title": this.title,
+      "readingsNumber": this.readingsNumber,
+      "bookPosition": this.bookPosition,
+      "remoteFullBookUri": this.remoteFullBookUri,
+      "localCoverUri": this.localCoverUri,
+      "synopsis": this.synopsis,
+      "chaptersLaunchDates": this.chaptersLaunchDates,
+      "remoteChapterUris": this.remoteChapterUris,
+      "remoteChapterTitles": this.remoteChapterTitles,
+      "periodicity": periodicity.toString().split(".")[1],
+      "genre": genre.toString().split(".")[1],
+      "language": language.toString().split(".")[1]
+    };
   }
 
   @override
@@ -150,3 +242,5 @@ class Book {
         synopsis.hashCode;
   }
 }
+
+enum BookUploadStatus { SUCCESS, FAILED }

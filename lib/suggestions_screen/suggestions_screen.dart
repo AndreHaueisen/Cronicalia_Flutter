@@ -1,7 +1,5 @@
 import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
-import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 

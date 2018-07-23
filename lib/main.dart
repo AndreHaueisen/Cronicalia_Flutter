@@ -1,4 +1,3 @@
-import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/login_screen/login_screen.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,7 +12,6 @@ import 'package:cronicalia_flutter/suggestions_screen/suggestions_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_flux/flutter_flux.dart';
 
 class TextColorDarkBackground {
   static final Color primary = Colors.white;
@@ -76,17 +74,7 @@ class Cronicalia extends StatelessWidget {
           cardColor: AppThemeColors.cardColor,
           toggleableActiveColor: AppThemeColors.accentColor),
       title: 'Cronicalia',
-      home: Try(),
+      home: SuggestionsScreen(),
     );
   }
-}
-
-class Try extends StatelessWidget{
- 
-
-  @override
-  Widget build(BuildContext context) {
-    return SuggestionsScreen();
-  }
-
 }

@@ -33,9 +33,8 @@ class UserStore extends Store {
     fileRepository = FileRepository(_storageReference);
     dataRepository = DataRepository(_firestore);
 
-    triggerOnAction(getUserFromCacheAction, (User newUser){
+    triggerOnAction(getUserFromCacheAction, (User newUser) {
       _user = newUser;
-
     });
 
     triggerOnConditionalAction(getUserFromServerAction, (List<String> userInitialData) {
@@ -57,8 +56,8 @@ class UserStore extends Store {
 
     triggerOnConditionalAction(updateUserProfileImageAction, (String localUri) {
       fileRepository.updateUserProfileImage(_user.encodedEmail, localUri, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user){
-          if(user != null){
+        dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
             _user = user;
             print("user loaded in store");
             // Do not need to trigger()
@@ -70,8 +69,8 @@ class UserStore extends Store {
 
     triggerOnConditionalAction(updateUserBackgroundImageAction, (String localUri) {
       fileRepository.updateUserBackgroundImage(_user.encodedEmail, localUri, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user){
-          if(user != null){
+        dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
             _user = user;
             print("user loaded in store");
             // Do not need to trigger()
@@ -81,39 +80,39 @@ class UserStore extends Store {
       });
     });
 
-    triggerOnConditionalAction(changeLoginStatusAction, (bool isLoggedIn){
+    triggerOnConditionalAction(changeLoginStatusAction, (bool isLoggedIn) {
       this._isLoggedIn = isLoggedIn;
       return false;
     });
 
-    triggerOnAction(updateUserNameAction, (String newName){
+    triggerOnAction(updateUserNameAction, (String newName) {
       this._user.name = newName;
-      this._user.books.forEach((_, book){
+      this._user.books.forEach((_, book) {
         book.authorName = newName;
       });
       dataRepository.updateUserName(this._user);
     });
 
-    triggerOnAction(updateUserTwitterProfileAction, (String newTwitterProfile){
+    triggerOnAction(updateUserTwitterProfileAction, (String newTwitterProfile) {
       this._user.twitterProfile = newTwitterProfile;
-      this._user.books.forEach((_, book){
+      this._user.books.forEach((_, book) {
         book.authorTwitterProfile = newTwitterProfile;
       });
       dataRepository.updateUserTwitterProfile(this._user);
     });
 
-    triggerOnAction(updateUserAboutMeAction, (String newAboutMe){
+    triggerOnAction(updateUserAboutMeAction, (String newAboutMe) {
       this._user.aboutMe = newAboutMe;
       dataRepository.updateUserAboutMe(this._user);
     });
 
-    triggerOnConditionalAction(updateBookPosterImageAction, (List<String> payload){
+    triggerOnConditionalAction(updateBookPosterImageAction, (List<String> payload) {
       String bookKey = payload[0];
       String localUri = payload[1];
 
-      fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookKey], localUri, dataRepository).then((_){
-        dataRepository.getUser(_user.encodedEmail).then((user){
-          if(user != null){
+      fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookKey], localUri, dataRepository).then((_) {
+        dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
             _user = user;
             print("user loaded in store");
             // Do not need to trigger()
@@ -125,13 +124,13 @@ class UserStore extends Store {
       return false;
     });
 
-    triggerOnConditionalAction(updateBookCoverImageAction, (List<String> payload){
+    triggerOnConditionalAction(updateBookCoverImageAction, (List<String> payload) {
       String bookKey = payload[0];
       String localUri = payload[1];
 
-      fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookKey], localUri, dataRepository).then((_){
-        dataRepository.getUser(_user.encodedEmail).then((user){
-          if(user != null){
+      fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookKey], localUri, dataRepository).then((_) {
+        dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
             _user = user;
             print("user loaded in store");
             // Do not need to trigger()
@@ -143,7 +142,7 @@ class UserStore extends Store {
       return false;
     });
 
-    triggerOnAction(updateBookTitleAction, (List<String> payload){
+    triggerOnAction(updateBookTitleAction, (List<String> payload) {
       String bookKey = payload[0];
       String newTitle = payload[1];
 
@@ -151,9 +150,8 @@ class UserStore extends Store {
       book.title = newTitle;
 
       dataRepository.updateBookTitle(_user.encodedEmail, book, newTitle);
-
     });
-    triggerOnAction(updateBookSynopsisAction, (List<String> payload){
+    triggerOnAction(updateBookSynopsisAction, (List<String> payload) {
       String bookKey = payload[0];
       String newSynopsis = payload[1];
 
@@ -161,6 +159,30 @@ class UserStore extends Store {
       book.synopsis = newSynopsis;
 
       dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis);
+    });
+
+    triggerOnConditionalAction(createCompleteBookAction, (Book book) {
+      
+      fileRepository.createNewCompleteBook(_user.encodedEmail, book, dataRepository).then((_) {
+        dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
+            _user = user;
+            print("user loaded in store");
+          }
+        });
+
+        return false;
+      }).catchError((_) {
+        print("Book creation failed");
+      });
+    });
+
+    triggerOnConditionalAction(createIncompleteBookAction, (List<dynamic> payload) {
+      Book book = payload[0];
+      List<String> pdfLocalPaths = payload[1];
+      List<String> chapterTitles = payload[2];
+
+      //launch incompleteBook
     });
   }
 
@@ -170,10 +192,10 @@ class UserStore extends Store {
 
   bool get isLoggedIn => _isLoggedIn;
 
-  Future<bool> isLoggedInAsync() async{
+  Future<bool> isLoggedInAsync() async {
     FirebaseUser firebaseUser = await _firebaseAuth.currentUser();
 
-    if(firebaseUser != null){
+    if (firebaseUser != null) {
       _isLoggedIn = true;
       _userEmail = firebaseUser.email;
       return true;
@@ -182,9 +204,7 @@ class UserStore extends Store {
       _userEmail = null;
       return false;
     }
-
   }
-
 }
 
 final StoreToken userStoreToken = new StoreToken(UserStore());
@@ -204,12 +224,22 @@ final Action<String> updateUserAboutMeAction = new Action<String>();
 /// payload[0] contains user bookKey
 /// payload[1] contains user localUri
 final Action<List<String>> updateBookPosterImageAction = new Action<List<String>>();
+
 /// payload[0] contains user bookKey
 /// payload[1] contains user localUri
 final Action<List<String>> updateBookCoverImageAction = new Action<List<String>>();
+
 /// payload[0] contains user bookKey
 /// payload[1] contains user newTitle
 final Action<List<String>> updateBookTitleAction = new Action<List<String>>();
+
 /// payload[0] contains user bookKey
 /// payload[1] contains user newSynopsis
 final Action<List<String>> updateBookSynopsisAction = new Action<List<String>>();
+
+
+final Action<Book> createCompleteBookAction = new Action<Book>();
+/// payload[0] contains book
+/// payload[1] contains local pdf file paths
+/// payload[2] contains chapter's names if book is not complete
+final Action<List<dynamic>> createIncompleteBookAction = new Action<List<dynamic>>();

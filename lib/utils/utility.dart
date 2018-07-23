@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:validate/validate.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
 
 class Utility {
   static bool isEmailValid(String email) {
@@ -31,31 +32,44 @@ class Utility {
     return encodedEmail.replaceAll(",", ".");
   }
 
-  static Future<void> saveFileToLocalCacheSync(File inputFile, File outputFile) async{
-
+  static Future<void> saveImageToLocalCache(File inputFile, File outputFile) async {
     IOSink ioSink = outputFile.openWrite();
 
-    await ioSink.addStream(inputFile.openRead());
+    File downsizedImageFile = await resizeImage(inputFile);
+
+    await ioSink.addStream(downsizedImageFile.openRead());
     await ioSink.flush();
     ioSink.close();
 
-    await ioSink.done;
     print("File write done");
+    return await ioSink.done;
   }
 
-  static void saveFileToLocalCache(File inputFile, File outputFile){
+  static Future<File> resizeImage(File inputFile) async {
+    int imageMaxWidth = 1000;
+    int imageMaxHeight = 700;
 
-    IOSink ioSink = outputFile.openWrite();
+    ImageProperties properties = await FlutterNativeImage.getImageProperties(inputFile.path);
 
-    ioSink.addStream(inputFile.openRead()).then((_){
-      ioSink.flush().then((_){
-        ioSink.close();
-      });
-    });
+    bool isLandscape = properties.width >= properties.height;
 
-    ioSink.done.then((_) {
-      print("File write done");
-    });
+    if (isLandscape) {
+      if (properties.width > imageMaxWidth) {
+        return  await FlutterNativeImage.compressImage(inputFile.path,
+            quality: 90, targetWidth: imageMaxWidth, targetHeight: (properties.height * imageMaxWidth / properties.width).round());
+
+      } else {
+        return inputFile;
+      }
+    } else {
+      if (properties.height > imageMaxHeight) {
+        return await FlutterNativeImage.compressImage(inputFile.path,
+            quality: 90, targetWidth: (properties.width * imageMaxHeight / properties.height).round(), targetHeight: imageMaxHeight);
+
+      } else {
+        return inputFile;
+      }
+    }
   }
 
   static Future<File> createUserFile(String directoryName, String fileName) async {
@@ -71,7 +85,6 @@ class Utility {
       }
 
       return (file == null) ? directory : file;
-
     } catch (exception) {
       print(exception.toString());
       return null;

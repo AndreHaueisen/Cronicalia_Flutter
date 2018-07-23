@@ -73,7 +73,7 @@ class BookFileWidget extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(left: 12.0, top: 8.0),
+                      padding: const EdgeInsets.only(left: 12.0, top: 16.0),
                       child: Text(
                         _formattedFilePath,
                         style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 12.0),

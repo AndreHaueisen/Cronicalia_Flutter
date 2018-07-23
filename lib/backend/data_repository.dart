@@ -15,8 +15,7 @@ class DataRepository {
 
   //USER
   Future<User> getNewUser(String decodedEmail, String photoUrl) async {
-    DocumentSnapshot snapshot =
-        await _firestore.collection(Constants.COLLECTION_USERS).document(Utility.encodeEmail(decodedEmail)).get();
+    DocumentSnapshot snapshot = await _firestore.collection(Constants.COLLECTION_USERS).document(Utility.encodeEmail(decodedEmail)).get();
 
     User user;
 
@@ -44,8 +43,7 @@ class DataRepository {
     }
   }
 
-  Future<void> updateUserProfilePictureReferences(
-      String encodedEmail, String localProfileImageUri, String remoteProfileImageUri) async {
+  Future<void> updateUserProfilePictureReferences(String encodedEmail, String localProfileImageUri, String remoteProfileImageUri) async {
     DocumentReference reference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
     Map<String, dynamic> valuesToUpdate = {
       "localProfilePictureUri": localProfileImageUri,
@@ -67,7 +65,6 @@ class DataRepository {
   }
 
   Future<void> updateUserName(User user) async {
-
     DocumentReference referenceUser = _firestore.collection(Constants.COLLECTION_USERS).document(user.encodedEmail);
     Map<String, dynamic> valuesToUpdate = {"name": user.name};
     user.books.forEach((key, book) {
@@ -78,10 +75,9 @@ class DataRepository {
   }
 
   Future<void> updateUserTwitterProfile(User user) async {
-
     DocumentReference referenceUser = _firestore.collection(Constants.COLLECTION_USERS).document(user.encodedEmail);
     Map<String, dynamic> valuesToUpdate = {"twitterProfile": user.twitterProfile};
-    user.books.forEach((key, book){
+    user.books.forEach((key, book) {
       valuesToUpdate.putIfAbsent("books.$key.twitterProfile", () => user.twitterProfile);
     });
 
@@ -96,21 +92,17 @@ class DataRepository {
   }
 
   //BOOK
-  Future<void> updateBookPosterPictureReferences(String encodedEmail, Book book, String localPosterUri, String remotePosterUri) async{
+  Future<void> updateBookPosterPictureReferences(String encodedEmail, Book book, String localPosterUri, String remotePosterUri) async {
     WriteBatch writeBatch = _firestore.batch();
-    String bookKey = book.generateBookKey();
 
     DocumentReference userBookReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
     Map<String, dynamic> userBookToUpdate = {
-      "books.$bookKey.localPosterUri": localPosterUri,
-      "books.$bookKey.remotePosterUri": remotePosterUri
+      "books.${book.uID}.localPosterUri": localPosterUri,
+      "books.${book.uID}.remotePosterUri": remotePosterUri
     };
 
-    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(bookKey);
-    Map<String, dynamic> bookToUpdate = {
-      "localPosterUri": localPosterUri,
-      "remotePosterUri": remotePosterUri
-    };
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(book.uID);
+    Map<String, dynamic> bookToUpdate = {"localPosterUri": localPosterUri, "remotePosterUri": remotePosterUri};
 
     writeBatch.updateData(userBookReference, userBookToUpdate);
     writeBatch.updateData(bookReference, bookToUpdate);
@@ -118,21 +110,17 @@ class DataRepository {
     return await writeBatch.commit();
   }
 
-  Future<void> updateBookCoverPictureReferences(String encodedEmail, Book book, String localCoverUri, String remoteCoverUri) async{
+  Future<void> updateBookCoverPictureReferences(String encodedEmail, Book book, String localCoverUri, String remoteCoverUri) async {
     WriteBatch writeBatch = _firestore.batch();
-    String bookKey = book.generateBookKey();
 
     DocumentReference userBookReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
     Map<String, dynamic> userBookToUpdate = {
-      "books.$bookKey.localCoverUri": localCoverUri,
-      "books.$bookKey.remoteCoverUri": remoteCoverUri
+      "books.${book.uID}.localCoverUri": localCoverUri,
+      "books.${book.uID}.remoteCoverUri": remoteCoverUri
     };
 
-    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(bookKey);
-    Map<String, dynamic> bookToUpdate = {
-      "localCoverUri": localCoverUri,
-      "remoteCoverUri": remoteCoverUri
-    };
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(book.uID);
+    Map<String, dynamic> bookToUpdate = {"localCoverUri": localCoverUri, "remoteCoverUri": remoteCoverUri};
 
     writeBatch.updateData(userBookReference, userBookToUpdate);
     writeBatch.updateData(bookReference, bookToUpdate);
@@ -142,32 +130,46 @@ class DataRepository {
 
   Future<void> updateBookTitle(String encodedEmail, Book book, String newTitle) async {
     WriteBatch writeBatch = _firestore.batch();
-    String bookKey = book.generateBookKey();
 
     DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
-    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(bookKey);
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(book.uID);
 
-    Map<String, dynamic> valueToUpdateOnUser = {"books.$bookKey.title": newTitle};
-    Map<String, dynamic> valueToUpdateOnBook = {"title" : newTitle};
+    Map<String, dynamic> valueToUpdateOnUser = {"books.${book.uID}.title": newTitle};
+    Map<String, dynamic> valueToUpdateOnBook = {"title": newTitle};
 
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
 
     return await writeBatch.commit();
   }
-  Future<void> updateBookSynopsis(String encodedEmail, Book book, String newSynopsis) async {
 
+  Future<void> updateBookSynopsis(String encodedEmail, Book book, String newSynopsis) async {
     WriteBatch writeBatch = _firestore.batch();
-    String bookKey = book.generateBookKey();
+
 
     DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
-    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(bookKey);
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(book.uID);
 
-    Map<String, dynamic> valueToUpdateOnUser = {"books.$bookKey.synopsis": newSynopsis};
-    Map<String, dynamic> valueToUpdateOnBook = {"synopsis" : newSynopsis};
+    Map<String, dynamic> valueToUpdateOnUser = {"books.${book.uID}.synopsis": newSynopsis};
+    Map<String, dynamic> valueToUpdateOnBook = {"synopsis": newSynopsis};
 
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
+
+    return await writeBatch.commit();
+  }
+
+  Future<void> createNewBook(String encodedEmail, Book book) async {
+    WriteBatch writeBatch = _firestore.batch();
+   
+    DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document();
+
+    book.uID = bookReference.documentID;
+    Map<String, dynamic> bookToSaveOnUser = {"books.${book.uID}": book.toMap()};
+
+    writeBatch.updateData(userReference, bookToSaveOnUser);
+    writeBatch.setData(bookReference, book.toMap());
 
     return await writeBatch.commit();
   }

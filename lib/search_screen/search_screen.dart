@@ -1,8 +1,5 @@
 import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
-import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flushbar/flushbar.dart';
 
 class SearchScreen extends StatelessWidget {
   SearchScreen();

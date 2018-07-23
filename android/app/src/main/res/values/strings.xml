@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Cronicalia</string>
-
+    <string name="facebook_app_id" translatable="false">284060812125351</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb284060812125351</string>
 </resources>
