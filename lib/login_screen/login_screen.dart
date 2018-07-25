@@ -4,6 +4,7 @@ import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/old_user_login_widget.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/user_email_collector_widget.dart';
+import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,16 +27,16 @@ class LoginScreen extends StatefulWidget {
 
   LoginScreen(FirebaseAuth firebaseAuth, Firestore firestore, this.context) {
     _loginHandler = LoginHandler(firebaseAuth, firestore, (LoginState loginState,
-        {String title, String message, String userName, String userEmail, String photoUrl}) {
+        {String title, String message, User newUser}) {
 
       switch (loginState) {
         case LoginState.LOGGED_IN:
           {
-      
+
             FlushbarHelper.createSuccess(title: title, message: message)
               ..onStatusChanged = (FlushbarStatus status) {
                 if (status == FlushbarStatus.DISMISSED) {
-                  getUserFromServerAction.call([userEmail, photoUrl]);
+                  getUserFromServerAction.call(newUser);
 
                   _loginHandler.isSignedIn().then((isSignedIn) {
                     changeLoginStatusAction(isSignedIn);
@@ -51,7 +52,7 @@ class LoginScreen extends StatefulWidget {
 
         case LoginState.LOADING:
           {
-            _flushbar = FlushbarHelper.createInformation(title: title, message: message, duration: Duration(seconds: 4));
+            _flushbar = FlushbarHelper.createInformation(title: title, message: message, duration: Duration(seconds: 5));
             _flushbar.show(context);
 
             break;

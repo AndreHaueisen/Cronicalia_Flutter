@@ -18,7 +18,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
     userStore = listenToStore(userStoreToken);
     userStore.isLoggedInAsync().then((isLoggedIn) {
       if (isLoggedIn) {
-        getUserFromServerAction([userStore.userEmail, ""]);
+        getUserFromServerAction(userStore.user);
       }
     });
   }

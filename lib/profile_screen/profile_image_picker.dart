@@ -9,7 +9,7 @@ import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 
-class ProfileModel {
+class ProfileImagePicker {
   static void pickImageFromGallery(ImageType imageType, User user) async {
     File image = await ImagePicker.pickImage(source: ImageSource.gallery);
 

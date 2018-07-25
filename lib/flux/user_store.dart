@@ -5,6 +5,7 @@ import 'package:cronicalia_flutter/backend/data_repository.dart';
 import 'package:cronicalia_flutter/backend/file_repository.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/user.dart';
+import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_flux/flutter_flux.dart';
@@ -16,7 +17,6 @@ class UserStore extends Store {
   FileRepository fileRepository;
   DataRepository dataRepository;
 
-  String _userEmail = "";
   bool _isLoggedIn = false;
   User _user = new User(
       name: "Unknown",
@@ -27,6 +27,7 @@ class UserStore extends Store {
       remoteProfilePictureUri: "",*/
       localBackgroundPictureUri: "",
       remoteBackgroundPictureUri: "",
+      books: new Map<String, Book>(),
       fans: 0);
 
   UserStore() {
@@ -37,13 +38,11 @@ class UserStore extends Store {
       _user = newUser;
     });
 
-    triggerOnConditionalAction(getUserFromServerAction, (List<String> userInitialData) {
-      this._userEmail = userInitialData[0];
-      String photoUrl = userInitialData[1];
+    triggerOnConditionalAction(getUserFromServerAction, (User user) {
 
-      dataRepository.getNewUser(_userEmail, photoUrl).then((User user) {
-        if (user != null) {
-          this._user = user;
+      dataRepository.getNewUser(user: user).then((User userFromDatabase) {
+        if (userFromDatabase != null) {
+          this._user = userFromDatabase;
           print("user loaded in store");
           trigger();
         } else {
@@ -107,10 +106,13 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(updateBookPosterImageAction, (List<String> payload) {
-      String bookKey = payload[0];
+      String bookUID = payload[0];
       String localUri = payload[1];
 
-      fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookKey], localUri, dataRepository).then((_) {
+      //First update locally
+      _user.books[bookUID].localPosterUri = localUri;
+
+      fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookUID], localUri, dataRepository).then((_) {
         dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
@@ -125,10 +127,12 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(updateBookCoverImageAction, (List<String> payload) {
-      String bookKey = payload[0];
+      String bookUID = payload[0];
       String localUri = payload[1];
 
-      fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookKey], localUri, dataRepository).then((_) {
+      _user.books[bookUID].localCoverUri = localUri;
+
+      fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookUID], localUri, dataRepository).then((_) {
         dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
@@ -188,8 +192,6 @@ class UserStore extends Store {
 
   User get user => _user;
 
-  String get userEmail => _userEmail;
-
   bool get isLoggedIn => _isLoggedIn;
 
   Future<bool> isLoggedInAsync() async {
@@ -197,11 +199,12 @@ class UserStore extends Store {
 
     if (firebaseUser != null) {
       _isLoggedIn = true;
-      _userEmail = firebaseUser.email;
+      _user.encodedEmail = Utility.encodeEmail(firebaseUser.email);
+      _user.name = firebaseUser.displayName;
       return true;
     } else {
       _isLoggedIn = false;
-      _userEmail = null;
+
       return false;
     }
   }
@@ -211,7 +214,7 @@ final StoreToken userStoreToken = new StoreToken(UserStore());
 
 /// userInitialData[0] contains user email
 /// userInitialData[1] contains user photoUrl
-final Action<List<String>> getUserFromServerAction = new Action<List<String>>();
+final Action<User> getUserFromServerAction = new Action<User>();
 final Action<User> getUserFromCacheAction = new Action<User>();
 final Action<bool> changeLoginStatusAction = new Action<bool>();
 

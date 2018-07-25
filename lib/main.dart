@@ -49,7 +49,21 @@ class Cronicalia extends StatelessWidget {
     _initializeFirebase();
   }
 
-  
+  void _initializeFirebase() async {
+    final FirebaseApp app = await FirebaseApp.configure(
+      name: 'Cronicalia',
+      options: const FirebaseOptions(
+        googleAppID: '1:872347975270:android:eedb2f61024d773b',
+        gcmSenderID: '872347975270',
+        apiKey: 'AIzaSyACbFCvgGAgUsxZX-bEgw8QP3OclWICDcU',
+        projectID: 'cronicalia-b9a25',
+      ),
+    );
+
+    firebaseAuth = FirebaseAuth.instance;
+    firebaseStorage = new FirebaseStorage(app: app, storageBucket: 'gs://cronicalia-b9a25.appspot.com');
+    firestore = new Firestore(app: app);
+  }
 
   @override
   Widget build(BuildContext context) {

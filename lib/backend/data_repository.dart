@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
+import 'package:meta/meta.dart';
 
 class DataRepository {
   final Firestore _firestore;
@@ -14,16 +16,11 @@ class DataRepository {
   DataRepository(this._firestore);
 
   //USER
-  Future<User> getNewUser(String decodedEmail, String photoUrl) async {
-    DocumentSnapshot snapshot = await _firestore.collection(Constants.COLLECTION_USERS).document(Utility.encodeEmail(decodedEmail)).get();
-
-    User user;
+  Future<User> getNewUser({@required User user}) async {
+    DocumentSnapshot snapshot = await _firestore.collection(Constants.COLLECTION_USERS).document(user.encodedEmail).get();
 
     if (snapshot != null && snapshot.exists) {
       user = new User.fromSnapshot(snapshot);
-      if (user.localProfilePictureUri == null && user.remoteProfilePictureUri == null) {
-        user.remoteProfilePictureUri = photoUrl;
-      }
       return user;
     } else {
       return null;
@@ -166,12 +163,42 @@ class DataRepository {
     DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document();
 
     book.uID = bookReference.documentID;
+    book.localPosterUri = await _savePosterOnPermanentLocalFile(book.localPosterUri, book.uID);
+    book.localCoverUri = await _saveCoverOnPermanentLocalFile(book.localCoverUri, book.uID);
+
+    await _cleanupTemporaryFiles();
+
     Map<String, dynamic> bookToSaveOnUser = {"books.${book.uID}": book.toMap()};
 
     writeBatch.updateData(userReference, bookToSaveOnUser);
     writeBatch.setData(bookReference, book.toMap());
 
     return await writeBatch.commit();
+  }
+
+  Future<String> _savePosterOnPermanentLocalFile(String tempPosterPath, String bookUID) async {
+    File posterTempFile = File(tempPosterPath);
+    File posterPicFile = await Utility.createUserFile(
+        Constants.FOLDER_NAME_BOOKS,
+        "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
+
+    await Utility.saveImageToLocalCache(posterTempFile, posterPicFile);
+    return posterPicFile.path;
+  }
+
+  Future<String> _saveCoverOnPermanentLocalFile(String tempCoverPath, String bookUID) async {
+    File coverTempFile = File(tempCoverPath);
+    File coverPicFile = await Utility.createUserFile(
+        Constants.FOLDER_NAME_BOOKS,
+        "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
+
+    await Utility.saveImageToLocalCache(coverTempFile, coverPicFile);
+    return coverPicFile.path;
+  }
+
+  Future<void> _cleanupTemporaryFiles() async {
+    await Utility.deleteFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
+    await Utility.deleteFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
   }
 
   String _resolveCollectionLanguageLocation(BookLanguage bookLanguage) {

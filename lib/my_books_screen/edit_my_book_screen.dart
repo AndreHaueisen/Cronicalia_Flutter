@@ -14,9 +14,9 @@ enum ImageType { POSTER, COVER }
 enum ImageOrigin { CAMERA, GALLERY }
 
 class EditMyBookScreen extends StatefulWidget {
-  String bookKey;
-  
-  EditMyBookScreen(this.bookKey);
+  String bookUID;
+
+  EditMyBookScreen(this.bookUID);
 
   @override
   State createState() {
@@ -24,8 +24,7 @@ class EditMyBookScreen extends StatefulWidget {
   }
 }
 
-class EditMyBookScreenState extends State<EditMyBookScreen>
-    with TickerProviderStateMixin, StoreWatcherMixin<EditMyBookScreen> {
+class EditMyBookScreenState extends State<EditMyBookScreen> with TickerProviderStateMixin, StoreWatcherMixin<EditMyBookScreen> {
   UserStore _userStore;
   bool _isEditModeOn = false;
   Book _book;
@@ -38,7 +37,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     _textController = new TextEditingController();
     _userStore = listenToStore(userStoreToken);
 
-    _book = _userStore.user.books[widget.bookKey];
+    _book = _userStore.user.books[widget.bookUID];
     _wiggleController = new AnimationController(vsync: this, duration: Duration(milliseconds: 250));
     _wiggleAnimation = new Tween(begin: -pi / 60, end: pi / 60).animate(_wiggleController)
       ..addListener(() {
@@ -93,102 +92,112 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         child: new SingleChildScrollView(
           padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
           child: new Stack(children: [
-            Card(
-              child: new FractionallySizedBox(
-                widthFactor: 0.90,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    new Align(
-                      child: new Padding(
-                        padding: const EdgeInsets.only(top: 8.0, right: 8.0, left: 8.0),
-                        child: MaterialButton(
-                          minWidth: 140.0,
-                          child: Text(
-                            "CHANGE POSTER",
-                            style: TextStyle(fontSize: 13.0),
-                          ),
-                          onPressed: () {
-                            _showImageOriginDialog(ImageType.POSTER);
-                          },
-                          textColor: Theme.of(context).accentTextTheme.button.color,
-                          color: Theme.of(context).accentColor,
-                        ),
-                      ),
-                      alignment: Alignment.centerRight,
-                    ),
-                    new Align(
-                      child: new Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: MaterialButton(
-                          minWidth: 140.0,
-                          child: Text(
-                            "CHANGE COVER",
-                            style: TextStyle(fontSize: 13.0),
-                          ),
-                          onPressed: () {
-                            _showImageOriginDialog(ImageType.COVER);
-                          },
-                          textColor: Theme.of(context).accentTextTheme.button.color,
-                          color: Theme.of(context).accentColor,
-                        ),
-                      ),
-                      alignment: Alignment.centerRight,
-                    ),
-                    new Padding(
-                      padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
-                      child: new GestureDetector(
-                        onTap: () {
-                          if (_isEditModeOn) {
-                            _showTitleTextInputDialog();
-                            _isEditModeOn = false;
-                          }
-                        },
-                        child: new Transform.rotate(
-                          angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
-                          child: new Text(
-                            _book.title,
-                            style: TextStyle(fontSize: 24.0),
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                    new Padding(
-                      padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0, bottom: 8.0),
-                      child: new GestureDetector(
-                        onTap: () {
-                          if (_isEditModeOn) {
-                            _showSynopsisTextInputDialog();
-                            _isEditModeOn = false;
-                          }
-                        },
-                        child: new Transform.rotate(
-                          angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
-                          child: new Text(
-                            _book.synopsis,
-                            style: TextStyle(color: TextColorDarkBackground.secondary),
-                            textAlign: TextAlign.justify,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 8,
-                          ),
-                        ),
-                      ),
-                    ),
-                    _bookStatsWidget(context)
-                  ],
-                ),
-              ),
-            ),
+            _buildBookInfoCard(),
             _coverPicture(),
             _outsiderButton(context),
           ]),
         ),
       ),
     ]);
+  }
+
+  Widget _buildBookInfoCard() {
+    return Card(
+      child: new FractionallySizedBox(
+        widthFactor: 0.90,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            new Align(
+              child: new Padding(
+                padding: const EdgeInsets.only(top: 8.0, right: 12.0, left: 8.0),
+                child: ButtonTheme(
+                  minWidth: 140.0,
+                  child: RaisedButton(
+                    child: Text(
+                      "CHANGE POSTER",
+                      style: TextStyle(fontSize: 13.0),
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+                    onPressed: () {
+                      _showImageOriginDialog(ImageType.POSTER);
+                    },
+                    textColor: TextColorBrightBackground.primary,
+                    color: AppThemeColors.accentColor,
+                  ),
+                ),
+              ),
+              alignment: Alignment.centerRight,
+            ),
+            new Align(
+              child: new Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 12.0),
+                child: ButtonTheme(
+                  minWidth: 140.0,
+                  child: RaisedButton(
+                    child: Text(
+                      "CHANGE COVER",
+                      style: TextStyle(fontSize: 13.0),
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+                    onPressed: () {
+                      _showImageOriginDialog(ImageType.COVER);
+                    },
+                    textColor: TextColorBrightBackground.primary,
+                    color: AppThemeColors.accentColor,
+                  ),
+                ),
+              ),
+              alignment: Alignment.centerRight,
+            ),
+            new Padding(
+              padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
+              child: new GestureDetector(
+                onTap: () {
+                  if (_isEditModeOn) {
+                    _showTitleTextInputDialog();
+                    _isEditModeOn = false;
+                  }
+                },
+                child: new Transform.rotate(
+                  angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
+                  child: new Text(
+                    _book.title,
+                    style: TextStyle(fontSize: 24.0),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+            ),
+            new Padding(
+              padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0, bottom: 8.0),
+              child: new GestureDetector(
+                onTap: () {
+                  if (_isEditModeOn) {
+                    _showSynopsisTextInputDialog();
+                    _isEditModeOn = false;
+                  }
+                },
+                child: new Transform.rotate(
+                  angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
+                  child: new Text(
+                    _book.synopsis,
+                    style: TextStyle(color: TextColorDarkBackground.secondary),
+                    textAlign: TextAlign.justify,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 8,
+                  ),
+                ),
+              ),
+            ),
+            _bookStatsWidget(context)
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _coverPicture() {
@@ -200,10 +209,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
           image: MyBookImagePicker.getProfileImageProvider(_book.localCoverUri, _book.remoteCoverUri),
         ),
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black26, offset: Offset(0.5, 1.0), blurRadius: 2.0, spreadRadius: 2.0)
-          ],
+          boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(0.5, 1.0), blurRadius: 2.0, spreadRadius: 2.0)],
           border: Border.all(style: BorderStyle.solid, color: Colors.white, width: 1.0),
           shape: BoxShape.rectangle,
         ),
@@ -234,10 +240,10 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
           );
         })) {
       case ImageOrigin.CAMERA:
-        MyBookImagePicker.pickImageFromCamera(imageType, _userStore.user, widget.bookKey, _book.uID);
+        MyBookImagePicker.pickImageFromCamera(imageType, _userStore.user, widget.bookUID);
         break;
       case ImageOrigin.GALLERY:
-        MyBookImagePicker.pickImageFromGallery(imageType, _userStore.user, widget.bookKey, _book.uID);
+        MyBookImagePicker.pickImageFromGallery(imageType, _userStore.user, widget.bookUID);
         break;
     }
   }

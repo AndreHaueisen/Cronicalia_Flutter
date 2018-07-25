@@ -55,9 +55,8 @@ class Utility {
 
     if (isLandscape) {
       if (properties.width > imageMaxWidth) {
-        return  await FlutterNativeImage.compressImage(inputFile.path,
+        return await FlutterNativeImage.compressImage(inputFile.path,
             quality: 90, targetWidth: imageMaxWidth, targetHeight: (properties.height * imageMaxWidth / properties.width).round());
-
       } else {
         return inputFile;
       }
@@ -65,7 +64,6 @@ class Utility {
       if (properties.height > imageMaxHeight) {
         return await FlutterNativeImage.compressImage(inputFile.path,
             quality: 90, targetWidth: (properties.width * imageMaxHeight / properties.height).round(), targetHeight: imageMaxHeight);
-
       } else {
         return inputFile;
       }
@@ -88,6 +86,23 @@ class Utility {
     } catch (exception) {
       print(exception.toString());
       return null;
+    }
+  }
+
+  static Future<void> deleteFile(String directoryName, String fileName) async {
+    Directory applicationDirectory = await getApplicationDocumentsDirectory();
+    String newFilePath = "${applicationDirectory.path}/cache/$directoryName/$fileName";
+
+    File fileToBeDeleted = File(newFilePath);
+
+    if (fileToBeDeleted.existsSync()) {
+      bool wasFileDeleted = !(await fileToBeDeleted.delete()).existsSync();
+      if (wasFileDeleted)
+        print("File deleted: $newFilePath");
+      else
+        print("File not deleted: $newFilePath");
+    } else {
+      print("File did not exist: $newFilePath");
     }
   }
 }

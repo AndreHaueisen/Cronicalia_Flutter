@@ -5,7 +5,7 @@ import 'package:cronicalia_flutter/custom_widgets/outsider_button_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/profile_screen/profile_model.dart';
+import 'package:cronicalia_flutter/profile_screen/profile_image_picker.dart';
 
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -87,7 +87,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
               new Container(
                 height: double.infinity,
                 child: Image(
-                  image: ProfileModel.getBackgroundImageProvider(
+                  image: ProfileImagePicker.getBackgroundImageProvider(
                       _userStore.user.localBackgroundPictureUri, _userStore.user.remoteBackgroundPictureUri),
                   alignment: Alignment.topCenter,
                 ),
@@ -112,44 +112,52 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                           children: <Widget>[
                             new Align(
                               child: new Padding(
-                                padding: const EdgeInsets.only(top: 8.0, right: 8.0, left: 8.0),
-                                child: MaterialButton(
-                                  child: Text(
-                                    "CHANGE POSTER",
-                                    style: TextStyle(fontSize: 13.0),
+                                padding: const EdgeInsets.only(top: 8.0, right: 12.0, left: 8.0),
+                                child: ButtonTheme(
+                                  minWidth: 120.0,
+                                  child: RaisedButton(
+                                    child: Text(
+                                      "CHANGE POSTER",
+                                      style: TextStyle(fontSize: 13.0),
+                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+                                    onPressed: () {
+                                      if (_userStore.isLoggedIn) {
+                                        print("User logged in");
+                                        _showImageOriginDialog(ImageType.BACKGROUND);
+                                      } else {
+                                        Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                                      }
+                                    },
+                                    textColor: TextColorBrightBackground.primary,
+                                    color: AppThemeColors.accentColor,
                                   ),
-                                  onPressed: () {
-                                    if (_userStore.isLoggedIn) {
-                                      print("User logged in");
-                                      _showImageOriginDialog(ImageType.BACKGROUND);
-                                    } else {
-                                      Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                                    }
-                                  },
-                                  textColor: Theme.of(context).accentTextTheme.button.color,
-                                  color: Theme.of(context).accentColor,
                                 ),
                               ),
                               alignment: Alignment.centerRight,
                             ),
                             new Align(
                               child: new Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: MaterialButton(
-                                  child: Text(
-                                    "CHANGE PROFILE",
-                                    style: TextStyle(fontSize: 13.0),
+                                padding: const EdgeInsets.only(right: 12.0, left: 8.0),
+                                child: ButtonTheme(
+                                  minWidth: 120.0,
+                                                                  child: RaisedButton(
+                                    child: Text(
+                                      "CHANGE PROFILE",
+                                      style: TextStyle(fontSize: 13.0),
+                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+                                    onPressed: () {
+                                      if (_userStore.isLoggedIn) {
+                                        print("User logged in");
+                                        _showImageOriginDialog(ImageType.PROFILE);
+                                      } else {
+                                        Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                                      }
+                                    },
+                                    textColor: TextColorBrightBackground.primary,
+                                    color: AppThemeColors.accentColor,
                                   ),
-                                  onPressed: () {
-                                    if (_userStore.isLoggedIn) {
-                                      print("User logged in");
-                                      _showImageOriginDialog(ImageType.PROFILE);
-                                    } else {
-                                      Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                                    }
-                                  },
-                                  textColor: Theme.of(context).accentTextTheme.button.color,
-                                  color: Theme.of(context).accentColor,
                                 ),
                               ),
                               alignment: Alignment.centerRight,
@@ -166,7 +174,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                                 child: new Transform.rotate(
                                   angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
                                   child: new Text(
-                                    _userStore.user.aboutMe,
+                                    _userStore.user.aboutMe != null ? _userStore.user.aboutMe : "Tell your readers about you",
                                     textAlign: TextAlign.justify,
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 8,
@@ -217,16 +225,16 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
           );
         })) {
       case ImageOrigin.CAMERA:
-        ProfileModel.pickImageFromCamera(imageType, _userStore.user);
+        ProfileImagePicker.pickImageFromCamera(imageType, _userStore.user);
         break;
       case ImageOrigin.GALLERY:
-        ProfileModel.pickImageFromGallery(imageType, _userStore.user);
+        ProfileImagePicker.pickImageFromGallery(imageType, _userStore.user);
         break;
     }
   }
 
   Future<Null> _showNameTextInputDialog() async {
-    _textController.text = _userStore.user.name;
+    _textController.text = _userStore.user.name != null ? _userStore.user.name : "Unknown user";
 
     const Text title = Text(
       "Edit user name",
@@ -295,8 +303,12 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
   }
 
   Future<Null> _showTwitterTextInputDialog() async {
-    _textController.text =
-        (_userStore.user.twitterProfile.startsWith('@') ? _userStore.user.twitterProfile.substring(1) : _userStore.user.twitterProfile);
+    if (_userStore.user.twitterProfile != null) {
+      _textController.text =
+          (_userStore.user.twitterProfile.startsWith('@') ? _userStore.user.twitterProfile.substring(1) : _userStore.user.twitterProfile);
+    } else {
+      _textController.text = '';
+    }
 
     const Text title = Text(
       "Edit twitter profile",
@@ -373,7 +385,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
   }
 
   Future<Null> _showAboutMeTextInputDialog() async {
-    _textController.text = _userStore.user.aboutMe;
+    _textController.text = _userStore.user.aboutMe != null ? _userStore.user.aboutMe : "";
 
     const Text title = Text(
       "Tell users about you",
@@ -471,7 +483,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                 child: Icon(Icons.remove_red_eye),
               ),
               Text(
-                "10",
+                _calculateUserTotalViews().toString(),
                 style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
               ),
             ],
@@ -486,7 +498,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
               new Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
-                  "20",
+                  _calculateUserTotalIncome().toString(),
                   style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
                 ),
               )
@@ -497,9 +509,27 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
     );
   }
 
+  int _calculateUserTotalViews() {
+    int userTotalViews = 0;
+    _userStore.user.books.forEach((_, book) {
+      userTotalViews += book.readingsNumber;
+    });
+
+    return userTotalViews;
+  }
+
+  double _calculateUserTotalIncome() {
+    double userTotalIncome = 0.0;
+    _userStore.user.books.forEach((_, book) {
+      userTotalIncome += book.income;
+    });
+
+    return userTotalIncome;
+  }
+
   Widget userIdentificationWidget(BuildContext context) {
     return new FractionalTranslation(
-      translation: Offset(0.22, -0.25),
+      translation: Offset(0.13, -0.25),
       child: new Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -536,7 +566,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
               child: new Transform.rotate(
                 angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
                 child: Text(
-                  _userStore.user.twitterProfile,
+                  _userStore.user.twitterProfile != null ? _userStore.user.twitterProfile : "yourTwitterProfile",
                   style: TextStyle(color: TextColorDarkBackground.secondary),
                 ),
               ),
@@ -556,8 +586,9 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
         border: Border.all(color: Theme.of(context).accentColor),
         shape: BoxShape.circle,
         image: DecorationImage(
-          image: ProfileModel.getProfileImageProvider(_userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
-        ),
+            image:
+                ProfileImagePicker.getProfileImageProvider(_userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
+            fit: BoxFit.fill),
       ),
     );
   }

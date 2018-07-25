@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -8,7 +10,7 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 typedef void LoginStatusCallback(LoginState loginState,
-    {String title, String message, String userName, String userEmail, String photoUrl});
+    {String title, String message, User newUser});
 
 enum LoginState { LOGGED_IN, LOGGED_OUT, LOADING, ERROR, PASSWORD_RESET }
 enum ProviderOptions { GOOGLE, FACEBOOK, TWITTER, PASSWORD }
@@ -39,7 +41,7 @@ class LoginHandler {
     return null;
   }
 
-  void signIntoFirebaseWithGoogle() async {
+  void signIntoFirebaseWithGoogle(bool isUserNew) async {
     loginStatusCallback(LoginState.LOADING,
         title: "Loading credentials", message: "Wait while we confirm your ID with Google");
 
@@ -53,7 +55,7 @@ class LoginHandler {
       throw ("firebase user returned null");
     }
 
-    _saveUserOnDatabase(firebaseUser);
+    _saveUserLoginDataOnDatabase(firebaseUser, isUserNew);
   }
 
   Future<Map<String, String>> _getCredentialsUsingGoogle() async {
@@ -91,7 +93,7 @@ class LoginHandler {
     }
   }
 
-  void signIntoFirebaseWithFacebook() async {
+  void signIntoFirebaseWithFacebook(bool isUserNew) async {
     loginStatusCallback(LoginState.LOADING,
         title: "Loading credentials", message: "Wait while we confirm your ID with Facebook");
 
@@ -103,7 +105,7 @@ class LoginHandler {
       throw ("Firebase user returned null");
     }
 
-    _saveUserOnDatabase(firebaseUser);
+    _saveUserLoginDataOnDatabase(firebaseUser, isUserNew);
   }
 
   Future<String> _getCredentialsUsingFacebook() async {
@@ -129,7 +131,7 @@ class LoginHandler {
     }
   }
 
-  void signIntoFirebaseWithTwitter() async {
+  void signIntoFirebaseWithTwitter(bool isUserNew) async {
     loginStatusCallback(LoginState.LOADING,
         title: "Loading credentials", message: "Wait while we confirm your ID with Twitter");
 
@@ -143,7 +145,7 @@ class LoginHandler {
       throw ("firebase user returned null");
     }
 
-    _saveUserOnDatabase(firebaseUser);
+    _saveUserLoginDataOnDatabase(firebaseUser, isUserNew);
   }
 
   Future<Map<String, String>> _getCredentialsUsingTwitter() async {
@@ -181,7 +183,7 @@ class LoginHandler {
 
     firebaseAuth.createUserWithEmailAndPassword(email: email, password: password).then((firebaseUser) {
       if (firebaseUser != null) {
-        _saveUserOnDatabase(firebaseUser);
+        _saveUserLoginDataOnDatabase(firebaseUser, true);
       }
     }).catchError((error) {
       loginStatusCallback(LoginState.ERROR, title: "Error", message: error.message);
@@ -195,7 +197,7 @@ class LoginHandler {
 
     firebaseAuth.signInWithEmailAndPassword(email: email, password: password).then((firebaseUser) {
       if (firebaseUser != null) {
-        _saveUserOnDatabase(firebaseUser);
+        _saveUserLoginDataOnDatabase(firebaseUser, false);
       }
     }).catchError((error) {
       loginStatusCallback(LoginState.ERROR, title: "Error", message: error.message);
@@ -209,7 +211,7 @@ class LoginHandler {
         title: "Email sent", message: "Follow the intructions to reset your password");
   }
 
-  _saveUserOnDatabase(FirebaseUser firebaseUser) async {
+  Future<void> _saveUserLoginDataOnDatabase(FirebaseUser firebaseUser, bool isUserNew) async {
     if (firestore == null) {
       throw ("Firestore returned null");
     }
@@ -221,11 +223,20 @@ class LoginHandler {
     final Map<String, String> emailTokenMap = {userEncodedEmail: messageToken};
     final Map<String, String> emailUIDMap = {userEncodedEmail: userUID};
 
+    User newUser = User(
+        name: firebaseUser.displayName,
+        encodedEmail: userEncodedEmail,
+        remoteProfilePictureUri: firebaseUser.photoUrl,
+        fans: 0,
+        books: Map<String, Book>());
+
     final WriteBatch batch = firestore.batch();
     final DocumentReference messageTokensReference =
         firestore.collection(Constants.COLLECTION_CREDENTIALS).document(Constants.DOCUMENT_MESSAGE_TOKENS);
     final DocumentReference uidUserReference =
         firestore.collection(Constants.COLLECTION_CREDENTIALS).document(Constants.DOCUMENT_UID_MAPPINGS);
+
+    if(isUserNew) _saveNewUserOnDatabase(batch, newUser);
 
     batch.setData(messageTokensReference, emailTokenMap, merge: true);
     batch.setData(uidUserReference, emailUIDMap, merge: true);
@@ -243,13 +254,16 @@ class LoginHandler {
       loginStatusCallback(LoginState.LOGGED_IN,
           title: title,
           message: message,
-          userName: firebaseUser.displayName,
-          userEmail: firebaseUser.email,
-          photoUrl: firebaseUser.photoUrl);
+          newUser: newUser);
       print("token saved!");
     }, onError: (error) {
       loginStatusCallback(LoginState.ERROR, title: "Error", message: error.toString());
       print("token not saved");
     });
+  }
+
+  Future<void> _saveNewUserOnDatabase(WriteBatch batch, User newUser) async{
+    final DocumentReference userReference = firestore.collection(Constants.COLLECTION_USERS).document(newUser.encodedEmail);
+    batch.setData(userReference, newUser.toMap(), merge: true);
   }
 }

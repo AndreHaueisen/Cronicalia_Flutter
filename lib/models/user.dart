@@ -15,17 +15,16 @@ class User {
   int fans;
   Map<String, Book> books;
 
-  User(
-      {this.name,
-      this.encodedEmail,
-      this.twitterProfile,
-      this.aboutMe,
-      this.localProfilePictureUri,
-      this.remoteProfilePictureUri,
-      this.localBackgroundPictureUri,
-      this.remoteBackgroundPictureUri,
-      this.fans,
-      this.books});
+  User({this.name,
+    this.encodedEmail,
+    this.twitterProfile,
+    this.aboutMe,
+    this.localProfilePictureUri,
+    this.remoteProfilePictureUri,
+    this.localBackgroundPictureUri,
+    this.remoteBackgroundPictureUri,
+    this.fans,
+    this.books});
 
   User.fromSnapshot(DocumentSnapshot snapshot) {
     if (snapshot != null && snapshot.exists) {
@@ -39,10 +38,28 @@ class User {
       this.remoteBackgroundPictureUri = snapshot.data['remoteBackgroundPictureUri'];
       this.fans = snapshot.data['fans'];
       this.books = new Map<String, Book>();
-      (snapshot.data['books'] as LinkedHashMap).forEach((key, value) {
-        books[key] = Book.fromLinkedMap(value);
-      });
+      LinkedHashMap booksLinkedMap = (snapshot.data['books'] as LinkedHashMap);
+      if (booksLinkedMap != null) {
+        booksLinkedMap.forEach((key, value) {
+          books[key] = Book.fromLinkedMap(value);
+        });
+      }
     }
+  }
+
+  Map<String, dynamic> toMap(){
+    return {
+      "name" : this.name,
+      "encodedEmail" : this.encodedEmail,
+      "twitterProfile" : this.twitterProfile,
+      "aboutMe" : this.aboutMe,
+      "localProfilePictureUri" : this.localProfilePictureUri,
+      "remoteProfilePictureUri" : this.remoteProfilePictureUri,
+      "localBackgroundPictureUri" : this.localBackgroundPictureUri,
+      "remoteBackgroundPictureUri" : this.remoteBackgroundPictureUri,
+      "fans" : this.fans,
+      "books" : this.books
+    };
   }
 
   @override
@@ -81,29 +98,33 @@ class User {
         books.hashCode;
   }
 
-  User copy(
-      {String name,
-      String encodedEmail,
-      String twitterProfile,
-      String aboutMe,
-      String localProfilePictureUri,
-      String remoteProfilePictureUri,
-      String localBackgroundPictureUri,
-      String remoteBackgroundPictureUri,
-      int fans,
-      Map<String, Book> books}) {
-
+  User copy({String name,
+    String encodedEmail,
+    String twitterProfile,
+    String aboutMe,
+    String localProfilePictureUri,
+    String remoteProfilePictureUri,
+    String localBackgroundPictureUri,
+    String remoteBackgroundPictureUri,
+    int fans,
+    Map<String, Book> books}) {
     return new User(
-      name: (name == null) ? this.name : name,
-      encodedEmail: (encodedEmail == null) ? this.encodedEmail : encodedEmail,
-      twitterProfile: (twitterProfile == null) ? this.twitterProfile : twitterProfile,
-      aboutMe: (aboutMe == null) ? this.aboutMe : aboutMe,
-      localProfilePictureUri: (localProfilePictureUri == null) ? this.localProfilePictureUri : localProfilePictureUri,
-      remoteProfilePictureUri: (remoteProfilePictureUri == null) ? this.remoteProfilePictureUri : remoteProfilePictureUri,
-      localBackgroundPictureUri: (localBackgroundPictureUri == null) ? this.localBackgroundPictureUri : localBackgroundPictureUri,
-      remoteBackgroundPictureUri: (remoteBackgroundPictureUri == null) ? this.remoteBackgroundPictureUri : remoteBackgroundPictureUri,
-      fans: (fans == null) ? this.fans : fans,
-      books: (books == null) ? this.books : books
+        name: (name == null) ? this.name : name,
+        encodedEmail: (encodedEmail == null) ? this.encodedEmail : encodedEmail,
+        twitterProfile: (twitterProfile == null) ? this.twitterProfile : twitterProfile,
+        aboutMe: (aboutMe == null) ? this.aboutMe : aboutMe,
+        localProfilePictureUri: (localProfilePictureUri == null) ? this.localProfilePictureUri : localProfilePictureUri,
+        remoteProfilePictureUri: (remoteProfilePictureUri == null)
+            ? this.remoteProfilePictureUri
+            : remoteProfilePictureUri,
+        localBackgroundPictureUri: (localBackgroundPictureUri == null)
+            ? this.localBackgroundPictureUri
+            : localBackgroundPictureUri,
+        remoteBackgroundPictureUri: (remoteBackgroundPictureUri == null)
+            ? this.remoteBackgroundPictureUri
+            : remoteBackgroundPictureUri,
+        fans: (fans == null) ? this.fans : fans,
+        books: (books == null) ? this.books : books
     );
   }
 }

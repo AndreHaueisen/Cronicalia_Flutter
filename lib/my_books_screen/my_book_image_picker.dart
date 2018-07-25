@@ -10,78 +10,60 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 
 class MyBookImagePicker {
-  static void pickImageFromGallery(
-      ImageType imageType, User user, String bookKey, String bookUID) async {
+  static void pickImageFromGallery(ImageType imageType, User user, String bookUID) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
         File posterPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
+            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, posterPicFile);
 
-        updateBookPosterImageAction([bookKey, posterPicFile.path]);
-        _updateLocalPosterUri(user, bookKey, posterPicFile);
-        getUserFromCacheAction(user.copy(books: user.books));
+        updateBookPosterImageAction([bookUID, posterPicFile.path]);
       } else {
         File coverPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
+            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
-        updateBookCoverImageAction([bookKey, coverPicFile.path]);
-        _updateLocalCoverUri(user, bookKey, coverPicFile);
-        getUserFromCacheAction(
-            user.copy(localProfilePictureUri: coverPicFile.path));
+        updateBookCoverImageAction([bookUID, coverPicFile.path]);
       }
     }
   }
 
-  static void pickImageFromCamera(
-      ImageType imageType, User user, String bookKey, String bookUID) async {
+  static void pickImageFromCamera(ImageType imageType, User user, String bookUID) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
     if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
         File posterPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
+            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, posterPicFile);
 
-        updateBookPosterImageAction([bookKey, posterPicFile.path]);
-        _updateLocalPosterUri(user, bookKey, posterPicFile);
-        getUserFromCacheAction(user.copy(books: user.books));
+        updateBookPosterImageAction([bookUID, posterPicFile.path]);
       } else {
         File coverPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
+            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
-        updateBookCoverImageAction([bookKey, coverPicFile.path]);
-        _updateLocalCoverUri(user, bookKey, coverPicFile);
-        getUserFromCacheAction(
-            user.copy(localProfilePictureUri: coverPicFile.path));
+        updateBookCoverImageAction([bookUID, coverPicFile.path]);
       }
     }
   }
 
-  //TODO remember to delete temporary files
-  static Future<String> pickImageFromCameraForNewBook(
-      ImageType imageType) async {
+  //This creates a temporary file because we do not have the new book UID yet
+  //File is delete after upload operation finishes
+  static Future<String> pickImageFromCameraForNewBook(ImageType imageType) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
     if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
-        File posterPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
+        File posterPicFile =
+            await Utility.createUserFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, posterPicFile);
         return posterPicFile.path;
       } else {
-        File coverPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
+        File coverPicFile =
+            await Utility.createUserFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, coverPicFile);
         return coverPicFile.path;
       }
@@ -90,22 +72,20 @@ class MyBookImagePicker {
     return null;
   }
 
-  //TODO remember to delete temporary files
-  static Future<String> pickImageFromGalleryForNewBook(
-      ImageType imageType) async {
+  //This creates a temporary file because we do not have the new book UID yet
+  //File is delete after upload operation finishes
+  static Future<String> pickImageFromGalleryForNewBook(ImageType imageType) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
       if (imageType == ImageType.POSTER) {
-        File posterPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
+        File posterPicFile =
+            await Utility.createUserFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, posterPicFile);
         return posterPicFile.path;
       } else {
-        File coverPicFile = await Utility.createUserFile(
-            Constants.FOLDER_NAME_BOOKS,
-            "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
+        File coverPicFile =
+            await Utility.createUserFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, coverPicFile);
         return coverPicFile.path;
       }
@@ -114,8 +94,7 @@ class MyBookImagePicker {
     return null;
   }
 
-  static ImageProvider getPosterImageProvider(
-      String localPosterPictureUri, String remotePosterPictureUri) {
+  static ImageProvider getPosterImageProvider(String localPosterPictureUri, String remotePosterPictureUri) {
     ImageProvider imageProvider = AssetImage("images/horizon.png");
 
     if (localPosterPictureUri != null) {
@@ -125,7 +104,6 @@ class MyBookImagePicker {
       } else {
         if (remotePosterPictureUri != null) {
           imageProvider = NetworkImage(remotePosterPictureUri);
-
         }
       }
     } else if (remotePosterPictureUri != null) {
@@ -135,8 +113,7 @@ class MyBookImagePicker {
     return imageProvider;
   }
 
-  static ImageProvider getProfileImageProvider(
-      String localCoverPictureUri, String remoteCoverPictureUri) {
+  static ImageProvider getProfileImageProvider(String localCoverPictureUri, String remoteCoverPictureUri) {
     //TODO test with CachedNetworkImage()
 
     ImageProvider imageProvider = AssetImage("images/profile.png");
@@ -148,7 +125,6 @@ class MyBookImagePicker {
       } else {
         if (remoteCoverPictureUri != null) {
           imageProvider = NetworkImage(remoteCoverPictureUri);
-
         }
       }
     } else if (remoteCoverPictureUri != null) {
@@ -156,21 +132,5 @@ class MyBookImagePicker {
     }
 
     return imageProvider;
-  }
-
-  static void _updateLocalCoverUri(User user, String bookKey, File file) {
-    user.books.update(bookKey, (book) {
-      book.localCoverUri = file.path;
-    }, ifAbsent: () {
-      print("No key found");
-    });
-  }
-
-  static void _updateLocalPosterUri(User user, String bookKey, File file) {
-    user.books.update(bookKey, (book) {
-      book.localPosterUri = file.path;
-    }, ifAbsent: () {
-      print("No key found");
-    });
   }
 }

@@ -84,7 +84,7 @@ class NewUserLoginWidgetState extends State<NewUserLoginWidget> {
       padding: const EdgeInsets.only(top: 16.0, left: 48.0, right: 48.0, bottom: 8.0),
       child: MaterialButton(
         onPressed: () {
-          widget.loginHandler.signIntoFirebaseWithGoogle();
+          widget.loginHandler.signIntoFirebaseWithGoogle(true);
         },
         child: Text("LOGIN WITH GOOGLE"),
         textColor: Colors.white,
@@ -98,7 +98,7 @@ class NewUserLoginWidgetState extends State<NewUserLoginWidget> {
       padding: const EdgeInsets.only(top: 16.0, left: 48.0, right: 48.0, bottom: 8.0),
       child: MaterialButton(
         onPressed: () {
-          widget.loginHandler.signIntoFirebaseWithFacebook();
+          widget.loginHandler.signIntoFirebaseWithFacebook(true);
         },
         child: Text("LOGIN WITH FACEBOOK"),
         textColor: Colors.white,
@@ -112,7 +112,7 @@ class NewUserLoginWidgetState extends State<NewUserLoginWidget> {
       padding: const EdgeInsets.only(top: 16.0, left: 48.0, right: 48.0, bottom: 8.0),
       child: MaterialButton(
         onPressed: () {
-          widget.loginHandler.signIntoFirebaseWithTwitter();
+          widget.loginHandler.signIntoFirebaseWithTwitter(true);
         },
         child: Text("LOGIN WITH TWITTER"),
         textColor: Colors.white,

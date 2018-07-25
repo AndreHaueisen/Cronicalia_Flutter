@@ -55,6 +55,8 @@ flutter:
      - images/profile.png
      - images/poster_placeholder.png
      - images/cover_placeholder.png
+     - images/empty_book_list_land.png
+     - images/empty_book_list_port.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.
