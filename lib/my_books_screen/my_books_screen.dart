@@ -58,7 +58,7 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
               onPressed: () {
                 if (_userStore.isLoggedIn) {
                   print("User logged in");
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => new CreateMyBookScreen()));
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => new CreateMyBookScreen(), maintainState: false));
                 } else {
                   Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
                 }
@@ -91,7 +91,7 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
           padding: const EdgeInsets.only(top: 8.0, right: 16.0, bottom: 16.0),
           child: FloatingActionButton(
             onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => new CreateMyBookScreen()));
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => new CreateMyBookScreen(), maintainState: false));
             },
             child: Icon(Icons.add),
           ),

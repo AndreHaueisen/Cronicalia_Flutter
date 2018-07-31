@@ -9,6 +9,7 @@ import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
+import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:documents_picker/documents_picker.dart';
 
@@ -25,7 +26,7 @@ class CreateMyBookScreen extends StatefulWidget {
 
 class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatcherMixin<CreateMyBookScreen> implements UserInputCallback {
   final Book _book = Book();
-  final List<dynamic> _filePaths = List<dynamic>();
+  final List<String> _filePaths = List<String>();
   final List<String> _fileTitles = List<String>();
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
   final TextEditingController _titleController = new TextEditingController();
@@ -85,8 +86,12 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     _fileTitles[index] = input;
   }
 
-  Future<List<dynamic>> _getPdfPaths() async {
-    return DocumentsPicker.pickDocuments;
+  Future<List<String>> _getPdfPaths() async {
+    List<dynamic> documentPaths = await DocumentsPicker.pickDocuments;
+
+    return documentPaths.map((dynamic path) {
+      return path.toString();
+    }).toList();
   }
 
   List<Widget> _buildPersistentButtons(BuildContext context) {
@@ -124,15 +129,53 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
               _book.localFullBookUri = _filePaths[0];
               createCompleteBookAction(_book);
             } else {
+              _filePaths.forEach((_) {
+                _book.chaptersLaunchDates.add(_book.publicationDate);
+              });
+              _fileTitles.forEach((String fileTitle) {
+                _book.remoteChapterTitles.add(fileTitle);
+              });
               createIncompleteBookAction([_book, _filePaths, _fileTitles]);
             }
-            //TODO delete temporary pic files
-
+            _showProgressFlushbar();
             print("Uploading book data");
           }
         },
       ),
     ];
+  }
+
+  void _showProgressFlushbar() {
+    UserStore userStore = listenToStore(userStoreToken);
+
+    Flushbar progressFlushbar = FlushbarHelper.createLoading(
+      title: "Uploading files",
+      message: "Wait while we create your new masterpiece",
+      linearProgressIndicator: LinearProgressIndicator(
+        backgroundColor: AppThemeColors.primaryColorDark,
+      ),
+      duration: null,
+    )
+      ..onStatusChanged = (FlushbarStatus status) {
+        switch (status) {
+          case FlushbarStatus.DISMISSED:
+            {
+              Navigator.of(context).pop();
+              break;
+            }
+          default:
+            {}
+        }
+      }
+      ..show(context);
+
+    if (userStore.getProgressStream() != null) {
+      userStore.getProgressStream().controller.stream.listen((progress) {}, onDone: () {
+        progressFlushbar.dismiss();
+      }, onError: (error) {
+        FlushbarHelper.createError(title: "Upload failed", message: "One or more files failed. Try again");
+      }, cancelOnError: true);
+    }
   }
 
   bool _validateInformation() {

@@ -143,7 +143,6 @@ class DataRepository {
   Future<void> updateBookSynopsis(String encodedEmail, Book book, String newSynopsis) async {
     WriteBatch writeBatch = _firestore.batch();
 
-
     DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
     DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(book.uID);
 

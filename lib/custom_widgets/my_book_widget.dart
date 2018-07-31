@@ -165,7 +165,7 @@ class MyBookWidget extends StatelessWidget {
             translation: Offset(0.2, 7.1),
             child: OutsiderButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey)));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey), maintainState: false));
                 print("show edit mode");
               },
               icon: Icon(Icons.edit),

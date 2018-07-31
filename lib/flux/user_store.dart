@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/backend/data_repository.dart';
 import 'package:cronicalia_flutter/backend/file_repository.dart';
 import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,8 +15,9 @@ class UserStore extends Store {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final Firestore _firestore = Firestore.instance;
   final StorageReference _storageReference = FirebaseStorage.instance.ref();
-  FileRepository fileRepository;
-  DataRepository dataRepository;
+  FileRepository _fileRepository;
+  DataRepository _dataRepository;
+  ProgressStream _progressStream = new ProgressStream();
 
   bool _isLoggedIn = false;
   User _user = new User(
@@ -31,16 +33,15 @@ class UserStore extends Store {
       fans: 0);
 
   UserStore() {
-    fileRepository = FileRepository(_storageReference);
-    dataRepository = DataRepository(_firestore);
+    _fileRepository = FileRepository(_storageReference);
+    _dataRepository = DataRepository(_firestore);
 
     triggerOnAction(getUserFromCacheAction, (User newUser) {
       _user = newUser;
     });
 
     triggerOnConditionalAction(getUserFromServerAction, (User user) {
-
-      dataRepository.getNewUser(user: user).then((User userFromDatabase) {
+      _dataRepository.getNewUser(user: user).then((User userFromDatabase) {
         if (userFromDatabase != null) {
           this._user = userFromDatabase;
           print("user loaded in store");
@@ -54,8 +55,8 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(updateUserProfileImageAction, (String localUri) {
-      fileRepository.updateUserProfileImage(_user.encodedEmail, localUri, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user) {
+      _fileRepository.updateUserProfileImage(_user.encodedEmail, localUri, _dataRepository).then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -67,8 +68,8 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(updateUserBackgroundImageAction, (String localUri) {
-      fileRepository.updateUserBackgroundImage(_user.encodedEmail, localUri, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user) {
+      _fileRepository.updateUserBackgroundImage(_user.encodedEmail, localUri, _dataRepository).then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -89,7 +90,7 @@ class UserStore extends Store {
       this._user.books.forEach((_, book) {
         book.authorName = newName;
       });
-      dataRepository.updateUserName(this._user);
+      _dataRepository.updateUserName(this._user);
     });
 
     triggerOnAction(updateUserTwitterProfileAction, (String newTwitterProfile) {
@@ -97,12 +98,12 @@ class UserStore extends Store {
       this._user.books.forEach((_, book) {
         book.authorTwitterProfile = newTwitterProfile;
       });
-      dataRepository.updateUserTwitterProfile(this._user);
+      _dataRepository.updateUserTwitterProfile(this._user);
     });
 
     triggerOnAction(updateUserAboutMeAction, (String newAboutMe) {
       this._user.aboutMe = newAboutMe;
-      dataRepository.updateUserAboutMe(this._user);
+      _dataRepository.updateUserAboutMe(this._user);
     });
 
     triggerOnConditionalAction(updateBookPosterImageAction, (List<String> payload) {
@@ -112,8 +113,8 @@ class UserStore extends Store {
       //First update locally
       _user.books[bookUID].localPosterUri = localUri;
 
-      fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookUID], localUri, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user) {
+      _fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -132,8 +133,8 @@ class UserStore extends Store {
 
       _user.books[bookUID].localCoverUri = localUri;
 
-      fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookUID], localUri, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user) {
+      _fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -153,7 +154,7 @@ class UserStore extends Store {
       Book book = this._user.books[bookKey];
       book.title = newTitle;
 
-      dataRepository.updateBookTitle(_user.encodedEmail, book, newTitle);
+      _dataRepository.updateBookTitle(_user.encodedEmail, book, newTitle);
     });
     triggerOnAction(updateBookSynopsisAction, (List<String> payload) {
       String bookKey = payload[0];
@@ -162,35 +163,57 @@ class UserStore extends Store {
       Book book = this._user.books[bookKey];
       book.synopsis = newSynopsis;
 
-      dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis);
+      _dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis);
     });
 
     triggerOnConditionalAction(createCompleteBookAction, (Book book) {
-      
-      fileRepository.createNewCompleteBook(_user.encodedEmail, book, dataRepository).then((_) {
-        dataRepository.getUser(_user.encodedEmail).then((user) {
+      const int numberOfFilesToBeUploaded = 3;
+      _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
+
+      _fileRepository.createNewCompleteBook(_user.encodedEmail, book, _dataRepository, progressStream: _progressStream).then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            trigger();
             print("user loaded in store");
           }
         });
-
-        return false;
       }).catchError((_) {
-        print("Book creation failed");
+        print("Complete book creation failed");
       });
+
+      return false;
     });
 
     triggerOnConditionalAction(createIncompleteBookAction, (List<dynamic> payload) {
       Book book = payload[0];
       List<String> pdfLocalPaths = payload[1];
-      List<String> chapterTitles = payload[2];
+      final int numberOfFilesToBeUploaded = 2 + pdfLocalPaths.length;
+      _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
-      //launch incompleteBook
+      _fileRepository
+          .createNewIncompleteBook(_user.encodedEmail, book, pdfLocalPaths, _dataRepository, progressStream: _progressStream)
+          .then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
+            _user = user;
+            trigger();
+            print("user loaded in store");
+          }
+        });
+      }).catchError((_) {
+        print("Incomplete book creation failed");
+      });
+
+      return false;
     });
   }
 
   User get user => _user;
+
+  ProgressStream getProgressStream() {
+    return _progressStream;
+  }
 
   bool get isLoggedIn => _isLoggedIn;
 
@@ -240,9 +263,8 @@ final Action<List<String>> updateBookTitleAction = new Action<List<String>>();
 /// payload[1] contains user newSynopsis
 final Action<List<String>> updateBookSynopsisAction = new Action<List<String>>();
 
-
 final Action<Book> createCompleteBookAction = new Action<Book>();
+
 /// payload[0] contains book
 /// payload[1] contains local pdf file paths
-/// payload[2] contains chapter's names if book is not complete
 final Action<List<dynamic>> createIncompleteBookAction = new Action<List<dynamic>>();

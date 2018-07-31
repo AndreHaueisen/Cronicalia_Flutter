@@ -11,27 +11,27 @@ dependencies:
   flushbar: '>=0.3.0'
 
   #firebase
-  firebase_auth: "^0.5.12"
-  cloud_firestore: "^0.7.3"
-  firebase_storage: "^1.0.0"
-  firebase_core: "^0.2.4"
+  firebase_auth: "^0.5.15"
+  cloud_firestore: "0.7.4"
+  firebase_storage: "1.0.1"
+  firebase_core: "^0.2.5"
 
   #login
-  google_sign_in: "^3.0.4"
-  flutter_twitter_login: "^1.1.0"
-  flutter_facebook_login: "^1.1.1"
+  google_sign_in: "3.0.4"
+  flutter_twitter_login: "1.1.0"
+  flutter_facebook_login: "1.1.1"
 
   #image manipulation
   flutter_native_image:
     git: https://github.com/btastic/flutter_native_image.git
 
-  validate: "^1.6.0"
-  flutter_flux: "^4.1.1"
-  path_provider: "^0.4.1"
-  image_picker: "^0.4.5"
-  cached_network_image: "^0.4.1+1"
+  validate: "1.6.0"
+  flutter_flux: "4.1.1"
+  path_provider: "0.4.1"
+  image_picker: "0.4.6"
+  cached_network_image: "0.4.1+1"
 
-  documents_picker: "^0.0.2"
+  documents_picker: "0.0.2"
 
 dev_dependencies:
   flutter_test:

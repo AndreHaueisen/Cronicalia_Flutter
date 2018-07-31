@@ -23,7 +23,7 @@ class BookFileWidget extends StatelessWidget {
         Flexible(
           flex: 1,
           child: Padding(
-            padding: const EdgeInsets.only(left:16.0, right: 16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0),
             child: Icon(
               Icons.attach_file,
               color: TextColorBrightBackground.secondary,
@@ -38,11 +38,7 @@ class BookFileWidget extends StatelessWidget {
             color: Colors.black12,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                _formattedFilePath,
-                textAlign: TextAlign.right,
-                style: TextStyle(color: TextColorBrightBackground.primary)
-              ),
+              child: Text(_formattedFilePath, textAlign: TextAlign.right, style: TextStyle(color: TextColorBrightBackground.primary)),
             ),
           ),
         )
@@ -51,11 +47,16 @@ class BookFileWidget extends StatelessWidget {
   }
 
   Widget _bookIncompleteFileRepresentation() {
+    //TextEditingController textController = TextEditingController();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         children: <Widget>[
-          Container(color: Colors.grey[200], constraints: BoxConstraints.expand(height: 1.0),),
+          Container(
+            color: Colors.grey[200],
+            constraints: BoxConstraints.expand(height: 1.0),
+          ),
           Row(
             children: <Widget>[
               Flexible(
@@ -83,7 +84,8 @@ class BookFileWidget extends StatelessWidget {
                       maxLengthEnforced: true,
                       maxLength: Constants.MAX_TITLE_LENGTH,
                       keyboardType: TextInputType.emailAddress,
-                      onSubmitted: (String chapterTitle) {
+                      textInputAction: TextInputAction.next,
+                      onChanged: (String chapterTitle) {
                         if (chapterTitle == null || chapterTitle.isEmpty) {
                           chapterTitle = _formattedFilePath.split(".").first;
                         }
