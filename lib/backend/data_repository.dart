@@ -7,6 +7,7 @@ import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:meta/meta.dart';
+import 'package:flutter/painting.dart';
 
 class DataRepository {
   final Firestore _firestore;
@@ -198,6 +199,7 @@ class DataRepository {
   Future<void> _cleanupTemporaryFiles() async {
     await Utility.deleteFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
     await Utility.deleteFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
+    imageCache.clear();
   }
 
   String _resolveCollectionLanguageLocation(BookLanguage bookLanguage) {

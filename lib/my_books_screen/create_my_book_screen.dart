@@ -80,9 +80,6 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
 
   @override
   void onInputReady(String input, int index) {
-    if (_fileTitles.length < index + 1) {
-      _fileTitles.length = (index + 1);
-    }
     _fileTitles[index] = input;
   }
 
@@ -107,6 +104,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
                 _filePaths.add(paths[0]);
               } else {
                 _filePaths.addAll(paths);
+                _fileTitles.length = _filePaths.length;
               }
               setState(() {});
               _scrollController.animateTo(MediaQuery.of(context).size.height, duration: Duration(seconds: 2), curve: Curves.decelerate);
@@ -185,7 +183,8 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
         _validateGenre() &&
         _validateLanguage() &&
         _validatePeriodicity() &&
-        _validateFiles());
+        _validateFiles() &&
+        _validateChapterTitles());
   }
 
   bool _validatePoster() {
@@ -300,11 +299,27 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     }
   }
 
+  bool _validateChapterTitles() {
+    
+    for (var counter = 0; counter < _fileTitles.length; counter++) {
+      String title = _fileTitles[counter];
+      if (title == null || title.isEmpty) {
+        FlushbarHelper
+            .createError(title: "Title error", message: "Your chapter title number ${counter + 1} is missing", duration: Duration(seconds: 3))
+            .show(context);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   Widget _buildImages() {
     return Stack(
       children: <Widget>[
         GestureDetector(
           onTap: () {
+            imageCache.clear();
             _showImageOriginDialog(ImageType.POSTER);
           },
           child: (_book.localPosterUri != null)
@@ -325,6 +340,8 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
             alignment: Alignment.centerLeft,
             child: GestureDetector(
               onTap: () {
+                imageCache.clear();
+
                 _showImageOriginDialog(ImageType.COVER);
               },
               child: (_book.localCoverUri != null)

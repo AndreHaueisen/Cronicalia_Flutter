@@ -52,7 +52,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
      - images/horizon.png
-     - images/profile.png
+     - images/unknown_profile_pic.png
      - images/poster_placeholder.png
      - images/cover_placeholder.png
      - images/empty_book_list_land.png

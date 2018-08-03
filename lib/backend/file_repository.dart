@@ -151,6 +151,8 @@ class FileRepository {
         dataRepository.createNewBook(encodedEmail, book);
         print("On done called");
       }, cancelOnError: true);
+
+      await streamController.done;
     } catch (error) {
       print(error);
       progressStream.notifyError();

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:cronicalia_flutter/custom_widgets/outsider_button_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
@@ -110,60 +109,39 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            new Align(
-                              child: new Padding(
-                                padding: const EdgeInsets.only(top: 8.0, right: 12.0, left: 8.0),
-                                child: ButtonTheme(
-                                  minWidth: 120.0,
-                                  child: RaisedButton(
-                                    child: Text(
-                                      "CHANGE POSTER",
-                                      style: TextStyle(fontSize: 13.0),
-                                    ),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-                                    onPressed: () {
-                                      if (_userStore.isLoggedIn) {
-                                        print("User logged in");
-                                        _showImageOriginDialog(ImageType.BACKGROUND);
-                                      } else {
-                                        Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                                      }
-                                    },
-                                    textColor: TextColorBrightBackground.primary,
-                                    color: AppThemeColors.accentColor,
-                                  ),
-                                ),
-                              ),
-                              alignment: Alignment.centerRight,
+                            _buildEditButton(
+                                buttonTitle: "CHANGE POSTER",
+                                onClick: () {
+                                  if (_userStore.isLoggedIn) {
+                                    print("User logged in");
+                                    _showImageOriginDialog(ImageType.BACKGROUND);
+                                  } else {
+                                    Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                                  }
+                                },
+                                padding: const EdgeInsets.only(top: 8.0, right: 12.0, left: 8.0)),
+                            _buildEditButton(
+                              buttonTitle: "CHANGE PROFILE",
+                              onClick: () {
+                                if (_userStore.isLoggedIn) {
+                                  print("User logged in");
+                                  _showImageOriginDialog(ImageType.PROFILE);
+                                } else {
+                                  Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                                }
+                              },
                             ),
-                            new Align(
-                              child: new Padding(
-                                padding: const EdgeInsets.only(right: 12.0, left: 8.0),
-                                child: ButtonTheme(
-                                  minWidth: 120.0,
-                                                                  child: RaisedButton(
-                                    child: Text(
-                                      "CHANGE PROFILE",
-                                      style: TextStyle(fontSize: 13.0),
-                                    ),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-                                    onPressed: () {
-                                      if (_userStore.isLoggedIn) {
-                                        print("User logged in");
-                                        _showImageOriginDialog(ImageType.PROFILE);
-                                      } else {
-                                        Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                                      }
-                                    },
-                                    textColor: TextColorBrightBackground.primary,
-                                    color: AppThemeColors.accentColor,
-                                  ),
-                                ),
-                              ),
-                              alignment: Alignment.centerRight,
+                            _buildEditButton(
+                              buttonTitle: "CHANGE TEXTS",
+                              onClick: () {
+                                _isEditModeOn = !_isEditModeOn;
+                                if (_isEditModeOn) {
+                                  _wiggleController.forward();
+                                }
+                              },
                             ),
                             new Padding(
-                              padding: const EdgeInsets.only(top: 48.0, left: 16.0, right: 16.0, bottom: 8.0),
+                              padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0, bottom: 8.0),
                               child: new GestureDetector(
                                 onTap: () {
                                   if (_isEditModeOn) {
@@ -178,6 +156,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                                     textAlign: TextAlign.justify,
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 8,
+                                    style: TextStyle(color: TextColorDarkBackground.secondary),
                                   ),
                                 ),
                               ),
@@ -191,7 +170,6 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                   ]),
                 ),
               ),
-              _outsiderButton(context),
             ],
           ),
         ),
@@ -199,6 +177,31 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
           selectedItemIdex: 4,
         ),
       ]),
+    );
+  }
+
+  Widget _buildEditButton(
+      {@required String buttonTitle, @required Function onClick, EdgeInsets padding = const EdgeInsets.only(left: 8.0, right: 16.0)}) {
+    return new Align(
+      alignment: Alignment.centerRight,
+      child: new Padding(
+        padding: padding,
+        child: ButtonTheme(
+          minWidth: 135.0,
+          child: OutlineButton(
+            child: Text(
+              buttonTitle,
+              style: TextStyle(fontSize: 12.0),
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            onPressed: onClick,
+            textColor: AppThemeColors.accentColor,
+            borderSide: BorderSide(color: AppThemeColors.accentColor, width: 1.5),
+            highlightColor: Colors.white,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
     );
   }
 
@@ -589,21 +592,6 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             image:
                 ProfileImagePicker.getProfileImageProvider(_userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
             fit: BoxFit.fill),
-      ),
-    );
-  }
-
-  Widget _outsiderButton(BuildContext context) {
-    return FractionalTranslation(
-      translation: const Offset(2.7, 1.45),
-      child: new OutsiderButton(
-        icon: Icon(Icons.mode_edit),
-        onPressed: () {
-          _isEditModeOn = !_isEditModeOn;
-          if (_isEditModeOn) {
-            _wiggleController.forward();
-          }
-        },
       ),
     );
   }

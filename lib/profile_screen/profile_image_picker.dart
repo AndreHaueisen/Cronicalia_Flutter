@@ -81,7 +81,7 @@ class ProfileImagePicker {
   static ImageProvider getProfileImageProvider(String localProfilePictureUri, String remoteProfilePictureUri) {
     //TODO test with CachedNetworkImage()
 
-    ImageProvider imageProvider = AssetImage("images/profile.png");
+    ImageProvider imageProvider = AssetImage("images/unknown_profile_pic.png", );
 
     if (localProfilePictureUri != null) {
       File profileFile = File(localProfilePictureUri);

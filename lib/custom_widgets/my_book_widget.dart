@@ -43,7 +43,6 @@ class MyBookWidget extends StatelessWidget {
   }
 
   Widget _bookInfoCard(BuildContext context) {
-
     final DateFormat publicationDateFormat = DateFormat("MM/dd/yyyy");
     final String readableDate = publicationDateFormat.format(DateTime.fromMillisecondsSinceEpoch(_book.publicationDate));
 
@@ -65,7 +64,7 @@ class MyBookWidget extends StatelessWidget {
                   style: TextStyle(color: TextColorDarkBackground.secondary),
                   textAlign: TextAlign.justify,
                   overflow: TextOverflow.ellipsis,
-                  maxLines: 8),
+                  maxLines: 4),
             ),
             _bookStatsWidget(),
             Align(
@@ -74,7 +73,7 @@ class MyBookWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 4.0),
                 child: Text(
                   "Publication  $readableDate",
-                  style: TextStyle(fontSize: 12.0),
+                  style: TextStyle(fontSize: 12.0, color: TextColorDarkBackground.secondary),
                 ),
               ),
             ),
@@ -84,7 +83,7 @@ class MyBookWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
                 child: Text(
                   _book.isLaunchedComplete ? "Book complete" : "${_book.remoteChapterTitles.length} chapters",
-                  style: TextStyle(fontSize: 12.0),
+                  style: TextStyle(fontSize: 12.0, color: TextColorDarkBackground.secondary),
                 ),
               ),
             ),
@@ -105,9 +104,9 @@ class MyBookWidget extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: Icon(Icons.remove_red_eye),
+                child: Icon(Icons.remove_red_eye, color: TextColorDarkBackground.secondary,),
               ),
-              Text(_book.readingsNumber.toString())
+              Text(_book.readingsNumber.toString(), style: TextStyle(color: TextColorDarkBackground.secondary))
             ],
           ),
           Row(
@@ -115,18 +114,18 @@ class MyBookWidget extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 6.0),
-                child: Icon(Icons.star),
+                child: Icon(Icons.star, color: TextColorDarkBackground.secondary),
               ),
-              Text(_book.rating.toString())
+              Text(_book.rating.toString(), style: TextStyle(color: TextColorDarkBackground.secondary))
             ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.attach_money),
+              Icon(Icons.attach_money, color: TextColorDarkBackground.secondary),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Text(_book.income.toString()),
+                child: Text(_book.income.toString(), style: TextStyle(color: TextColorDarkBackground.secondary)),
               )
             ],
           )
@@ -148,10 +147,32 @@ class MyBookWidget extends StatelessWidget {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Image(
-                    width: 135.0,
-                    height: 180.0,
-                    image: NetworkImage(_book.remoteCoverUri),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildFloatingButton(
+                        icon: Icons.edit,
+                        onClick: () {
+                          Navigator
+                              .of(context)
+                              .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey), maintainState: false));
+                          print("show edit mode");
+                        },
+                      ),
+                      Image(
+                        width: 135.0,
+                        height: 180.0,
+                        image: NetworkImage(_book.remoteCoverUri),
+                      ),
+                      _buildFloatingButton(
+                        icon: Icons.chat_bubble_outline,
+                        onClick: () {
+                          print("show opinions");
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 Padding(
@@ -161,28 +182,27 @@ class MyBookWidget extends StatelessWidget {
               ],
             ),
           ),
-          FractionalTranslation(
-            translation: Offset(0.2, 7.1),
-            child: OutsiderButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey), maintainState: false));
-                print("show edit mode");
-              },
-              icon: Icon(Icons.edit),
-              position: OutsiderButtonPosition.BOTTOM,
-            ),
-          ),
-          FractionalTranslation(
-            translation: Offset(1.0, 7.1),
-            child: OutsiderButton(
-              onPressed: () {
-                print("show opinions");
-              },
-              icon: Icon(Icons.chat_bubble_outline),
-              position: OutsiderButtonPosition.BOTTOM,
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  _buildFloatingButton({@required IconData icon, @required Function onClick}) {
+    return OutlineButton(
+      onPressed: onClick,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Icon(
+          icon,
+          color: TextColorDarkBackground.secondary,
+        ),
+      ),
+      highlightColor: AppThemeColors.primaryColorLight,
+      color: AppThemeColors.primaryColorLight,
+      shape: CircleBorder(),
+      borderSide: BorderSide(
+        color: AppThemeColors.primaryColorLight,
+        width: 2.0,
       ),
     );
   }

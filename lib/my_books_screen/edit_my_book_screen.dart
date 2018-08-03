@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:cronicalia_flutter/custom_widgets/outsider_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
@@ -14,7 +13,8 @@ enum ImageType { POSTER, COVER }
 enum ImageOrigin { CAMERA, GALLERY }
 
 class EditMyBookScreen extends StatefulWidget {
-  String bookUID;
+
+  final String bookUID;
 
   EditMyBookScreen(this.bookUID);
 
@@ -94,7 +94,6 @@ class EditMyBookScreenState extends State<EditMyBookScreen> with TickerProviderS
           child: new Stack(children: [
             _buildBookInfoCard(),
             _coverPicture(),
-            _outsiderButton(context),
           ]),
         ),
       ),
@@ -109,47 +108,25 @@ class EditMyBookScreenState extends State<EditMyBookScreen> with TickerProviderS
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            new Align(
-              child: new Padding(
-                padding: const EdgeInsets.only(top: 8.0, right: 12.0, left: 8.0),
-                child: ButtonTheme(
-                  minWidth: 140.0,
-                  child: RaisedButton(
-                    child: Text(
-                      "CHANGE POSTER",
-                      style: TextStyle(fontSize: 13.0),
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-                    onPressed: () {
-                      _showImageOriginDialog(ImageType.POSTER);
-                    },
-                    textColor: TextColorBrightBackground.primary,
-                    color: AppThemeColors.accentColor,
-                  ),
-                ),
-              ),
-              alignment: Alignment.centerRight,
-            ),
-            new Align(
-              child: new Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 12.0),
-                child: ButtonTheme(
-                  minWidth: 140.0,
-                  child: RaisedButton(
-                    child: Text(
-                      "CHANGE COVER",
-                      style: TextStyle(fontSize: 13.0),
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-                    onPressed: () {
-                      _showImageOriginDialog(ImageType.COVER);
-                    },
-                    textColor: TextColorBrightBackground.primary,
-                    color: AppThemeColors.accentColor,
-                  ),
-                ),
-              ),
-              alignment: Alignment.centerRight,
+            _buildEditButton(
+                buttonTitle: "CHANGE POSTER",
+                onClick: () {
+                  _showImageOriginDialog(ImageType.POSTER);
+                },
+                padding: EdgeInsets.only(top: 8.0, left: 8.0, right: 16.0)),
+            _buildEditButton(
+                buttonTitle: "CHANGE COVER",
+                onClick: () {
+                  _showImageOriginDialog(ImageType.COVER);
+                }),
+            _buildEditButton(
+              buttonTitle: "CHANGE TEXTS",
+              onClick: () {
+                _isEditModeOn = !_isEditModeOn;
+                if (_isEditModeOn) {
+                  _wiggleController.forward();
+                }
+              },
             ),
             new Padding(
               padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
@@ -200,9 +177,34 @@ class EditMyBookScreenState extends State<EditMyBookScreen> with TickerProviderS
     );
   }
 
+  Widget _buildEditButton(
+      {@required String buttonTitle, @required Function onClick, EdgeInsets padding = const EdgeInsets.only(left: 8.0, right: 16.0)}) {
+    return new Align(
+      alignment: Alignment.centerRight,
+      child: new Padding(
+        padding: padding,
+        child: ButtonTheme(
+          minWidth: 130.0,
+          child: OutlineButton(
+            child: Text(
+              buttonTitle,
+              style: TextStyle(fontSize: 12.0),
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            onPressed: onClick,
+            textColor: AppThemeColors.accentColor,
+            borderSide: BorderSide(color: Colors.grey[500], width: 1.5),
+            highlightColor: Colors.grey[500],
+            color: Colors.grey[500],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _coverPicture() {
     return FractionalTranslation(
-      translation: Offset(0.15, -0.50),
+      translation: Offset(0.15, -0.15),
       child: Container(
         constraints: BoxConstraints.tight(Size(135.0, 180.0)),
         child: Image(
@@ -440,20 +442,5 @@ class EditMyBookScreenState extends State<EditMyBookScreen> with TickerProviderS
     if (userInput != null) {
       updateBookSynopsisAction([_book.uID, userInput]);
     }
-  }
-
-  Widget _outsiderButton(BuildContext context) {
-    return FractionalTranslation(
-      translation: const Offset(2.7, -0.8),
-      child: new OutsiderButton(
-        icon: Icon(Icons.mode_edit),
-        onPressed: () {
-          _isEditModeOn = !_isEditModeOn;
-          if (_isEditModeOn) {
-            _wiggleController.forward();
-          }
-        },
-      ),
-    );
   }
 }

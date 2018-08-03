@@ -47,8 +47,7 @@ class BookFileWidget extends StatelessWidget {
   }
 
   Widget _bookIncompleteFileRepresentation() {
-    //TextEditingController textController = TextEditingController();
-
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
@@ -83,12 +82,9 @@ class BookFileWidget extends StatelessWidget {
                     TextField(
                       maxLengthEnforced: true,
                       maxLength: Constants.MAX_TITLE_LENGTH,
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
-                      onChanged: (String chapterTitle) {
-                        if (chapterTitle == null || chapterTitle.isEmpty) {
-                          chapterTitle = _formattedFilePath.split(".").first;
-                        }
+                      onChanged: (String chapterTitle) {                 
                         _userInputCallback.onInputReady(chapterTitle.trim(), _index);
                       },
                       style: TextStyle(color: TextColorBrightBackground.primary),
