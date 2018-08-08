@@ -90,6 +90,36 @@ class DataRepository {
   }
 
   //BOOK
+  Future<List<Book>> getBookRecommendations(BookLanguage preferredLanguage) async {
+
+    String bookCollection = _resolveBookCollection(preferredLanguage);
+
+    QuerySnapshot snapshot = await _firestore.collection(bookCollection).orderBy("genre").orderBy("rating", descending: true).getDocuments();
+
+    List<Book> recommendedBooks = List<Book>();
+    if (snapshot != null) {
+      snapshot.documents.forEach((DocumentSnapshot documentSnapshot){
+        Book book = Book.fromSnapshot(documentSnapshot);
+        recommendedBooks.add(book);
+      });
+
+      return recommendedBooks;
+    } else {
+      return null;
+    }
+  }
+
+  String _resolveBookCollection(BookLanguage preferredLanguage){
+
+    switch(preferredLanguage){
+      case BookLanguage.ENGLISH: {return Constants.COLLECTION_BOOKS_ENGLISH;}
+      case BookLanguage.PORTUGUESE: {return Constants.COLLECTION_BOOKS_PORTUGUESE;}
+      case BookLanguage.DEUTSCH: {return Constants.COLLECTION_BOOKS_DEUTSCH;}
+      default: {return Constants.COLLECTION_BOOKS_ENGLISH;}
+      }
+
+  }
+
   Future<void> updateBookPosterPictureReferences(String encodedEmail, Book book, String localPosterUri, String remotePosterUri) async {
     WriteBatch writeBatch = _firestore.batch();
 
@@ -126,14 +156,14 @@ class DataRepository {
     return await writeBatch.commit();
   }
 
-  Future<void> updateBookTitle(String encodedEmail, Book book, String newTitle) async {
+  Future<void> updateBookTitle(String encodedEmail, Book editedBook) async {
     WriteBatch writeBatch = _firestore.batch();
 
     DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
-    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(book.language)).document(book.uID);
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(editedBook.language)).document(editedBook.uID);
 
-    Map<String, dynamic> valueToUpdateOnUser = {"books.${book.uID}.title": newTitle};
-    Map<String, dynamic> valueToUpdateOnBook = {"title": newTitle};
+    Map<String, dynamic> valueToUpdateOnUser = {"books.${editedBook.uID}.title": editedBook.title};
+    Map<String, dynamic> valueToUpdateOnBook = {"title": editedBook.title};
 
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
@@ -149,6 +179,36 @@ class DataRepository {
 
     Map<String, dynamic> valueToUpdateOnUser = {"books.${book.uID}.synopsis": newSynopsis};
     Map<String, dynamic> valueToUpdateOnBook = {"synopsis": newSynopsis};
+
+    writeBatch.updateData(userReference, valueToUpdateOnUser);
+    writeBatch.updateData(bookReference, valueToUpdateOnBook);
+
+    return await writeBatch.commit();
+  }
+
+  Future<void> updateBookCompletionStatus(String encodedEmail, Book editedBook) async{
+    WriteBatch writeBatch = _firestore.batch();
+
+    DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(editedBook.language)).document(editedBook.uID);
+
+    Map<String, dynamic> valueToUpdateOnUser = {"books.${editedBook.uID}.isCurrentlyComplete": editedBook.isCurrentlyComplete};
+    Map<String, dynamic> valueToUpdateOnBook = {"isCurrentlyComplete": editedBook.isCurrentlyComplete};
+
+    writeBatch.updateData(userReference, valueToUpdateOnUser);
+    writeBatch.updateData(bookReference, valueToUpdateOnBook);
+
+    return await writeBatch.commit();
+  }
+
+  Future<void> updateBookChapterPeriodicity(String encodedEmail, Book editedBook) async{
+    WriteBatch writeBatch = _firestore.batch();
+
+    DocumentReference userReference = _firestore.collection(Constants.COLLECTION_USERS).document(encodedEmail);
+    DocumentReference bookReference = _firestore.collection(_resolveCollectionLanguageLocation(editedBook.language)).document(editedBook.uID);
+
+    Map<String, dynamic> valueToUpdateOnUser = {"books.${editedBook.uID}.periodicity": editedBook.periodicity.toString().split(".")[1]};
+    Map<String, dynamic> valueToUpdateOnBook = {"periodicity": editedBook.periodicity.toString().split(".")[1]};
 
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);

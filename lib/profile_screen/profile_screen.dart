@@ -470,11 +470,11 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.favorite),
+                child: Icon(Icons.favorite, color: TextColorDarkBackground.tertiary,),
               ),
               Text(
                 _userStore.user.fans.toString(),
-                style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
+                style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold, fontSize: 16.0),
               ),
             ],
           ),
@@ -483,11 +483,11 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.remove_red_eye),
+                child: Icon(Icons.remove_red_eye, color: TextColorDarkBackground.tertiary,),
               ),
               Text(
                 _calculateUserTotalViews().toString(),
-                style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
+                style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold, fontSize: 16.0),
               ),
             ],
           ),
@@ -496,13 +496,13 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.only(top: 8.0, left: 8.0, bottom: 8.0),
-                child: Icon(Icons.attach_money),
+                child: Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary,),
               ),
               new Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
                   _calculateUserTotalIncome().toString(),
-                  style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
+                  style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold, fontSize: 16.0),
                 ),
               )
             ],
@@ -551,7 +551,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                 angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
                 child: Text(
                   _userStore.user.name,
-                  style: TextStyle(fontSize: 18.0),
+                  style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w500),
                   maxLines: 2,
                 ),
               ),

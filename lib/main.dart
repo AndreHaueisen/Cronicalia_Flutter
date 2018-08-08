@@ -15,8 +15,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 class TextColorDarkBackground {
   static final Color primary = Colors.white;
-  static final Color secondary = Colors.grey[400];
-  static final Color tertiary = Colors.grey[600];
+  static final Color secondary = Colors.grey[350];
+  static final Color tertiary = Colors.grey[500];
 }
 
 class TextColorBrightBackground {
@@ -49,7 +49,7 @@ class Cronicalia extends StatelessWidget {
     _initializeFirebase();
   }
 
- 
+
 
   @override
   Widget build(BuildContext context) {

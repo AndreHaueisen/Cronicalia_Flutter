@@ -154,7 +154,7 @@ class UserStore extends Store {
       Book book = this._user.books[bookKey];
       book.title = newTitle;
 
-      _dataRepository.updateBookTitle(_user.encodedEmail, book, newTitle);
+      _dataRepository.updateBookTitle(_user.encodedEmail, book);
     });
     triggerOnAction(updateBookSynopsisAction, (List<String> payload) {
       String bookKey = payload[0];
@@ -164,6 +164,26 @@ class UserStore extends Store {
       book.synopsis = newSynopsis;
 
       _dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis);
+    });
+
+    triggerOnAction(updateBookCompletionStatusAction, (List<dynamic> payload){
+      String bookKey = payload[0];
+      bool isBookCurrentlyComplete = payload[1];
+
+      Book book = this._user.books[bookKey];
+      book.isCurrentlyComplete = isBookCurrentlyComplete;
+
+      _dataRepository.updateBookCompletionStatus(_user.encodedEmail, book);
+    });
+
+    triggerOnAction(updateBookChapterPeriodicityAction, (List<dynamic> payload){
+      String bookKey = payload[0];
+      ChapterPeriodicity newPeriodicity = payload[1];
+
+      Book book = this._user.books[bookKey];
+      book.periodicity = newPeriodicity;
+
+      _dataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book);
     });
 
     triggerOnConditionalAction(createCompleteBookAction, (Book book) {
@@ -247,21 +267,29 @@ final Action<String> updateUserNameAction = new Action<String>();
 final Action<String> updateUserTwitterProfileAction = new Action<String>();
 final Action<String> updateUserAboutMeAction = new Action<String>();
 
-/// payload[0] contains user bookKey
-/// payload[1] contains user localUri
+/// payload[0] contains book bookKey
+/// payload[1] contains book localUri
 final Action<List<String>> updateBookPosterImageAction = new Action<List<String>>();
 
-/// payload[0] contains user bookKey
-/// payload[1] contains user localUri
+/// payload[0] contains book bookKey
+/// payload[1] contains book localUri
 final Action<List<String>> updateBookCoverImageAction = new Action<List<String>>();
 
-/// payload[0] contains user bookKey
-/// payload[1] contains user newTitle
+/// payload[0] contains book bookKey
+/// payload[1] contains book newTitle
 final Action<List<String>> updateBookTitleAction = new Action<List<String>>();
 
-/// payload[0] contains user bookKey
-/// payload[1] contains user newSynopsis
+/// payload[0] contains book bookKey
+/// payload[1] contains book newSynopsis
 final Action<List<String>> updateBookSynopsisAction = new Action<List<String>>();
+
+/// payload[0] contains book bookKey
+/// payload[1] contains book idCurrentlyComplete
+final Action<List<dynamic>> updateBookCompletionStatusAction = new Action<List<dynamic>>();
+
+/// payload[0] contains book bookKey
+/// payload[1] contains book periodicity
+final Action<List<dynamic>> updateBookChapterPeriodicityAction = new Action<List<dynamic>>();
 
 final Action<Book> createCompleteBookAction = new Action<Book>();
 

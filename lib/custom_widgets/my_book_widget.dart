@@ -55,7 +55,8 @@ class MyBookWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 8.0),
               child: Text(
                 _book.title,
-                style: TextStyle(fontSize: 20.0),
+                style: TextStyle(fontSize: 20.0,fontWeight: FontWeight.w700,),
+                
               ),
             ),
             Padding(
@@ -68,7 +69,7 @@ class MyBookWidget extends StatelessWidget {
             ),
             _bookStatsWidget(),
             Align(
-              alignment: FractionalOffset.centerRight,
+              alignment: FractionalOffset.bottomRight,
               child: Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 4.0),
                 child: Text(
@@ -78,7 +79,7 @@ class MyBookWidget extends StatelessWidget {
               ),
             ),
             Align(
-              alignment: FractionalOffset.centerRight,
+              alignment: FractionalOffset.bottomRight,
               child: Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
                 child: Text(
@@ -104,9 +105,9 @@ class MyBookWidget extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: Icon(Icons.remove_red_eye, color: TextColorDarkBackground.secondary,),
+                child: Icon(Icons.remove_red_eye, color: TextColorDarkBackground.tertiary,),
               ),
-              Text(_book.readingsNumber.toString(), style: TextStyle(color: TextColorDarkBackground.secondary))
+              Text(_book.readingsNumber.toString(), style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
             ],
           ),
           Row(
@@ -114,18 +115,18 @@ class MyBookWidget extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 6.0),
-                child: Icon(Icons.star, color: TextColorDarkBackground.secondary),
+                child: Icon(Icons.star, color: TextColorDarkBackground.tertiary),
               ),
-              Text(_book.rating.toString(), style: TextStyle(color: TextColorDarkBackground.secondary))
+              Text(_book.rating.toString(), style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
             ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.attach_money, color: TextColorDarkBackground.secondary),
+              Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Text(_book.income.toString(), style: TextStyle(color: TextColorDarkBackground.secondary)),
+                child: Text(_book.income.toString(), style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold)),
               )
             ],
           )

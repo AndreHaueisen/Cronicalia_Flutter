@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum BookGenre { UNDEFINED, ACTION, ADVENTURE, COMEDY, DRAMA, FANTASY, FICTION, HORROR, MYTHOLOGY, ROMANCE, SATIRE }
 
 enum BookLanguage { UNDEFINED, ENGLISH, PORTUGUESE, DEUTSCH }
@@ -67,7 +69,81 @@ class Book {
       this.periodicity = ChapterPeriodicity.NONE,
       this.synopsis});
 
-  String generateStorageFolder(){
+  Book.fromSnapshot(DocumentSnapshot snapshot) {
+    if (snapshot != null && snapshot.exists) {
+      this.rating = snapshot.data['rating'];
+      this.authorTwitterProfile = snapshot.data['authorTwitterProfile'];
+      this.isCurrentlyComplete = snapshot.data['isCurrentlyComplete'];
+      this.remotePosterUri = snapshot.data['remotePosterUri'];
+      this.publicationDate = snapshot.data['publicationDate'];
+      this.uID = snapshot.data['uID'];
+      this.income = snapshot.data['income'];
+      this.localPosterUri = snapshot.data['localPosterUri'];
+      this.ratingCounter = snapshot.data['ratingCounter'];
+      this.authorName = snapshot.data['authorName'];
+      this.remoteCoverUri = snapshot.data['remoteCoverUri'];
+      this.isLaunchedComplete = snapshot.data['isLaunchedComplete'];
+      this.authorEmailId = snapshot.data['authorEmailId'];
+      this.localFullBookUri = snapshot.data['localFullBookUri'];
+      this.title = snapshot.data['title'];
+      this.readingsNumber = snapshot.data['readingsNumber'];
+      this.bookPosition = snapshot.data['bookPosition'];
+      this.remoteFullBookUri = snapshot.data['remoteFullBookUri'];
+      this.localCoverUri = snapshot.data['localCoverUri'];
+      this.synopsis = snapshot.data['synopsis'];
+      this.chaptersLaunchDates.addAll(snapshot.data['chaptersLaunchDates']);
+      this.remoteChapterUris.addAll(snapshot.data['remoteChapterUris']);
+      this.remoteChapterTitles.addAll(snapshot.data['remoteChapterTitles']);
+
+      this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
+        return periodicity.toString() == "ChapterPeriodicity.${snapshot.data['periodicity']}";
+      }, orElse: () => null);
+      this.genre = BookGenre.values.firstWhere((genre) {
+        return genre.toString() == "BookGenre.${snapshot.data['genre']}";
+      }, orElse: () => null);
+      this.language = BookLanguage.values.firstWhere((bookLanguage) {
+        return bookLanguage.toString() == "BookLanguage.${snapshot.data['language']}";
+      }, orElse: () => null);
+    }
+  }
+
+  Book.fromLinkedMap(LinkedHashMap linkedMap) {
+    this.rating = linkedMap['rating'];
+    this.authorTwitterProfile = linkedMap['authorTwitterProfile'];
+    this.isCurrentlyComplete = linkedMap['isCurrentlyComplete'];
+    this.remotePosterUri = linkedMap['remotePosterUri'];
+    this.publicationDate = linkedMap['publicationDate'];
+    this.uID = linkedMap['uID'];
+    this.income = linkedMap['income'];
+    this.localPosterUri = linkedMap['localPosterUri'];
+    this.ratingCounter = linkedMap['ratingCounter'];
+    this.authorName = linkedMap['authorName'];
+    this.remoteCoverUri = linkedMap['remoteCoverUri'];
+    this.isLaunchedComplete = linkedMap['isLaunchedComplete'];
+    this.authorEmailId = linkedMap['authorEmailId'];
+    this.localFullBookUri = linkedMap['localFullBookUri'];
+    this.title = linkedMap['title'];
+    this.readingsNumber = linkedMap['readingsNumber'];
+    this.bookPosition = linkedMap['bookPosition'];
+    this.remoteFullBookUri = linkedMap['remoteFullBookUri'];
+    this.localCoverUri = linkedMap['localCoverUri'];
+    this.synopsis = linkedMap['synopsis'];
+    this.chaptersLaunchDates.addAll(linkedMap['chaptersLaunchDates']);
+    this.remoteChapterUris.addAll(linkedMap['remoteChapterUris']);
+    this.remoteChapterTitles.addAll(linkedMap['remoteChapterTitles']);
+
+    this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
+      return periodicity.toString() == "ChapterPeriodicity.${linkedMap['periodicity']}";
+    }, orElse: () => null);
+    this.genre = BookGenre.values.firstWhere((genre) {
+      return genre.toString() == "BookGenre.${linkedMap['genre']}";
+    }, orElse: () => null);
+    this.language = BookLanguage.values.firstWhere((bookLanguage) {
+      return bookLanguage.toString() == "BookLanguage.${linkedMap['language']}";
+    }, orElse: () => null);
+  }
+
+  String generateStorageFolder() {
     return "${authorEmailId}_${title.replaceAll(' ', '_')}_${convertLanguageToString(language).toUpperCase()}";
   }
 
@@ -130,42 +206,6 @@ class Book {
       default:
         return "Undefined";
     }
-  }
-
-  Book.fromLinkedMap(LinkedHashMap linkedMap) {
-    this.rating = linkedMap['rating'];
-    this.authorTwitterProfile = linkedMap['authorTwitterProfile'];
-    this.isCurrentlyComplete = linkedMap['isCurrentlyComplete'];
-    this.remotePosterUri = linkedMap['remotePosterUri'];
-    this.publicationDate = linkedMap['publicationDate'];
-    this.uID = linkedMap['uID'];
-    this.income = linkedMap['income'];
-    this.localPosterUri = linkedMap['localPosterUri'];
-    this.ratingCounter = linkedMap['ratingCounter'];
-    this.authorName = linkedMap['authorName'];
-    this.remoteCoverUri = linkedMap['remoteCoverUri'];
-    this.isLaunchedComplete = linkedMap['isLaunchedComplete'];
-    this.authorEmailId = linkedMap['authorEmailId'];
-    this.localFullBookUri = linkedMap['localFullBookUri'];
-    this.title = linkedMap['title'];
-    this.readingsNumber = linkedMap['readingsNumber'];
-    this.bookPosition = linkedMap['bookPosition'];
-    this.remoteFullBookUri = linkedMap['remoteFullBookUri'];
-    this.localCoverUri = linkedMap['localCoverUri'];
-    this.synopsis = linkedMap['synopsis'];
-    this.chaptersLaunchDates.addAll(linkedMap['chaptersLaunchDates']);
-    this.remoteChapterUris.addAll(linkedMap['remoteChapterUris']);
-    this.remoteChapterTitles.addAll(linkedMap['remoteChapterTitles']);
-
-    this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
-      return periodicity.toString() == "ChapterPeriodicity.${linkedMap['periodicity']}";
-    }, orElse: () => null);
-    this.genre = BookGenre.values.firstWhere((genre) {
-      return genre.toString() == "BookGenre.${linkedMap['genre']}";
-    }, orElse: () => null);
-    this.language = BookLanguage.values.firstWhere((bookLanguage) {
-      return bookLanguage.toString() == "BookLanguage.${linkedMap['language']}";
-    }, orElse: () => null);
   }
 
   Map<String, dynamic> toMap() {
