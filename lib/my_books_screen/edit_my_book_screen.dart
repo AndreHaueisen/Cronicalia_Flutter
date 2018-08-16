@@ -27,8 +27,7 @@ class EditMyBookScreen extends StatefulWidget {
 }
 
 class EditMyBookScreenState extends State<EditMyBookScreen>
-    with TickerProviderStateMixin, StoreWatcherMixin<EditMyBookScreen>
-    implements UserInputCallback {
+    with TickerProviderStateMixin, StoreWatcherMixin<EditMyBookScreen>{
   UserStore _userStore;
   bool _isEditModeOn = false;
   Book _book;
@@ -403,10 +402,10 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                 physics: new ClampingScrollPhysics(),
                 itemBuilder: (BuildContext context, int index) {
                   return BookFileWidget(
-                    _book.isCurrentlyComplete,
-                    _book.remoteChapterUris[index],
-                    index,
-                    this
+                    key: Key(_book.remoteChapterUris[index]),
+                    isLaunchedComplete: _book.isCurrentlyComplete,
+                    filePath: _book.remoteChapterUris[index],
+                    index: index,
                   );
                 },
                 shrinkWrap: true,
@@ -418,11 +417,6 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         ),
       ),
     );
-  }
-
-  @override
-  void onInputReady(String input, int index) {
-    // TODO: implement onInputReady
   }
 
   Future<Null> _showImageOriginDialog(ImageType imageType) async {

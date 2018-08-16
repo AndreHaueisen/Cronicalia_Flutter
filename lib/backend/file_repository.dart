@@ -6,9 +6,13 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cronicalia_flutter/utils/utility.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 const CONTENT_TYPE_IMAGE = "image/jpg";
 const CONTENT_TYPE_PDF = "application/pdf";
+const CONTENT_TYPE_TXT = "text/plain";
 
 class FileRepository {
   final StorageReference _storageReference;
@@ -23,8 +27,11 @@ class FileRepository {
           customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_PROFILE});
 
       if (file.existsSync()) {
-        final StorageUploadTask uploadTask =
-            _storageReference.child(Constants.STORAGE_USERS).child(encodedEmail).child(file.path.split('/').last).putFile(file, metadata);
+        final StorageUploadTask uploadTask = _storageReference
+            .child(Constants.STORAGE_USERS)
+            .child(encodedEmail)
+            .child(file.path.split('/').last)
+            .putFile(file, metadata);
 
         String newRemotePath = (await uploadTask.future).downloadUrl.toString();
         await dataRepository.updateUserProfilePictureReferences(encodedEmail, newLocalPath, newRemotePath);
@@ -47,8 +54,11 @@ class FileRepository {
           customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_BACKGROUND});
 
       if (file.existsSync()) {
-        final StorageUploadTask uploadTask =
-            _storageReference.child(Constants.STORAGE_USERS).child(encodedEmail).child(file.path.split('/').last).putFile(file, metadata);
+        final StorageUploadTask uploadTask = _storageReference
+            .child(Constants.STORAGE_USERS)
+            .child(encodedEmail)
+            .child(file.path.split('/').last)
+            .putFile(file, metadata);
 
         String newRemotePath = (await uploadTask.future).downloadUrl.toString();
         await dataRepository.updateUserBackgroundPictureReferences(encodedEmail, newLocalPath, newRemotePath);
@@ -63,7 +73,8 @@ class FileRepository {
     }
   }
 
-  Future<String> updateBookPosterImage(String encodedEmail, Book book, String newLocalPath, DataRepository dataRepository) async {
+  Future<String> updateBookPosterImage(
+      String encodedEmail, Book book, String newLocalPath, DataRepository dataRepository) async {
     try {
       UploadTaskSnapshot taskSnapshot = await _uploadBookPosterImage(encodedEmail, book, newLocalPath);
       String newRemotePath = (taskSnapshot != null) ? taskSnapshot.downloadUrl.toString() : throw ("Poster upload failed");
@@ -75,7 +86,8 @@ class FileRepository {
     }
   }
 
-  Future<String> updateBookCoverImage(String encodedEmail, Book book, String newLocalPath, DataRepository dataRepository) async {
+  Future<String> updateBookCoverImage(
+      String encodedEmail, Book book, String newLocalPath, DataRepository dataRepository) async {
     try {
       UploadTaskSnapshot taskSnapshot = (await _uploadBookCoverImage(encodedEmail, book, newLocalPath));
       String newRemotePath = (taskSnapshot != null) ? taskSnapshot.downloadUrl.toString() : throw ("Cover upload failed");
@@ -87,11 +99,13 @@ class FileRepository {
     }
   }
 
-  Future<void> createNewCompleteBook(String encodedEmail, Book book, DataRepository dataRepository, {ProgressStream progressStream}) async {
+  Future<void> createNewCompleteBook(String encodedEmail, Book book, DataRepository dataRepository,
+      {ProgressStream progressStream}) async {
     try {
       UploadTaskSnapshot posterTaskSnapshot = await _uploadBookPosterImage(encodedEmail, book, book.localPosterUri);
-      book.remotePosterUri =
-          posterTaskSnapshot.downloadUrl == null ? throw ("Poster upload failed") : posterTaskSnapshot.downloadUrl.toString();
+      book.remotePosterUri = posterTaskSnapshot.downloadUrl == null
+          ? throw ("Poster upload failed")
+          : posterTaskSnapshot.downloadUrl.toString();
 
       if (progressStream != null) progressStream.notifySuccess();
 
@@ -101,8 +115,9 @@ class FileRepository {
 
       if (progressStream != null) progressStream.notifySuccess();
 
-      UploadTaskSnapshot pdfTaskSnapshot = await _uploadPdfFile(encodedEmail, book, book.localFullBookUri);
-      book.remoteFullBookUri = pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf upload failed") : pdfTaskSnapshot.downloadUrl.toString();
+      UploadTaskSnapshot pdfTaskSnapshot = await _uploadTxtFile(encodedEmail, book, book.localFullBookUri);
+      book.remoteFullBookUri =
+          pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf upload failed") : pdfTaskSnapshot.downloadUrl.toString();
 
       if (progressStream != null) progressStream.notifySuccess();
 
@@ -112,12 +127,14 @@ class FileRepository {
     }
   }
 
-  Future<void> createNewIncompleteBook(String encodedEmail, Book book, List<String> pdfLocalPaths, DataRepository dataRepository,
+  Future<void> createNewIncompleteBook(
+      String encodedEmail, Book book, List<String> pdfLocalPaths, DataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
       UploadTaskSnapshot posterTaskSnapshot = await _uploadBookPosterImage(encodedEmail, book, book.localPosterUri);
-      book.remotePosterUri =
-          posterTaskSnapshot.downloadUrl == null ? throw ("Poster upload failed") : posterTaskSnapshot.downloadUrl.toString();
+      book.remotePosterUri = posterTaskSnapshot.downloadUrl == null
+          ? throw ("Poster upload failed")
+          : posterTaskSnapshot.downloadUrl.toString();
 
       if (progressStream != null) progressStream.notifySuccess();
 
@@ -131,13 +148,14 @@ class FileRepository {
       StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
 
       pdfLocalPaths.forEach((String localPath) {
-        streamController.add(_uploadPdfFile(encodedEmail, book, localPath));
+        streamController.add(_uploadTxtFile(encodedEmail, book, localPath));
       });
 
       streamController.stream.listen((Future<UploadTaskSnapshot> pdfTaskSnapshotFuture) async {
         UploadTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
-        book.remoteChapterUris
-            .add(pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf #$counter upload failed") : pdfTaskSnapshot.downloadUrl.toString());
+        book.remoteChapterUris.add(pdfTaskSnapshot.downloadUrl == null
+            ? throw ("Pdf #$counter upload failed")
+            : pdfTaskSnapshot.downloadUrl.toString());
 
         if (progressStream != null) progressStream.notifySuccess();
         if (counter == (pdfLocalPaths.length - 1)) {
@@ -199,9 +217,9 @@ class FileRepository {
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadPdfFile(String encodedEmail, Book book, String filePath) {
+  Future<UploadTaskSnapshot> _uploadTxtFile(String encodedEmail, Book book, String filePath) {
     final File file = File(filePath);
-    final metadata = new StorageMetadata(contentType: CONTENT_TYPE_PDF);
+    final metadata = new StorageMetadata(contentType: CONTENT_TYPE_TXT);
 
     if (file.existsSync()) {
       final StorageUploadTask uploadTask = _storageReference
@@ -215,6 +233,17 @@ class FileRepository {
     } else {
       return null;
     }
+  }
+
+
+  //get file from FirebaseStorage
+  Future<String> downloadBookFile() async {
+    //StorageReference.getReferenceFromUrl();
+
+    //Placeholder
+    String fileText = await rootBundle.loadString('assets/test_file.txt');
+
+    return fileText;
   }
 
   String _resolveStorageLanguageLocation(BookLanguage bookLanguage) {

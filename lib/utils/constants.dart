@@ -48,6 +48,7 @@ class Constants{
   static const FILE_NAME_TEMP_COVER_PICTURE = "temp_cover.jpg";
   static const FOLDER_NAME_PROFILE = "profile";
   static const FOLDER_NAME_BOOKS = "books";
+  static const FOLDER_NAME_MY_READINGS = "my_readings";
 
   static const PDF_ADD_CODE = 400;
   static const PDF_REQUEST_CODE = 500;

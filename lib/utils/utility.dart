@@ -70,7 +70,7 @@ class Utility {
     }
   }
 
-  static Future<File> createUserFile(String directoryName, String fileName) async {
+  static Future<File> createFile(String directoryName, String fileName) async {
     Directory applicationDirectory = await getApplicationDocumentsDirectory();
     String newFilePath = "${applicationDirectory.path}/cache/$directoryName/$fileName";
 

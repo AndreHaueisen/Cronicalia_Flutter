@@ -1,3 +1,4 @@
+import 'package:cronicalia_flutter/book_read_screen/selected_book_screen.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:flutter/material.dart';
@@ -8,13 +9,16 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
   final List<Book> recommendedBooks;
   final BookGenre currentGenre;
 
+  static const double _BOX_HEIGHT = 200.0;
+
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 8.0),
+          padding: const EdgeInsets.only(top: 8.0, left: 8.0),
           child: Text(
             Book.convertGenreToString(currentGenre).toUpperCase(),
             style: TextStyle(
@@ -24,7 +28,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 190.0,
+          height: _BOX_HEIGHT,
           child: ListView.builder(
             itemCount: recommendedBooks.length,
             scrollDirection: Axis.horizontal,
@@ -40,9 +44,18 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
   Widget _buildBookPreview(BuildContext context, Book book) {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
-      child: Card(
-        margin: EdgeInsets.all(8.0),
-        child: _buildBookFaceWithText(context, book),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (BuildContext context) => SelectedBookScreen(book),
+            ),
+          );
+        },
+        child: Card(
+          margin: EdgeInsets.all(8.0),
+          child: _buildBookFaceWithText(context, book),
+        ),
       ),
     );
   }
@@ -58,7 +71,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
             child: Image.network(
               book.remoteCoverUri,
               fit: BoxFit.fill,
-              height: 190.0,
+              height: _BOX_HEIGHT,
             ),
           ),
         ),
@@ -76,14 +89,15 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
                     book.title,
                     style: TextStyle(
                       color: TextColorDarkBackground.primary,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18.0
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
                   child: Text(
-                    book.authorName,
+                    "By ${book.authorName}",
                     style: TextStyle(color: TextColorDarkBackground.secondary),
                   ),
                 ),
@@ -93,6 +107,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
                     book.synopsis,
                     style: TextStyle(
                       color: TextColorDarkBackground.secondary,
+                      fontSize: 12.0
                     ),
                     maxLines: 5,
                     overflow: TextOverflow.ellipsis,

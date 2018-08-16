@@ -24,10 +24,9 @@ class CreateMyBookScreen extends StatefulWidget {
   }
 }
 
-class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatcherMixin<CreateMyBookScreen> implements UserInputCallback {
+class _CreateMyBookScreenState extends State<CreateMyBookScreen>
+    with StoreWatcherMixin<CreateMyBookScreen>, SingleTickerProviderStateMixin<CreateMyBookScreen> {
   final Book _book = Book();
-  final List<String> _filePaths = List<String>();
-  final List<String> _fileTitles = List<String>();
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
   final TextEditingController _titleController = new TextEditingController();
   final TextEditingController _synopsisController = new TextEditingController();
@@ -38,6 +37,10 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
   void initState() {
     super.initState();
     _scrollController = new ScrollController();
+    _uploadProgressController = AnimationController(
+      vsync: this,
+      value: 0.0
+    );
   }
 
   @override
@@ -56,6 +59,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
       body: SingleChildScrollView(
         controller: _scrollController,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             _buildImages(),
@@ -66,7 +70,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
             _buildGenreDropdownButton(),
             _buildLanguageDropdownButton(),
             _buildResumePhrase(),
-            (_filePaths.length == 0)
+            (_filesWidgets.length == 0)
                 ? Container(
                     width: 0.0,
                     height: 0.0,
@@ -76,11 +80,6 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
         ),
       ),
     );
-  }
-
-  @override
-  void onInputReady(String input, int index) {
-    _fileTitles[index] = input;
   }
 
   Future<List<String>> _getPdfPaths() async {
@@ -99,15 +98,10 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
         onPressed: () {
           _getPdfPaths().then((paths) {
             if (paths != null && paths.isNotEmpty) {
-              if (_book.isLaunchedComplete) {
-                _filePaths.clear();
-                _filePaths.add(paths[0]);
-              } else {
-                _filePaths.addAll(paths);
-                _fileTitles.length = _filePaths.length;
-              }
+              _generateFileWidgets(paths);
               setState(() {});
-              _scrollController.animateTo(MediaQuery.of(context).size.height, duration: Duration(seconds: 2), curve: Curves.decelerate);
+              _scrollController.animateTo(MediaQuery.of(context).size.height,
+                  duration: Duration(seconds: 2), curve: Curves.decelerate);
             }
           });
         },
@@ -124,16 +118,16 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
             _book.bookPosition = userStore.user.books.length;
 
             if (_book.isLaunchedComplete) {
-              _book.localFullBookUri = _filePaths[0];
+              _book.localFullBookUri = _filesWidgets[0].filePath;
               createCompleteBookAction(_book);
             } else {
-              _filePaths.forEach((_) {
+              final List<String> localFilePaths = List<String>();
+              _filesWidgets.forEach((BookFileWidget fileWidget) {
                 _book.chaptersLaunchDates.add(_book.publicationDate);
+                _book.remoteChapterTitles.add(fileWidget.chapterTitle);
+                localFilePaths.add(fileWidget.filePath);
               });
-              _fileTitles.forEach((String fileTitle) {
-                _book.remoteChapterTitles.add(fileTitle);
-              });
-              createIncompleteBookAction([_book, _filePaths, _fileTitles]);
+              createIncompleteBookAction([_book, localFilePaths]);
             }
             _showProgressFlushbar();
             print("Uploading book data");
@@ -143,15 +137,16 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     ];
   }
 
+  AnimationController _uploadProgressController;
+
   void _showProgressFlushbar() {
     UserStore userStore = listenToStore(userStoreToken);
 
     Flushbar progressFlushbar = FlushbarHelper.createLoading(
       title: "Uploading files",
       message: "Wait while we create your new masterpiece",
-      linearProgressIndicator: LinearProgressIndicator(
-        backgroundColor: AppThemeColors.primaryColorDark,
-      ),
+      indicatorBackgroundColor: Colors.blue[300],
+      indicatorController: _uploadProgressController,
       duration: null,
     )
       ..onStatusChanged = (FlushbarStatus status) {
@@ -168,7 +163,9 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
       ..show(context);
 
     if (userStore.getProgressStream() != null) {
-      userStore.getProgressStream().controller.stream.listen((progress) {}, onDone: () {
+      userStore.getProgressStream().controller.stream.listen((progress) {
+        _uploadProgressController.animateTo(progress, duration: Duration(milliseconds: 300));
+      }, onDone: () {
         progressFlushbar.dismiss();
       }, onError: (error) {
         FlushbarHelper.createError(title: "Upload failed", message: "One or more files failed. Try again");
@@ -180,9 +177,9 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     return (_validatePoster() &&
         _validateCover() &&
         _validateInputForm() &&
+        _validatePeriodicity() &&
         _validateGenre() &&
         _validateLanguage() &&
-        _validatePeriodicity() &&
         _validateFiles() &&
         _validateChapterTitles());
   }
@@ -191,13 +188,11 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     if (_book.localPosterUri != null) {
       return true;
     } else {
-      FlushbarHelper
-          .createError(
-            title: "Poster missing",
-            message: "Choose a book poster to attract readers",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
+      FlushbarHelper.createError(
+        title: "Poster missing",
+        message: "Choose a book poster to attract readers",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
       return false;
     }
   }
@@ -206,13 +201,11 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     if (_book.localCoverUri != null) {
       return true;
     } else {
-      FlushbarHelper
-          .createError(
-            title: "Cover missing",
-            message: "Choose a book cover to attract readers",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
+      FlushbarHelper.createError(
+        title: "Cover missing",
+        message: "Choose a book cover to attract readers",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
       return false;
     }
   }
@@ -226,58 +219,24 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
       setState(() {
         _isAutoValidating = true;
       });
-      FlushbarHelper
-          .createError(
-            title: "Title or synopsis invalid",
-            message: "Check your book title and synopsis",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
+      FlushbarHelper.createError(
+        title: "Title or synopsis invalid",
+        message: "Check your book title and synopsis",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
       return false;
     }
   }
 
   bool _validateFiles() {
-    if (_filePaths.length > 0) {
+    if (_filesWidgets.length > 0) {
       return true;
     } else {
-      FlushbarHelper
-          .createError(
-            title: "File missing",
-            message: "Choose at least one PDF for your book",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
-      return false;
-    }
-  }
-
-  bool _validateGenre() {
-    if (_book.genre != null && _book.genre != BookGenre.UNDEFINED) {
-      return true;
-    } else {
-      FlushbarHelper
-          .createError(
-            title: "Genre missing",
-            message: "What is your book's genre?",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
-      return false;
-    }
-  }
-
-  bool _validateLanguage() {
-    if (_book.language != null && _book.language != BookLanguage.UNDEFINED) {
-      return true;
-    } else {
-      FlushbarHelper
-          .createError(
-            title: "Language missing",
-            message: "In what language your book is written?",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
+      FlushbarHelper.createError(
+        title: "File missing",
+        message: "Choose at least one PDF for your book",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
       return false;
     }
   }
@@ -288,24 +247,52 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     if ((_book.periodicity != null && _book.periodicity != ChapterPeriodicity.NONE)) {
       return true;
     } else {
-      FlushbarHelper
-          .createError(
-            title: "Chapter launch schedule missing",
-            message: "What is the interval between your chapter launches?",
-            duration: (Duration(seconds: 3)),
-          )
-          .show(context);
+      FlushbarHelper.createError(
+        title: "Chapter launch schedule missing",
+        message: "What is the interval between your chapter launches?",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
+    }
+  }
+
+  bool _validateGenre() {
+    if (_book.genre != null && _book.genre != BookGenre.UNDEFINED) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "Genre missing",
+        message: "What is your book's genre?",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
+    }
+  }
+
+  bool _validateLanguage() {
+    if (_book.language != null && _book.language != BookLanguage.UNDEFINED) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "Language missing",
+        message: "In what language your book is written?",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
       return false;
     }
   }
 
   bool _validateChapterTitles() {
-    
-    for (var counter = 0; counter < _fileTitles.length; counter++) {
-      String title = _fileTitles[counter];
+
+    if(_book.isLaunchedComplete) return true;
+
+    for (int counter = 0; counter < _filesWidgets.length; counter++) {
+      String title = _filesWidgets[counter].chapterTitle;
       if (title == null || title.isEmpty) {
-        FlushbarHelper
-            .createError(title: "Title error", message: "Your chapter title number ${counter + 1} is missing", duration: Duration(seconds: 3))
+        FlushbarHelper.createError(
+                title: "Title error",
+                message: "Your chapter title number ${counter + 1} is missing",
+                duration: Duration(seconds: 3))
             .show(context);
         return false;
       }
@@ -500,8 +487,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
       groupValue: _book.isLaunchedComplete,
       onChanged: (bool value) {
         setState(() {
-          _filePaths.clear();
-          _fileTitles.clear();
+          _filesWidgets.clear();
           _book.isLaunchedComplete = value;
           _book.isCurrentlyComplete = value;
         });
@@ -516,8 +502,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
       groupValue: _book.isLaunchedComplete,
       onChanged: (bool value) {
         setState(() {
-          _filePaths.clear();
-          _fileTitles.clear();
+          _filesWidgets.clear();
           _book.isLaunchedComplete = value;
           _book.isCurrentlyComplete = value;
           if (value == true) {
@@ -644,16 +629,20 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
         _book.isLaunchedComplete ? "You are launching a complete book. " : "You are launching an incomplete book. ";
     String genreStatusSubstring =
         _book.genre == BookGenre.UNDEFINED ? "" : "It is a(n) ${Book.convertGenreToString(_book.genre).toLowerCase()}. ";
-    String languageStatusSubstring =
-        _book.language == BookLanguage.UNDEFINED ? "" : "It is written in ${Book.convertLanguageToString(_book.language).toLowerCase()}. ";
-    String chapterNumberSubstring = _book.isLaunchedComplete ? "" : "It has ${_filePaths.length} chapter(s). ";
+    String languageStatusSubstring = _book.language == BookLanguage.UNDEFINED
+        ? ""
+        : "It is written in ${Book.convertLanguageToString(_book.language).toLowerCase()}. ";
+    String chapterNumberSubstring = _book.isLaunchedComplete ? "" : "It has ${_filesWidgets.length} chapter(s). ";
     String periodicityStatusSubstring =
         (_book.isLaunchedComplete || (!_book.isLaunchedComplete && _book.periodicity == ChapterPeriodicity.NONE))
             ? ""
             : "You intend to launch a new chapter ${Book.convertPeriodicityToString(_book.periodicity).toLowerCase()}. ";
 
-    _resumePhrase =
-        completionStatusSubstring + genreStatusSubstring + languageStatusSubstring + chapterNumberSubstring + periodicityStatusSubstring;
+    _resumePhrase = completionStatusSubstring +
+        genreStatusSubstring +
+        languageStatusSubstring +
+        chapterNumberSubstring +
+        periodicityStatusSubstring;
 
     return Padding(
       padding: const EdgeInsets.only(top: 16.0, bottom: 24.0, right: 16.0, left: 16.0),
@@ -661,38 +650,74 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen> with StoreWatch
     );
   }
 
+  final List<BookFileWidget> _filesWidgets = List<BookFileWidget>();
+
   Widget _buildFilesListCard() {
-    //TODO change by reordering list after flutter feature is ready
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
         elevation: 16.0,
         color: Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Text(
-                "Book Files",
-                style: TextStyle(fontSize: 24.0, color: TextColorBrightBackground.primary),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-              child: new ListView.builder(
-                physics: new ClampingScrollPhysics(),
-                itemBuilder: (BuildContext context, int index) {
-                  return BookFileWidget(_book.isLaunchedComplete, _filePaths[index], index, this);
-                },
-                shrinkWrap: true,
-                itemExtent: 118.0,
-                itemCount: _filePaths.length,
-              ),
-            ),
-          ],
+        child: SizedBox(
+          height: _filesWidgets.length <= 1
+              ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT
+              : (_filesWidgets.length) * FILE_WIDGET_HEIGHT,
+          child: _book.isLaunchedComplete
+              ? _filesWidgets[0]
+              : ReorderableListView(
+                  children: _filesWidgets,
+                  onReorder: (int oldIndex, int newIndex) {
+                    Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
+
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    _filesWidgets.insert(newIndex, toBeMovedFileWidget);
+
+                    print("oldIndex: $oldIndex");
+                    print("newIndex: $newIndex");
+                  },
+                  header: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      "Book Files",
+                      style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
+                    ),
+                  ),
+                ),
         ),
       ),
     );
   }
+
+  void _generateFileWidgets(List<String> filePaths) {
+    if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
+
+    if (_book.isLaunchedComplete) {
+      _filesWidgets.add(
+        BookFileWidget(
+          key: Key(filePaths[0]),
+          isLaunchedComplete: _book.isLaunchedComplete,
+          filePath: filePaths[0],
+          index: -1,
+        ),
+      );
+    } else {
+      int counter = 0;
+
+      filePaths.forEach((String filePath) {
+        _filesWidgets.add(
+          BookFileWidget(
+            key: Key(filePath),
+            isLaunchedComplete: _book.isLaunchedComplete,
+            filePath: filePath,
+            index: counter,
+          ),
+        );
+        counter++;
+      });
+    }
+  }
 }
+
+const double FILE_WIDGET_HEIGHT = 118.0;

@@ -15,14 +15,14 @@ class ProfileImagePicker {
     if(image != null) {
       if (imageType == ImageType.BACKGROUND) {
 
-        File backgroundPicFile = await Utility.createUserFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_BACKGROUND_PICTURE);
+        File backgroundPicFile = await Utility.createFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_BACKGROUND_PICTURE);
         await Utility.saveImageToLocalCache(image, backgroundPicFile);
         updateUserBackgroundImageAction(backgroundPicFile.path);
         getUserFromCacheAction(user.copy(localBackgroundPictureUri: backgroundPicFile.path));
 
       } else {
 
-        File profilePicFile = await Utility.createUserFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_PROFILE_PICTURE);
+        File profilePicFile = await Utility.createFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_PROFILE_PICTURE);
         await Utility.saveImageToLocalCache(image, profilePicFile);
         updateUserProfileImageAction(profilePicFile.path);
         getUserFromCacheAction(user.copy(localProfilePictureUri: profilePicFile.path));
@@ -36,14 +36,14 @@ class ProfileImagePicker {
     if(image != null) {
       if (imageType == ImageType.BACKGROUND) {
         
-        File backgroundPicFile = await Utility.createUserFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_BACKGROUND_PICTURE);
+        File backgroundPicFile = await Utility.createFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_BACKGROUND_PICTURE);
         await Utility.saveImageToLocalCache(image, backgroundPicFile);
         updateUserBackgroundImageAction(backgroundPicFile.path);
         getUserFromCacheAction(user.copy(localBackgroundPictureUri: backgroundPicFile.path));
 
       } else {
         
-        File profilePicFile = await Utility.createUserFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_PROFILE_PICTURE);
+        File profilePicFile = await Utility.createFile(Constants.FOLDER_NAME_PROFILE, Constants.FILE_NAME_PROFILE_PICTURE);
         await Utility.saveImageToLocalCache(image, profilePicFile);
         updateUserProfileImageAction(profilePicFile.path);
         getUserFromCacheAction(user.copy(localProfilePictureUri: profilePicFile.path));

@@ -208,7 +208,8 @@ class UserStore extends Store {
     triggerOnConditionalAction(createIncompleteBookAction, (List<dynamic> payload) {
       Book book = payload[0];
       List<String> pdfLocalPaths = payload[1];
-      final int numberOfFilesToBeUploaded = 2 + pdfLocalPaths.length;
+      const int pictureFilesNumber = 2;
+      final int numberOfFilesToBeUploaded = pictureFilesNumber + pdfLocalPaths.length;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
       _fileRepository

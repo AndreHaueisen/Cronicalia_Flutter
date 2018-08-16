@@ -14,7 +14,7 @@ packages:
       name: args
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.4.4"
+    version: "1.5.0"
   async:
     dependency: transitive
     description:
@@ -84,7 +84,7 @@ packages:
       name: csslib
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.14.4+1"
+    version: "0.14.5"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -105,7 +105,7 @@ packages:
       name: firebase_auth
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.15"
+    version: "0.5.18"
   firebase_core:
     dependency: "direct main"
     description:
@@ -126,7 +126,7 @@ packages:
       name: flushbar
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.7.6"
+    version: "0.8.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -158,7 +158,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: b5a9a2c37a864f34baef862d1f437b85b8fdfaa2
+      resolved-ref: "6f2753b7eb3fc99bdf765148e26d0556696a3a5e"
       url: "https://github.com/btastic/flutter_native_image.git"
     source: git
     version: "0.0.3"
@@ -201,7 +201,7 @@ packages:
       name: html
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.13.3+2"
+    version: "0.13.3+3"
   http:
     dependency: transitive
     description:
@@ -285,7 +285,7 @@ packages:
       name: matcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.12.2+1"
+    version: "0.12.3+1"
   meta:
     dependency: transitive
     description:
@@ -404,7 +404,7 @@ packages:
       name: shelf_web_socket
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.2+3"
+    version: "0.2.2+4"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -451,14 +451,14 @@ packages:
       name: string_scanner
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.3"
+    version: "1.0.4"
   synchronized:
     dependency: transitive
     description:
       name: synchronized
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.5.1"
+    version: "1.5.1+1"
   term_glyph:
     dependency: transitive
     description:
@@ -472,7 +472,7 @@ packages:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.12.41"
+    version: "0.12.42"
   typed_data:
     dependency: transitive
     description:
@@ -537,5 +537,5 @@ packages:
     source: hosted
     version: "2.1.15"
 sdks:
-  dart: ">=2.0.0-dev.62.0 <=2.0.0-dev.69.5.flutter-b04def964c"
-  flutter: ">=0.4.0 <=0.5.8"
+  dart: ">=2.0.0-dev.62.0 <=2.0.0-dev.69.5.flutter-eab492385c"
+  flutter: ">=0.4.0 <=0.6.0"

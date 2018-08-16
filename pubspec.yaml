@@ -11,7 +11,7 @@ dependencies:
   flushbar: '>=0.3.0'
 
   #firebase
-  firebase_auth: "^0.5.15"
+  firebase_auth: "^0.5.18"
   cloud_firestore: "0.7.4"
   firebase_storage: "1.0.1"
   firebase_core: "^0.2.5"
@@ -57,6 +57,8 @@ flutter:
      - images/cover_placeholder.png
      - images/empty_book_list_land.png
      - images/empty_book_list_port.png
+     
+     - assets/test_file.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.

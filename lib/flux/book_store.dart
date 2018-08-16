@@ -1,16 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/backend/data_repository.dart';
+import 'package:cronicalia_flutter/backend/file_repository.dart';
 import 'package:cronicalia_flutter/flux/book_sorter.dart';
 import 'package:cronicalia_flutter/models/book.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:flutter_flux/flutter_flux.dart';
 
 class BookStore extends Store {
   final Firestore _firestore = Firestore.instance;
+  final StorageReference _storageReference = FirebaseStorage.instance.ref();
 
   DataRepository _dataRepository;
+  FileRepository _fileRepository;
 
   int _totalNumberOfBooks = 0;
+  String _currentFileText = "Initial Text";
 
   final List<Book> _actionBooks = List<Book>();
   final List<Book> _adventureBooks = List<Book>();
@@ -25,6 +30,7 @@ class BookStore extends Store {
 
   BookStore() {
     _dataRepository = DataRepository(_firestore);
+    _fileRepository = FileRepository(_storageReference);
 
     triggerOnAction(loadBookRecomendationsAction, (BookLanguage preferredLanguage) async {
       final List<Book> recommendedBooks = await _dataRepository.getBookRecommendations(preferredLanguage);
@@ -54,6 +60,17 @@ class BookStore extends Store {
 
       _totalNumberOfBooks = _sumBooks();
     });
+
+    triggerOnConditionalAction(downloadBookFileAction, (String bookUid) {
+      _fileRepository.downloadBookFile().then((String fileText) {
+        if (fileText != null) {
+          _currentFileText = fileText;
+          trigger();
+        }
+      });
+
+      return false;
+    });
   }
 
   int _sumBooks() {
@@ -70,6 +87,8 @@ class BookStore extends Store {
   }
 
   int get totalNumberOfBook => _totalNumberOfBooks;
+  String get currentFileText => _currentFileText;
+
   List<Book> get actionBooks => _actionBooks;
   List<Book> get adventureBooks => _adventureBooks;
   List<Book> get comedyBooks => _comedyBooks;
@@ -85,3 +104,4 @@ class BookStore extends Store {
 final StoreToken bookStoreToken = new StoreToken(BookStore());
 
 Action<BookLanguage> loadBookRecomendationsAction = new Action<BookLanguage>();
+Action<String> downloadBookFileAction = new Action<String>();

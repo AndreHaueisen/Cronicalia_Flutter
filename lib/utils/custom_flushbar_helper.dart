@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 
 class FlushbarHelper {
   /// Get a success notification flushbar.
-  static Flushbar createSuccess({@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
+  static Flushbar createSuccess(
+      {@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
       ..titleText = Text(
         title,
@@ -21,13 +22,12 @@ class FlushbarHelper {
         color: Colors.green[300],
       )
       ..duration = duration
-      ..mainButton = null
-      ..userInputForm = null
-      ..linearProgressIndicator = null;
+      ..leftBarIndicatorColor = Colors.green[300];
   }
 
   /// Get an information notification flushbar
-  static Flushbar createInformation({@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
+  static Flushbar createInformation(
+      {@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
       ..titleText = Text(
         title,
@@ -45,13 +45,12 @@ class FlushbarHelper {
         color: Colors.blue[300],
       )
       ..duration = duration
-      ..mainButton = null
-      ..userInputForm = null
-      ..linearProgressIndicator = null;
+      ..leftBarIndicatorColor = Colors.blue[300];
   }
 
   /// Get a error notification flushbar
-  static Flushbar createError({@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
+  static Flushbar createError(
+      {@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
       ..titleText = Text(
         title,
@@ -69,14 +68,15 @@ class FlushbarHelper {
         color: Colors.red[300],
       )
       ..duration = duration
-      ..mainButton = null
-      ..userInputForm = null
-      ..linearProgressIndicator = null;
+      ..leftBarIndicatorColor = Colors.red[300];
   }
 
   /// Get a flushbar that can receive a user action through a button.
   static Flushbar createAction(
-      {@required String title, @required String message, @required FlatButton button, Duration duration = const Duration(seconds: 3)}) {
+      {@required String title,
+      @required String message,
+      @required FlatButton button,
+      Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
       ..titleText = Text(
         title,
@@ -88,16 +88,21 @@ class FlushbarHelper {
       )
       ..backgroundColor = Colors.grey[200]
       ..shadowColor = Colors.grey[300]
-      ..icon = null
       ..duration = duration
       ..mainButton = button
-      ..userInputForm = null
-      ..linearProgressIndicator = null;
+      ..leftBarIndicatorColor = button.textColor;
   }
 
   /// Get a flushbar that shows the progress of a async computation.
   static Flushbar createLoading(
-      {@required String title, @required String message, @required LinearProgressIndicator linearProgressIndicator, Duration duration}) {
+      {@required String title,
+      @required String message,
+      AnimationController indicatorController,
+      Color indicatorBackgroundColor,
+
+      Duration duration}) {
+
+
     return Flushbar()
       ..titleText = Text(
         title,
@@ -114,9 +119,10 @@ class FlushbarHelper {
         color: Colors.blue[300],
       )
       ..duration = duration
-      ..mainButton = null
-      ..userInputForm = null
-      ..linearProgressIndicator = linearProgressIndicator;
+      ..showProgressIndicator = true
+      ..progressIndicatorController = indicatorController
+      ..progressIndicatorBackgroundColor = indicatorBackgroundColor;
+      
   }
 
   static Flushbar createInput({@required Form textForm}) {

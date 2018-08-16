@@ -238,7 +238,7 @@ class DataRepository {
 
   Future<String> _savePosterOnPermanentLocalFile(String tempPosterPath, String bookUID) async {
     File posterTempFile = File(tempPosterPath);
-    File posterPicFile = await Utility.createUserFile(
+    File posterPicFile = await Utility.createFile(
         Constants.FOLDER_NAME_BOOKS,
         "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
 
@@ -248,7 +248,7 @@ class DataRepository {
 
   Future<String> _saveCoverOnPermanentLocalFile(String tempCoverPath, String bookUID) async {
     File coverTempFile = File(tempCoverPath);
-    File coverPicFile = await Utility.createUserFile(
+    File coverPicFile = await Utility.createFile(
         Constants.FOLDER_NAME_BOOKS,
         "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
 
