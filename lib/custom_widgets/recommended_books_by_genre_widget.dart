@@ -64,59 +64,59 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Expanded(
-          flex: 1,
+        SizedBox(
+          width: 140.0,
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Image.network(
-              book.remoteCoverUri,
-              fit: BoxFit.fill,
-              height: _BOX_HEIGHT,
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(topRight: Radius.circular(4.0), bottomRight: Radius.circular(4.0)),
+                          child: Image.network(
+                book.remoteCoverUri,
+                fit: BoxFit.fill,
+                height: _BOX_HEIGHT,
+              ),
             ),
           ),
         ),
         Expanded(
           flex: MediaQuery.of(context).orientation == Orientation.portrait ? 2 : 3,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
-                  child: Text(
-                    book.title,
-                    style: TextStyle(
-                      color: TextColorDarkBackground.primary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 18.0
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
+                child: Text(
+                  book.title,
+                  style: TextStyle(
+                    color: TextColorDarkBackground.primary,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18.0
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-                  child: Text(
-                    "By ${book.authorName}",
-                    style: TextStyle(color: TextColorDarkBackground.secondary),
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                child: Text(
+                  "By ${book.authorName}",
+                  style: TextStyle(color: TextColorDarkBackground.secondary),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: Text(
-                    book.synopsis,
-                    style: TextStyle(
-                      color: TextColorDarkBackground.secondary,
-                      fontSize: 12.0
-                    ),
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.justify,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Text(
+                  book.synopsis,
+                  style: TextStyle(
+                    color: TextColorDarkBackground.secondary,
+                    fontSize: 12.0
                   ),
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.justify,
                 ),
-                _buildBookStats(book),
-              ],
-            ),
+              ),
+              _buildBookStats(book),
+            ],
           ),
         ),
       ],

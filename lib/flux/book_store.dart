@@ -101,7 +101,7 @@ class BookStore extends Store {
   List<Book> get satireBooks => _satireBooks;
 }
 
-final StoreToken bookStoreToken = new StoreToken(BookStore());
+final StoreToken bookStoreToken = StoreToken(BookStore());
 
-Action<BookLanguage> loadBookRecomendationsAction = new Action<BookLanguage>();
-Action<String> downloadBookFileAction = new Action<String>();
+Action<BookLanguage> loadBookRecomendationsAction = Action<BookLanguage>();
+Action<String> downloadBookFileAction = Action<String>();

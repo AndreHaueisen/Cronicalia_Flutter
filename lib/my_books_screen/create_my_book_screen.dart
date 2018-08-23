@@ -25,7 +25,8 @@ class CreateMyBookScreen extends StatefulWidget {
 }
 
 class _CreateMyBookScreenState extends State<CreateMyBookScreen>
-    with StoreWatcherMixin<CreateMyBookScreen>, SingleTickerProviderStateMixin<CreateMyBookScreen> {
+    with StoreWatcherMixin<CreateMyBookScreen>, SingleTickerProviderStateMixin<CreateMyBookScreen>
+    implements BookFileWidgetCallback {
   final Book _book = Book();
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
   final TextEditingController _titleController = new TextEditingController();
@@ -37,15 +38,15 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   void initState() {
     super.initState();
     _scrollController = new ScrollController();
-    _uploadProgressController = AnimationController(
-      vsync: this,
-      value: 0.0
-    );
+    _uploadProgressController = AnimationController(vsync: this, value: 0.0);
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _filesWidgets?.forEach((BookFileWidget fileWidget){
+      fileWidget.cleanUp();
+    });
     super.dispose();
   }
 
@@ -124,7 +125,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
               final List<String> localFilePaths = List<String>();
               _filesWidgets.forEach((BookFileWidget fileWidget) {
                 _book.chaptersLaunchDates.add(_book.publicationDate);
-                _book.remoteChapterTitles.add(fileWidget.chapterTitle);
+                _book.chapterTitles.add(fileWidget.fileTitle);
                 localFilePaths.add(fileWidget.filePath);
               });
               createIncompleteBookAction([_book, localFilePaths]);
@@ -283,11 +284,10 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   bool _validateChapterTitles() {
-
-    if(_book.isLaunchedComplete) return true;
+    if (_book.isLaunchedComplete) return true;
 
     for (int counter = 0; counter < _filesWidgets.length; counter++) {
-      String title = _filesWidgets[counter].chapterTitle;
+      String title = _filesWidgets[counter].fileTitle;
       if (title == null || title.isEmpty) {
         FlushbarHelper.createError(
                 title: "Title error",
@@ -660,10 +660,19 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
         color: Colors.white,
         child: SizedBox(
           height: _filesWidgets.length <= 1
-              ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT
+              ? (_filesWidgets.length + 0.4) * FILE_WIDGET_HEIGHT
               : (_filesWidgets.length) * FILE_WIDGET_HEIGHT,
           child: _book.isLaunchedComplete
-              ? _filesWidgets[0]
+              ? Column(mainAxisSize: MainAxisSize.min, children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
+                    child: Text(
+                      "Book Files",
+                      style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
+                    ),
+                  ),
+                  _filesWidgets[0],
+                ])
               : ReorderableListView(
                   children: _filesWidgets,
                   onReorder: (int oldIndex, int newIndex) {
@@ -673,9 +682,6 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
                       newIndex -= 1;
                     }
                     _filesWidgets.insert(newIndex, toBeMovedFileWidget);
-
-                    print("oldIndex: $oldIndex");
-                    print("newIndex: $newIndex");
                   },
                   header: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -691,32 +697,54 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   void _generateFileWidgets(List<String> filePaths) {
-    if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
-
+    
     if (_book.isLaunchedComplete) {
+      if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
       _filesWidgets.add(
         BookFileWidget(
           key: Key(filePaths[0]),
-          isLaunchedComplete: _book.isLaunchedComplete,
+          isComplete: _book.isLaunchedComplete,
+          isReorderable: false,
           filePath: filePaths[0],
           index: -1,
+          bookFileWidgetCallback: this,
+          widgetHeight: FILE_WIDGET_HEIGHT,
         ),
       );
     } else {
-      int counter = 0;
+      int counter = _filesWidgets.length;
 
       filePaths.forEach((String filePath) {
         _filesWidgets.add(
           BookFileWidget(
             key: Key(filePath),
-            isLaunchedComplete: _book.isLaunchedComplete,
+            isComplete: _book.isLaunchedComplete,
             filePath: filePath,
             index: counter,
+            bookFileWidgetCallback: this,
+            widgetHeight: FILE_WIDGET_HEIGHT,
           ),
         );
         counter++;
       });
     }
+  }
+
+  @override
+  void onRemoveFileClick({String filePath, String fileTitle}) {
+    setState(() {
+      _filesWidgets.removeWhere((BookFileWidget bookFileWidget) {
+        if (filePath != null) {
+          return bookFileWidget.filePath == filePath;
+        }
+
+        if (fileTitle != null) {
+          return bookFileWidget.fileTitle == filePath;
+        }
+
+        return false;
+      });
+    });
   }
 }
 

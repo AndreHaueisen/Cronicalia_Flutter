@@ -6,9 +6,9 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:meta/meta.dart';
 
 const CONTENT_TYPE_IMAGE = "image/jpg";
 const CONTENT_TYPE_PDF = "application/pdf";
@@ -99,6 +99,10 @@ class FileRepository {
     }
   }
 
+  Future<String> updateBookFiles({@required originalBook, @required modifiedBook}){
+    
+  }
+
   Future<void> createNewCompleteBook(String encodedEmail, Book book, DataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
@@ -153,7 +157,7 @@ class FileRepository {
 
       streamController.stream.listen((Future<UploadTaskSnapshot> pdfTaskSnapshotFuture) async {
         UploadTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
-        book.remoteChapterUris.add(pdfTaskSnapshot.downloadUrl == null
+        book.chapterUris.add(pdfTaskSnapshot.downloadUrl == null
             ? throw ("Pdf #$counter upload failed")
             : pdfTaskSnapshot.downloadUrl.toString());
 
@@ -235,7 +239,6 @@ class FileRepository {
     }
   }
 
-
   //get file from FirebaseStorage
   Future<String> downloadBookFile() async {
     //StorageReference.getReferenceFromUrl();
@@ -259,5 +262,9 @@ class FileRepository {
       default:
         return Constants.STORAGE_ENGLISH_BOOKS;
     }
+  }
+
+  void _resolveFilesDiff({@required Book originalBook, @required Book modifiedBook}) {
+
   }
 }

@@ -186,6 +186,13 @@ class UserStore extends Store {
       _dataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book);
     });
 
+    triggerOnConditionalAction(updateBookFilesAction, (Book modifiedBook){
+      Book originalBook = user.books[modifiedBook.uID];
+      _fileRepository.updateBookFiles(originalBook: originalBook, modifiedBook: modifiedBook);
+
+      return false;
+    });
+
     triggerOnConditionalAction(createCompleteBookAction, (Book book) {
       const int numberOfFilesToBeUploaded = 3;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
@@ -291,6 +298,9 @@ final Action<List<dynamic>> updateBookCompletionStatusAction = new Action<List<d
 /// payload[0] contains book bookKey
 /// payload[1] contains book periodicity
 final Action<List<dynamic>> updateBookChapterPeriodicityAction = new Action<List<dynamic>>();
+
+///contains the book with file alterations
+Action<Book> updateBookFilesAction = Action<Book>();
 
 final Action<Book> createCompleteBookAction = new Action<Book>();
 

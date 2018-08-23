@@ -4,89 +4,95 @@ import 'package:flutter/material.dart';
 
 class FlushbarHelper {
   /// Get a success notification flushbar.
-  static Flushbar createSuccess(
-      {@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
+  static Flushbar createSuccess({@required String message, String title, Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
-      ..titleText = Text(
-        title,
-        style: TextStyle(color: TextColorBrightBackground.primary),
-      )
       ..messageText = Text(
         message,
         style: TextStyle(color: TextColorBrightBackground.secondary),
       )
-      ..backgroundColor = Colors.grey[200]
+      ..titleText = title != null
+          ? Text(
+              title,
+              style: TextStyle(color: TextColorBrightBackground.primary),
+            )
+          : null
+      ..backgroundColor = Colors.grey[100]
       ..shadowColor = Colors.grey[300]
       ..icon = Icon(
         Icons.check_circle,
-        color: Colors.green[300],
+        color: Colors.green[400],
       )
       ..duration = duration
-      ..leftBarIndicatorColor = Colors.green[300];
+      ..leftBarIndicatorColor = Colors.green[400];
   }
 
   /// Get an information notification flushbar
   static Flushbar createInformation(
-      {@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
+      {@required String message, String title, Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
-      ..titleText = Text(
-        title,
-        style: TextStyle(color: TextColorBrightBackground.primary),
-      )
       ..messageText = Text(
         message,
         style: TextStyle(color: TextColorBrightBackground.secondary),
       )
-      ..backgroundColor = Colors.grey[200]
+      ..titleText = title != null
+          ? Text(
+              title,
+              style: TextStyle(color: TextColorBrightBackground.primary),
+            )
+          : null
+      ..backgroundColor = Colors.grey[100]
       ..shadowColor = Colors.grey[300]
       ..icon = Icon(
         Icons.info_outline,
         size: 28.0,
-        color: Colors.blue[300],
+        color: Colors.blue[400],
       )
       ..duration = duration
-      ..leftBarIndicatorColor = Colors.blue[300];
+      ..leftBarIndicatorColor = Colors.blue[400];
   }
 
   /// Get a error notification flushbar
-  static Flushbar createError(
-      {@required String title, @required String message, Duration duration = const Duration(seconds: 3)}) {
+  static Flushbar createError({@required String message, String title, Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
-      ..titleText = Text(
-        title,
-        style: TextStyle(color: TextColorBrightBackground.primary),
-      )
       ..messageText = Text(
         message,
         style: TextStyle(color: TextColorBrightBackground.secondary),
       )
-      ..backgroundColor = Colors.grey[200]
+      ..titleText = title != null
+          ? Text(
+              title,
+              style: TextStyle(color: TextColorBrightBackground.primary),
+            )
+          : null
+      ..backgroundColor = Colors.grey[100]
       ..shadowColor = Colors.grey[300]
       ..icon = Icon(
         Icons.warning,
         size: 28.0,
-        color: Colors.red[300],
+        color: Colors.red[400],
       )
       ..duration = duration
-      ..leftBarIndicatorColor = Colors.red[300];
+      ..leftBarIndicatorColor = Colors.red[400];
   }
 
   /// Get a flushbar that can receive a user action through a button.
   static Flushbar createAction(
-      {@required String title,
-      @required String message,
+      {@required String message,
       @required FlatButton button,
+      String title,
       Duration duration = const Duration(seconds: 3)}) {
     return Flushbar()
-      ..titleText = Text(
-        title,
-        style: TextStyle(color: TextColorBrightBackground.primary),
-      )
       ..messageText = Text(
         message,
         style: TextStyle(color: TextColorBrightBackground.secondary),
       )
-      ..backgroundColor = Colors.grey[200]
+      ..titleText = title != null
+          ? Text(
+              title,
+              style: TextStyle(color: TextColorBrightBackground.primary),
+            )
+          : null
+      ..backgroundColor = Colors.grey[100]
       ..shadowColor = Colors.grey[300]
       ..duration = duration
       ..mainButton = button
@@ -95,39 +101,37 @@ class FlushbarHelper {
 
   /// Get a flushbar that shows the progress of a async computation.
   static Flushbar createLoading(
-      {@required String title,
-      @required String message,
+      {@required String message,
+      String title,
       AnimationController indicatorController,
       Color indicatorBackgroundColor,
-
       Duration duration}) {
-
-
     return Flushbar()
-      ..titleText = Text(
-        title,
-        style: TextStyle(color: TextColorBrightBackground.primary),
-      )
       ..messageText = Text(
         message,
         style: TextStyle(color: TextColorBrightBackground.secondary),
       )
-      ..backgroundColor = Colors.grey[200]
+      ..titleText = title != null
+          ? Text(
+              title,
+              style: TextStyle(color: TextColorBrightBackground.primary),
+            )
+          : null
+      ..backgroundColor = Colors.grey[100]
       ..shadowColor = Colors.grey[300]
       ..icon = Icon(
         Icons.cloud_upload,
-        color: Colors.blue[300],
+        color: Colors.blue[400],
       )
       ..duration = duration
       ..showProgressIndicator = true
       ..progressIndicatorController = indicatorController
       ..progressIndicatorBackgroundColor = indicatorBackgroundColor;
-      
   }
 
   static Flushbar createInput({@required Form textForm}) {
     return Flushbar()
-      ..backgroundColor = Colors.grey[200]
+      ..backgroundColor = Colors.grey[100]
       ..duration = null
       ..userInputForm = textForm;
   }

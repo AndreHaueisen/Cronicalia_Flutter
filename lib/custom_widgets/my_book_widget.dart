@@ -1,4 +1,3 @@
-import 'package:cronicalia_flutter/custom_widgets/outsider_button_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
@@ -55,8 +54,10 @@ class MyBookWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16.0, left: 8.0, right: 8.0, bottom: 8.0),
               child: Text(
                 _book.title,
-                style: TextStyle(fontSize: 20.0,fontWeight: FontWeight.w700,),
-                
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             Padding(
@@ -83,7 +84,7 @@ class MyBookWidget extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
                 child: Text(
-                  _book.isLaunchedComplete ? "Book complete" : "${_book.remoteChapterTitles.length} chapters",
+                  _book.isLaunchedComplete ? "Book complete" : "${_book.chapterTitles.length} chapters",
                   style: TextStyle(fontSize: 12.0, color: TextColorDarkBackground.secondary),
                 ),
               ),
@@ -105,9 +106,13 @@ class MyBookWidget extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: Icon(Icons.remove_red_eye, color: TextColorDarkBackground.tertiary,),
+                child: Icon(
+                  Icons.remove_red_eye,
+                  color: TextColorDarkBackground.tertiary,
+                ),
               ),
-              Text(_book.readingsNumber.toString(), style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
+              Text(_book.readingsNumber.toString(),
+                  style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
             ],
           ),
           Row(
@@ -117,7 +122,8 @@ class MyBookWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 8.0, right: 6.0),
                 child: Icon(Icons.star, color: TextColorDarkBackground.tertiary),
               ),
-              Text(_book.rating.toString(), style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
+              Text(_book.rating.toString(),
+                  style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
             ],
           ),
           Row(
@@ -126,7 +132,8 @@ class MyBookWidget extends StatelessWidget {
               Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Text(_book.income.toString(), style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold)),
+                child: Text(_book.income.toString(),
+                    style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold)),
               )
             ],
           )
@@ -148,33 +155,7 @@ class MyBookWidget extends StatelessWidget {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildFloatingButton(
-                        icon: Icons.edit,
-                        onClick: () {
-                          Navigator
-                              .of(context)
-                              .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey), maintainState: false));
-                          print("show edit mode");
-                        },
-                      ),
-                      Image(
-                        width: 135.0,
-                        height: 180.0,
-                        image: NetworkImage(_book.remoteCoverUri),
-                      ),
-                      _buildFloatingButton(
-                        icon: Icons.chat_bubble_outline,
-                        onClick: () {
-                          print("show opinions");
-                        },
-                      ),
-                    ],
-                  ),
+                  child: _buildLateralButtonsAndCover(context),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
@@ -185,6 +166,45 @@ class MyBookWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLateralButtonsAndCover(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _buildFloatingButton(
+          icon: Icons.edit,
+          onClick: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey), maintainState: false));
+            print("show edit mode");
+          },
+        ),
+        Container(
+          constraints: BoxConstraints.tight(Size(135.0, 180.0)),
+          decoration: BoxDecoration(
+            boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)],
+            borderRadius: BorderRadius.circular(6.0),
+            shape: BoxShape.rectangle,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6.0),
+            child: Image(
+              image: NetworkImage(_book.remoteCoverUri),
+              fit: BoxFit.fill,
+            ),
+          ),
+        ),
+        _buildFloatingButton(
+          icon: Icons.chat_bubble_outline,
+          onClick: () {
+            print("show opinions");
+          },
+        ),
+      ],
     );
   }
 

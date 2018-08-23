@@ -45,6 +45,11 @@ class Utility {
     return await ioSink.done;
   }
 
+  static bool isFileRemote(String fileUrl) {
+    assert(fileUrl != null, "fileUrl is null");
+    return fileUrl.startsWith('https://');
+  }
+
   static Future<File> resizeImage(File inputFile) async {
     int imageMaxWidth = 1000;
     int imageMaxHeight = 700;
@@ -56,14 +61,18 @@ class Utility {
     if (isLandscape) {
       if (properties.width > imageMaxWidth) {
         return await FlutterNativeImage.compressImage(inputFile.path,
-            quality: 90, targetWidth: imageMaxWidth, targetHeight: (properties.height * imageMaxWidth / properties.width).round());
+            quality: 90,
+            targetWidth: imageMaxWidth,
+            targetHeight: (properties.height * imageMaxWidth / properties.width).round());
       } else {
         return inputFile;
       }
     } else {
       if (properties.height > imageMaxHeight) {
         return await FlutterNativeImage.compressImage(inputFile.path,
-            quality: 90, targetWidth: (properties.width * imageMaxHeight / properties.height).round(), targetHeight: imageMaxHeight);
+            quality: 90,
+            targetWidth: (properties.width * imageMaxHeight / properties.height).round(),
+            targetHeight: imageMaxHeight);
       } else {
         return inputFile;
       }

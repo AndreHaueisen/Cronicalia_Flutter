@@ -32,8 +32,8 @@ class Book {
   BookLanguage language;
   String localFullBookUri;
   String remoteFullBookUri;
-  List<dynamic> remoteChapterTitles = List();
-  List<dynamic> remoteChapterUris = List();
+  List<dynamic> chapterTitles = List();
+  List<dynamic> chapterUris = List();
   List<dynamic> chaptersLaunchDates = List();
   String localCoverUri;
   String localPosterUri;
@@ -92,8 +92,8 @@ class Book {
       this.localCoverUri = snapshot.data['localCoverUri'];
       this.synopsis = snapshot.data['synopsis'];
       this.chaptersLaunchDates.addAll(snapshot.data['chaptersLaunchDates']);
-      this.remoteChapterUris.addAll(snapshot.data['remoteChapterUris']);
-      this.remoteChapterTitles.addAll(snapshot.data['remoteChapterTitles']);
+      this.chapterUris.addAll(snapshot.data['remoteChapterUris']);
+      this.chapterTitles.addAll(snapshot.data['remoteChapterTitles']);
 
       this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
         return periodicity.toString() == "ChapterPeriodicity.${snapshot.data['periodicity']}";
@@ -129,8 +129,8 @@ class Book {
     this.localCoverUri = linkedMap['localCoverUri'];
     this.synopsis = linkedMap['synopsis'];
     this.chaptersLaunchDates.addAll(linkedMap['chaptersLaunchDates']);
-    this.remoteChapterUris.addAll(linkedMap['remoteChapterUris']);
-    this.remoteChapterTitles.addAll(linkedMap['remoteChapterTitles']);
+    this.chapterUris.addAll(linkedMap['remoteChapterUris']);
+    this.chapterTitles.addAll(linkedMap['remoteChapterTitles']);
 
     this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
       return periodicity.toString() == "ChapterPeriodicity.${linkedMap['periodicity']}";
@@ -145,6 +145,40 @@ class Book {
 
   String generateStorageFolder() {
     return "${authorEmailId}_${title.replaceAll(' ', '_')}_${convertLanguageToString(language).toUpperCase()}";
+  }
+
+  Book copy() {
+    Book newBook = Book(
+      title: this.title,
+      uID: this.uID,
+      authorName: this.authorName,
+      authorEmailId: this.authorEmailId,
+      authorTwitterProfile: this.authorTwitterProfile,
+      publicationDate: this.publicationDate,
+      genre: this.genre,
+      bookPosition: this.bookPosition,
+      rating: this.rating,
+      ratingCounter: this.ratingCounter,
+      income: this.income,
+      readingsNumber: this.readingsNumber,
+      language: this.language,
+      localFullBookUri: this.localFullBookUri,
+      remoteFullBookUri: this.remoteFullBookUri,
+      localCoverUri: this.localCoverUri,
+      localPosterUri: this.localPosterUri,
+      remoteCoverUri: this.remoteCoverUri,
+      remotePosterUri: this.remotePosterUri,
+      isLaunchedComplete: this.isLaunchedComplete,
+      isCurrentlyComplete: this.isCurrentlyComplete,
+      periodicity: this.periodicity,
+      synopsis: this.synopsis,
+    );
+
+    newBook.chapterTitles.addAll(this.chapterTitles);
+    newBook.chapterUris.addAll(this.chapterUris);
+    newBook.chaptersLaunchDates.addAll(this.chaptersLaunchDates);
+
+    return newBook;
   }
 
   static String convertPeriodicityToString(ChapterPeriodicity chapterPeriodicity) {
@@ -231,8 +265,8 @@ class Book {
       "localCoverUri": this.localCoverUri,
       "synopsis": this.synopsis,
       "chaptersLaunchDates": this.chaptersLaunchDates,
-      "remoteChapterUris": this.remoteChapterUris,
-      "remoteChapterTitles": this.remoteChapterTitles,
+      "remoteChapterUris": this.chapterUris,
+      "remoteChapterTitles": this.chapterTitles,
       "periodicity": periodicity.toString().split(".")[1],
       "genre": genre.toString().split(".")[1],
       "language": language.toString().split(".")[1]
@@ -254,32 +288,7 @@ class Book {
 
   @override
   int get hashCode {
-    return title.hashCode +
-        uID.hashCode +
-        authorName.hashCode +
-        authorEmailId.hashCode +
-        authorTwitterProfile.hashCode +
-        publicationDate.hashCode +
-        genre.hashCode +
-        bookPosition.hashCode +
-        rating.hashCode +
-        ratingCounter.hashCode +
-        income.hashCode +
-        readingsNumber.hashCode +
-        language.hashCode +
-        localFullBookUri.hashCode +
-        remoteFullBookUri.hashCode +
-        remoteChapterTitles.hashCode +
-        remoteChapterUris.hashCode +
-        chaptersLaunchDates.hashCode +
-        localCoverUri.hashCode +
-        localPosterUri.hashCode +
-        remoteCoverUri.hashCode +
-        remotePosterUri.hashCode +
-        isLaunchedComplete.hashCode +
-        isCurrentlyComplete.hashCode +
-        periodicity.hashCode +
-        synopsis.hashCode;
+    return uID.hashCode;
   }
 }
 
