@@ -5,7 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
+import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
+import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 import 'package:flutter/painting.dart';
 
@@ -135,7 +137,7 @@ class DataRepository {
     writeBatch.updateData(userBookReference, userBookToUpdate);
     writeBatch.updateData(bookReference, bookToUpdate);
 
-    return await writeBatch.commit();
+    return writeBatch.commit();
   }
 
   Future<void> updateBookCoverPictureReferences(String encodedEmail, Book book, String localCoverUri, String remoteCoverUri) async {
@@ -153,7 +155,7 @@ class DataRepository {
     writeBatch.updateData(userBookReference, userBookToUpdate);
     writeBatch.updateData(bookReference, bookToUpdate);
 
-    return await writeBatch.commit();
+    return writeBatch.commit();
   }
 
   Future<void> updateBookTitle(String encodedEmail, Book editedBook) async {
@@ -168,7 +170,7 @@ class DataRepository {
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
 
-    return await writeBatch.commit();
+    return writeBatch.commit();
   }
 
   Future<void> updateBookSynopsis(String encodedEmail, Book book, String newSynopsis) async {
@@ -183,7 +185,7 @@ class DataRepository {
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
 
-    return await writeBatch.commit();
+    return writeBatch.commit();
   }
 
   Future<void> updateBookCompletionStatus(String encodedEmail, Book editedBook) async{
@@ -198,7 +200,7 @@ class DataRepository {
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
 
-    return await writeBatch.commit();
+    return writeBatch.commit();
   }
 
   Future<void> updateBookChapterPeriodicity(String encodedEmail, Book editedBook) async{
@@ -213,7 +215,7 @@ class DataRepository {
     writeBatch.updateData(userReference, valueToUpdateOnUser);
     writeBatch.updateData(bookReference, valueToUpdateOnBook);
 
-    return await writeBatch.commit();
+    return writeBatch.commit();
   }
 
   Future<void> createNewBook(String encodedEmail, Book book) async {

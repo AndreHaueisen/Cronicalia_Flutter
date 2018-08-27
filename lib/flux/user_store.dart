@@ -6,9 +6,11 @@ import 'package:cronicalia_flutter/backend/file_repository.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/models/user.dart';
+import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 class UserStore extends Store {
@@ -106,9 +108,10 @@ class UserStore extends Store {
       _dataRepository.updateUserAboutMe(this._user);
     });
 
-    triggerOnConditionalAction(updateBookPosterImageAction, (List<String> payload) {
-      String bookUID = payload[0];
-      String localUri = payload[1];
+    triggerOnConditionalAction(updateBookPosterImageAction, (List<dynamic> payload) {
+      String bookUID = payload[0] as String;
+      String localUri = payload[1] as String;
+      BuildContext context = payload[2] as BuildContext;
 
       //First update locally
       _user.books[bookUID].localPosterUri = localUri;
@@ -116,77 +119,134 @@ class UserStore extends Store {
       _fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
+
             _user = user;
             print("user loaded in store");
-            // Do not need to trigger()
+            trigger();
+            
+            FlushbarHelper.createSuccess(message: "Poster uploaded").show(context);
           }
+        }, onError: () {
+          FlushbarHelper.createError(message: "Poster upload failed").show(context);
         });
+      }).timeout(Duration(seconds: 12), onTimeout: () {
+        FlushbarHelper.createError(message: "Connection failed. New poster was not sent").show(context);
       });
 
-      //TODO: may have to be true
       return false;
     });
 
-    triggerOnConditionalAction(updateBookCoverImageAction, (List<String> payload) {
-      String bookUID = payload[0];
-      String localUri = payload[1];
+    triggerOnConditionalAction(updateBookCoverImageAction, (List<dynamic> payload) {
+      String bookUID = payload[0] as String;
+      String localUri = payload[1] as String;
+      BuildContext context = payload[2] as BuildContext;
 
       _user.books[bookUID].localCoverUri = localUri;
 
       _fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
+
             _user = user;
             print("user loaded in store");
-            // Do not need to trigger()
+            trigger();
+
+            FlushbarHelper.createSuccess(message: "Cover uploaded").show(context);
           }
+        }, onError: () {
+          FlushbarHelper.createError(message: "Cover upload failed").show(context);
         });
+      }).timeout(Duration(seconds: 12), onTimeout: () {
+        FlushbarHelper.createError(message: "Connection failed. New cover was not sent").show(context);
       });
 
-      //TODO: may have to be true
       return false;
     });
 
-    triggerOnAction(updateBookTitleAction, (List<String> payload) {
-      String bookKey = payload[0];
-      String newTitle = payload[1];
+    triggerOnConditionalAction(updateBookTitleAction, (List<dynamic> payload) {
+      String bookKey = payload[0] as String;
+      String newTitle = payload[1] as String;
+      BuildContext context = payload[2] as BuildContext;
 
       Book book = this._user.books[bookKey];
       book.title = newTitle;
 
-      _dataRepository.updateBookTitle(_user.encodedEmail, book);
+      _dataRepository.updateBookTitle(_user.encodedEmail, book).then((_) {
+        FlushbarHelper.createSuccess(message: "Title updated").show(context);
+        trigger();
+      }, onError: () {
+        FlushbarHelper.createError(message: "Title update failed").show(context);
+      }).timeout(Duration(seconds: 4), onTimeout: () {
+        FlushbarHelper.createError(message: "Connection failed").show(context);
+      });
+
+      return false;
     });
-    triggerOnAction(updateBookSynopsisAction, (List<String> payload) {
-      String bookKey = payload[0];
-      String newSynopsis = payload[1];
+
+    triggerOnConditionalAction(updateBookSynopsisAction, (List<dynamic> payload) {
+      String bookKey = payload[0] as String;
+      String newSynopsis = payload[1] as String;
+      BuildContext context = payload[2] as BuildContext;
 
       Book book = this._user.books[bookKey];
       book.synopsis = newSynopsis;
 
-      _dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis);
+      _dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis).then((_) {
+        FlushbarHelper.createSuccess(message: "Synopsis updated").show(context);
+        trigger();
+      }, onError: () {
+        FlushbarHelper.createError(message: "Synopsis update failed").show(context);
+      }).timeout(Duration(seconds: 4), onTimeout: () {
+        FlushbarHelper.createError(message: "Connection failed").show(context);
+      });
+
+      return false;
     });
 
-    triggerOnAction(updateBookCompletionStatusAction, (List<dynamic> payload){
+    triggerOnConditionalAction(updateBookCompletionStatusAction, (List<dynamic> payload) {
       String bookKey = payload[0];
       bool isBookCurrentlyComplete = payload[1];
+      BuildContext context = payload[2] as BuildContext;
 
       Book book = this._user.books[bookKey];
       book.isCurrentlyComplete = isBookCurrentlyComplete;
 
-      _dataRepository.updateBookCompletionStatus(_user.encodedEmail, book);
+      _dataRepository.updateBookCompletionStatus(_user.encodedEmail, book).then((_) {
+        trigger();
+      }, onError: () {
+        FlushbarHelper.createError(message: "Book status could not be updated").show(context);
+      }).timeout(Duration(seconds: 4), onTimeout: () {
+        FlushbarHelper.createError(message: "Connection failed").show(context);
+      });
+
+      return false;
     });
 
-    triggerOnAction(updateBookChapterPeriodicityAction, (List<dynamic> payload){
+    triggerOnConditionalAction(updateBookChapterPeriodicityAction, (List<dynamic> payload) {
       String bookKey = payload[0];
       ChapterPeriodicity newPeriodicity = payload[1];
+      BuildContext context = payload[2] as BuildContext;
 
       Book book = this._user.books[bookKey];
       book.periodicity = newPeriodicity;
 
-      _dataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book);
+      _dataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book).then((_) {
+        FlushbarHelper.createSuccess(
+                message:
+                    "Your readers will expect a new chapter ${Book.convertPeriodicityToString(newPeriodicity).toLowerCase()}")
+            .show(context);
+
+        trigger();
+      }, onError: () {
+        FlushbarHelper.createError(message: "Periodicity could not be updated").show(context);
+      }).timeout(Duration(seconds: 4), onTimeout: () {
+        FlushbarHelper.createError(message: "Connection failed").show(context);
+      });
+
+      return false;
     });
 
-    triggerOnConditionalAction(updateBookFilesAction, (Book modifiedBook){
+    triggerOnConditionalAction(updateBookFilesAction, (Book modifiedBook) {
       Book originalBook = user.books[modifiedBook.uID];
       _fileRepository.updateBookFiles(originalBook: originalBook, modifiedBook: modifiedBook);
 
@@ -197,7 +257,9 @@ class UserStore extends Store {
       const int numberOfFilesToBeUploaded = 3;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
-      _fileRepository.createNewCompleteBook(_user.encodedEmail, book, _dataRepository, progressStream: _progressStream).then((_) {
+      _fileRepository
+          .createNewCompleteBook(_user.encodedEmail, book, _dataRepository, progressStream: _progressStream)
+          .then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
@@ -277,26 +339,32 @@ final Action<String> updateUserAboutMeAction = new Action<String>();
 
 /// payload[0] contains book bookKey
 /// payload[1] contains book localUri
-final Action<List<String>> updateBookPosterImageAction = new Action<List<String>>();
+/// payload[2] contains BuildContext
+final Action<List<dynamic>> updateBookPosterImageAction = new Action<List<dynamic>>();
 
 /// payload[0] contains book bookKey
 /// payload[1] contains book localUri
-final Action<List<String>> updateBookCoverImageAction = new Action<List<String>>();
+/// payload[2] contains BuildContext
+final Action<List<dynamic>> updateBookCoverImageAction = new Action<List<dynamic>>();
 
 /// payload[0] contains book bookKey
 /// payload[1] contains book newTitle
-final Action<List<String>> updateBookTitleAction = new Action<List<String>>();
+/// payload[2] contains BuildContext
+final Action<List<dynamic>> updateBookTitleAction = new Action<List<dynamic>>();
 
 /// payload[0] contains book bookKey
 /// payload[1] contains book newSynopsis
-final Action<List<String>> updateBookSynopsisAction = new Action<List<String>>();
+/// payload[2] contains BuildContext
+final Action<List<dynamic>> updateBookSynopsisAction = new Action<List<dynamic>>();
 
 /// payload[0] contains book bookKey
 /// payload[1] contains book idCurrentlyComplete
+/// payload[2] contains BuildContext
 final Action<List<dynamic>> updateBookCompletionStatusAction = new Action<List<dynamic>>();
 
 /// payload[0] contains book bookKey
 /// payload[1] contains book periodicity
+/// payload[2] contains BuildContext
 final Action<List<dynamic>> updateBookChapterPeriodicityAction = new Action<List<dynamic>>();
 
 ///contains the book with file alterations

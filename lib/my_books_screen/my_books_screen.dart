@@ -26,6 +26,18 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
     _userStore = listenToStore(userStoreToken);
   }
 
+   @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(children: [
+        Expanded(child: (_userStore.isLoggedIn && _userStore.user.books.isNotEmpty) ? _buildBooksScreen() : _buildNoBookScreen()),
+        PersistentBottomBar(
+          selectedItemIdex: 3,
+        ),
+      ]),
+    );
+  }
+
   Widget _buildNoBookScreen() {
     return Stack(children: <Widget>[
       Image.asset(
@@ -100,15 +112,4 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
     ]);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(children: [
-        Expanded(child: (_userStore.isLoggedIn && _userStore.user.books.isNotEmpty) ? _buildBooksScreen() : _buildNoBookScreen()),
-        PersistentBottomBar(
-          selectedItemIdex: 3,
-        ),
-      ]),
-    );
-  }
 }

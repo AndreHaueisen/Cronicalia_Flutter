@@ -6,11 +6,11 @@ import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
+import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:documents_picker/documents_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 enum ImageType { POSTER, COVER }
@@ -32,7 +32,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     implements BookFileWidgetCallback {
   UserStore _userStore;
   bool _isEditModeOn = false;
-  Book _modifiableBook;
+  Book _immutableBook;
 
   AnimationController _wiggleController;
   Animation<double> _wiggleAnimation;
@@ -45,7 +45,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     _scrollController = new ScrollController();
     _userStore = listenToStore(userStoreToken);
 
-    _modifiableBook = _userStore.user.books[widget.bookUID].copy();
+    _immutableBook = _userStore.user.books[widget.bookUID];
 
     _initializeFilesWidgets();
 
@@ -96,11 +96,11 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   void _initializeFilesWidgets() {
-    if (_modifiableBook.isLaunchedComplete) {
-      _replaceFileWidget(fileTitle: _modifiableBook.title);
+    if (_immutableBook.isSingleFileBook) {
+      _replaceFileWidget(fileTitle: _immutableBook.title);
     } else {
       _addFileWidgets(
-          fileTitles: _modifiableBook.chapterTitles.map((dynamic chapterTitle) {
+          fileTitles: _immutableBook.chapterTitles.map((dynamic chapterTitle) {
         return chapterTitle.toString();
       }).toList());
     }
@@ -109,22 +109,9 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      persistentFooterButtons: _buildPersistentButtons(context),
+      persistentFooterButtons: _immutableBook.isCurrentlyComplete ? null : _buildPersistentButtons(context),
       body: new Stack(children: [
-        new Container(
-          height: double.infinity,
-          child: Image(
-            image: MyBookImagePicker.getPosterImageProvider(_modifiableBook.localPosterUri, _modifiableBook.remotePosterUri),
-            alignment: Alignment.topCenter,
-          ),
-          foregroundDecoration: new BoxDecoration(
-            gradient: new LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
-            ),
-          ),
-        ),
+        _buildBackground(),
         Center(
           child: SingleChildScrollView(
             controller: _scrollController,
@@ -137,7 +124,6 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                     _buildCoverPicture(),
                   ],
                 ),
-                _buildCompletionStatusButton(),
                 _buildPeriodicityDropdownButton(),
                 _buildFilesListCard(),
               ],
@@ -148,11 +134,28 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     );
   }
 
+  Widget _buildBackground() {
+    return new Container(
+      height: double.infinity,
+      child: Image(
+        image: MyBookImagePicker.getPosterImageProvider(_immutableBook.localPosterUri, _immutableBook.remotePosterUri),
+        alignment: Alignment.topCenter,
+      ),
+      foregroundDecoration: new BoxDecoration(
+        gradient: new LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
+        ),
+      ),
+    );
+  }
+
   List<Widget> _buildPersistentButtons(BuildContext context) {
     Widget resolveFilePickButton() {
-      if (_modifiableBook.isCurrentlyComplete) {
+      if (_immutableBook.isCurrentlyComplete) {
         return Container(width: 0.0, height: 0.0);
-      } else if (_modifiableBook.isLaunchedComplete) {
+      } else if (_immutableBook.isSingleFileBook) {
         return FlatButton(
           textColor: TextColorDarkBackground.secondary,
           child: Text("UPDATE FILE"),
@@ -200,7 +203,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
             if (paths != null && paths.isNotEmpty) {
               setState(
                 () {
-                  if (_modifiableBook.isLaunchedComplete) {
+                  if (_immutableBook.isSingleFileBook) {
                     _replaceFileWidget(filePath: paths[0]);
                   } else {
                     _addFileWidgets(filePaths: paths);
@@ -216,31 +219,33 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       FlatButton(
         child: Text("SAVE FILES"),
         onPressed: () {
+          final Book fileChangesBook = _userStore.user.books[widget.bookUID].copy();
+
           if (_validateInformation()) {
-            if (_modifiableBook.isLaunchedComplete) {
+            if (fileChangesBook.isSingleFileBook) {
               String filePath = _filesWidgets[0].filePath;
-              if (_modifiableBook.localFullBookUri != filePath) {
-                _modifiableBook.localFullBookUri = _filesWidgets[0].filePath;
-                updateBookFilesAction(_modifiableBook);
+              if (fileChangesBook.localFullBookUri != filePath) {
+                fileChangesBook.localFullBookUri = _filesWidgets[0].filePath;
+                updateBookFilesAction(fileChangesBook);
               }
             } else {
               int counter = 0;
               _filesWidgets.forEach((BookFileWidget fileWidget) {
                 if (fileWidget.filePath != null && !Utility.isFileRemote(fileWidget.filePath)) {
-                  if(counter >= _modifiableBook.chapterUris.length){
-                    _modifiableBook.chapterUris.add(fileWidget.filePath);
-                    _modifiableBook.chapterTitles.add(fileWidget.fileTitle);
-                    _modifiableBook.chaptersLaunchDates.add( DateTime.now().millisecondsSinceEpoch);
+                  if (counter >= fileChangesBook.chapterUris.length) {
+                    fileChangesBook.chapterUris.add(fileWidget.filePath);
+                    fileChangesBook.chapterTitles.add(fileWidget.fileTitle);
+                    fileChangesBook.chaptersLaunchDates.add(DateTime.now().millisecondsSinceEpoch);
                   } else {
-                  _modifiableBook.chapterUris[counter] = fileWidget.filePath;
-                  _modifiableBook.chapterTitles[counter] = fileWidget.fileTitle;
-                  _modifiableBook.chaptersLaunchDates[counter] = DateTime.now().millisecondsSinceEpoch;
+                    fileChangesBook.chapterUris[counter] = fileWidget.filePath;
+                    fileChangesBook.chapterTitles[counter] = fileWidget.fileTitle;
+                    fileChangesBook.chaptersLaunchDates[counter] = DateTime.now().millisecondsSinceEpoch;
                   }
                 }
                 counter++;
               });
 
-              updateBookFilesAction(_modifiableBook);
+              updateBookFilesAction(fileChangesBook);
             }
           }
         },
@@ -253,7 +258,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   bool _validateNewChapterTitles() {
-    if (_modifiableBook.isLaunchedComplete) return true;
+    if (_immutableBook.isSingleFileBook) return true;
 
     for (var counter = 0; counter < _filesWidgets.length; counter++) {
       String title = _filesWidgets[counter].fileTitle;
@@ -316,7 +321,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                 child: new Transform.rotate(
                   angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
                   child: new Text(
-                    _modifiableBook.title,
+                    _immutableBook.title,
                     style: TextStyle(fontSize: 24.0),
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
@@ -337,7 +342,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                 child: new Transform.rotate(
                   angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
                   child: new Text(
-                    _modifiableBook.synopsis,
+                    _immutableBook.synopsis,
                     style: TextStyle(color: TextColorDarkBackground.secondary),
                     textAlign: TextAlign.justify,
                     overflow: TextOverflow.ellipsis,
@@ -346,7 +351,8 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                 ),
               ),
             ),
-            _bookStatsWidget(context)
+            _bookStatsWidget(context),
+            _buildCompletionStatusButton(),
           ],
         ),
       ),
@@ -363,39 +369,17 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         padding: padding,
         child: ButtonTheme(
           minWidth: 130.0,
-          child: OutlineButton(
+          child: RaisedButton(
+            elevation: 0.0,
             child: Text(
               buttonTitle,
-              style: TextStyle(fontSize: 12.0),
+              style: TextStyle(fontSize: 12.0, color: TextColorBrightBackground.secondary),
             ),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
             onPressed: onClick,
-            textColor: AppThemeColors.accentColor,
-            borderSide: BorderSide(color: Colors.grey[500], width: 1.5),
-            highlightColor: Colors.grey[500],
-            color: Colors.grey[500],
+            highlightColor: Colors.grey[200],
+            color: Colors.grey[350],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCoverPicture() {
-    return FractionalTranslation(
-      translation: Offset(0.15, -0.15),
-      child: Container(
-        constraints: BoxConstraints.tight(Size(135.0, 180.0)),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6.0),
-          child: Image(
-            image: MyBookImagePicker.getProfileImageProvider(_modifiableBook.localCoverUri, _modifiableBook.remoteCoverUri),
-            fit: BoxFit.fill,
-          ),
-        ),
-        decoration: BoxDecoration(
-          boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)],
-          borderRadius: BorderRadius.circular(6.0),
-          shape: BoxShape.rectangle,
         ),
       ),
     );
@@ -408,18 +392,56 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       alignment: Alignment.centerLeft,
       duration: Duration(milliseconds: 500),
       child: Padding(
-        padding: const EdgeInsets.only(top: 8.0),
-        child: new FlatButton.icon(
+        padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+        child: new RaisedButton.icon(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
-            side: BorderSide(color: Colors.white, width: 1.0),
           ),
-          highlightColor: AppThemeColors.primaryColorLight,
-          icon: _modifiableBook.isCurrentlyComplete ? Icon(Icons.done) : Icon(Icons.build),
-          label: _modifiableBook.isCurrentlyComplete ? Text("Book marked as complete") : Text("Book in development"),
+          elevation: 0.0,
+          highlightColor: Colors.grey[200],
+          color: Colors.grey[350],
+          icon: _immutableBook.isCurrentlyComplete
+              ? Icon(
+                  Icons.done,
+                  color: TextColorBrightBackground.primary,
+                )
+              : Icon(
+                  Icons.build,
+                  color: TextColorBrightBackground.primary,
+                ),
+          label: _immutableBook.isCurrentlyComplete
+              ? Text(
+                  "Book marked as complete",
+                  style: TextStyle(color: TextColorBrightBackground.primary),
+                )
+              : Text(
+                  "Book under development",
+                  style: TextStyle(color: TextColorBrightBackground.primary),
+                ),
           onPressed: () {
-            updateBookCompletionStatusAction([_modifiableBook.uID, !_modifiableBook.isCurrentlyComplete]);
+            updateBookCompletionStatusAction([_immutableBook.uID, !_immutableBook.isCurrentlyComplete, context]);
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoverPicture() {
+    return FractionalTranslation(
+      translation: Offset(0.15, -0.15),
+      child: Container(
+        constraints: BoxConstraints.tight(Size(Constants.BOOK_COVER_DEFAULT_WIDTH, Constants.BOOK_COVER_DEFAULT_HEIGHT)),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6.0),
+          child: Image(
+            image: MyBookImagePicker.getCoverImageProvider(_immutableBook.localCoverUri, _immutableBook.remoteCoverUri),
+            fit: BoxFit.fill,
+          ),
+        ),
+        decoration: BoxDecoration(
+          boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)],
+          borderRadius: BorderRadius.circular(6.0),
+          shape: BoxShape.rectangle,
         ),
       ),
     );
@@ -428,7 +450,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   Widget _buildPeriodicityDropdownButton() {
     return AnimatedCrossFade(
       duration: Duration(milliseconds: 800),
-      crossFadeState: (_modifiableBook.isLaunchedComplete || _modifiableBook.isCurrentlyComplete)
+      crossFadeState: (_immutableBook.isSingleFileBook || _immutableBook.isCurrentlyComplete)
           ? CrossFadeState.showFirst
           : CrossFadeState.showSecond,
       firstChild: Container(
@@ -439,7 +461,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         color: Colors.transparent,
         child: AnimatedOpacity(
           duration: Duration(microseconds: 800),
-          opacity: _modifiableBook.isCurrentlyComplete ? 0.0 : 1.0,
+          opacity: _immutableBook.isCurrentlyComplete ? 0.0 : 1.0,
           curve: Curves.easeIn,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -454,7 +476,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                   padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
                   child: DropdownButton<ChapterPeriodicity>(
                     style: TextStyle(color: TextColorDarkBackground.secondary),
-                    value: _modifiableBook.periodicity == ChapterPeriodicity.NONE ? null : _modifiableBook.periodicity,
+                    value: _immutableBook.periodicity == ChapterPeriodicity.NONE ? null : _immutableBook.periodicity,
                     items: ChapterPeriodicity.values
                         .map((ChapterPeriodicity periodicity) {
                           if (periodicity != ChapterPeriodicity.NONE) return _buildPeriodicityDropdownItem(periodicity);
@@ -463,7 +485,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                         .sublist(1),
                     hint: Text("Change chapter launch periodicity"),
                     onChanged: (newPeriodicity) {
-                      updateBookChapterPeriodicityAction([_modifiableBook.uID, newPeriodicity]);
+                      updateBookChapterPeriodicityAction([_immutableBook.uID, newPeriodicity, context]);
                     },
                   ),
                 ),
@@ -490,45 +512,51 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   final List<BookFileWidget> _filesWidgets = List<BookFileWidget>();
 
   Widget _buildFilesListCard() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Card(
-        elevation: 16.0,
-        color: Colors.white,
-        child: SizedBox(
-          height: _filesWidgets.length <= 1 ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT : (3 * FILE_WIDGET_HEIGHT),
-          child: _modifiableBook.isLaunchedComplete
-              ? Column(mainAxisSize: MainAxisSize.min, children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
-                    child: Text(
-                      "Book Files",
-                      style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
-                    ),
-                  ),
-                  _filesWidgets[0],
-                ])
-              : ReorderableListView(
-                  children: _filesWidgets,
-                  onReorder: (int oldIndex, int newIndex) {
-                    Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
+    return _immutableBook.isCurrentlyComplete
+        ? Container(
+            height: 0.0,
+            width: 0.0,
+          )
+        : Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              elevation: 16.0,
+              color: Colors.white,
+              child: SizedBox(
+                height:
+                    _filesWidgets.length <= 1 ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT : (3 * FILE_WIDGET_HEIGHT),
+                child: _immutableBook.isSingleFileBook
+                    ? Column(mainAxisSize: MainAxisSize.min, children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
+                          child: Text(
+                            "Book Files",
+                            style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
+                          ),
+                        ),
+                        _filesWidgets[0],
+                      ])
+                    : ReorderableListView(
+                        children: _filesWidgets,
+                        onReorder: (int oldIndex, int newIndex) {
+                          Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
 
-                    if (oldIndex < newIndex) {
-                      newIndex -= 1;
-                    }
-                    _filesWidgets.insert(newIndex, toBeMovedFileWidget);
-                  },
-                  header: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      "Book Files",
-                      style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
-                    ),
-                  ),
-                ),
-        ),
-      ),
-    );
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          _filesWidgets.insert(newIndex, toBeMovedFileWidget);
+                        },
+                        header: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            "Book Files",
+                            style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+          );
   }
 
   //Use when _book.isLaunchedComplete == false
@@ -539,7 +567,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       _filesWidgets.add(
         BookFileWidget(
             key: Key(filePath),
-            isComplete: _modifiableBook.isLaunchedComplete,
+            isComplete: _immutableBook.isSingleFileBook,
             filePath: filePath,
             index: counter,
             bookFileWidgetCallback: this,
@@ -551,7 +579,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     fileTitles?.forEach((String fileTitle) {
       _filesWidgets.add(BookFileWidget(
           key: Key("${fileTitle}_$counter"),
-          isComplete: _modifiableBook.isLaunchedComplete,
+          isComplete: _immutableBook.isSingleFileBook,
           fileTitle: fileTitle,
           index: counter,
           bookFileWidgetCallback: this,
@@ -568,8 +596,8 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
     _filesWidgets.add(
       BookFileWidget(
-        key: Key(filePath ?? _modifiableBook.title),
-        isComplete: _modifiableBook.isLaunchedComplete,
+        key: Key(filePath ?? _immutableBook.title),
+        isComplete: _immutableBook.isSingleFileBook,
         isReorderable: false,
         filePath: filePath,
         fileTitle: fileTitle,
@@ -602,17 +630,19 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
           );
         })) {
       case ImageOrigin.CAMERA:
-        MyBookImagePicker.pickImageFromCamera(imageType, _userStore.user, widget.bookUID);
+        imageCache.clear();
+        MyBookImagePicker.pickImageFromCamera(imageType, _userStore.user, widget.bookUID, context);
         break;
       case ImageOrigin.GALLERY:
-        MyBookImagePicker.pickImageFromGallery(imageType, _userStore.user, widget.bookUID);
+        imageCache.clear();
+        MyBookImagePicker.pickImageFromGallery(imageType, _userStore.user, widget.bookUID, context);
         break;
     }
   }
 
   Widget _bookStatsWidget(BuildContext context) {
     return new Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
       child: new Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
@@ -621,11 +651,14 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.remove_red_eye),
+                child: Icon(
+                  Icons.remove_red_eye,
+                  color: TextColorDarkBackground.tertiary,
+                ),
               ),
               Text(
-                _modifiableBook.readingsNumber.toString(),
-                style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
+                _immutableBook.readingsNumber.toString(),
+                style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 16.0),
               ),
             ],
           ),
@@ -634,11 +667,11 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.star),
+                child: Icon(Icons.star, color: TextColorDarkBackground.tertiary),
               ),
               Text(
-                _modifiableBook.rating.toString(),
-                style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
+                _immutableBook.rating.toString(),
+                style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 16.0),
               ),
             ],
           ),
@@ -647,13 +680,13 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.only(top: 8.0, left: 8.0, bottom: 8.0),
-                child: Icon(Icons.attach_money),
+                child: Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary),
               ),
               new Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
-                  _modifiableBook.income.toString(),
-                  style: TextStyle(color: Theme.of(context).accentColor, fontSize: 16.0),
+                  _immutableBook.income.toString(),
+                  style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 16.0),
                 ),
               )
             ],
@@ -664,7 +697,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   Future<Null> _showTitleTextInputDialog() async {
-    _textController.text = _modifiableBook.title;
+    _textController.text = _immutableBook.title;
 
     const Text title = Text(
       "Edit book title",
@@ -728,12 +761,12 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         }));
 
     if (userInput != null && userInput.length >= 3) {
-      updateBookTitleAction([_modifiableBook.uID, userInput]);
+      updateBookTitleAction([_immutableBook.uID, userInput, context]);
     }
   }
 
   Future<Null> _showSynopsisTextInputDialog() async {
-    _textController.text = _modifiableBook.synopsis;
+    _textController.text = _immutableBook.synopsis;
 
     const Text title = Text(
       "Edit book synopsis",
@@ -800,7 +833,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         }));
 
     if (userInput != null) {
-      updateBookSynopsisAction([_modifiableBook.uID, userInput]);
+      updateBookSynopsisAction([_immutableBook.uID, userInput, context]);
     }
   }
 

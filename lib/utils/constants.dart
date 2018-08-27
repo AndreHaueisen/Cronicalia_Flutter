@@ -103,6 +103,8 @@ class Constants{
   static const MAX_TITLE_LENGTH = 50;
   static const MAX_SYNOPSIS_LENGTH = 3000;
   static const MIN_SYNOPSIS_LENGTH = 100;
+  static const BOOK_COVER_DEFAULT_HEIGHT = 180.0;
+  static const BOOK_COVER_DEFAULT_WIDTH = 135.0;
 
   static const GOOGLE_ID_TOKEN = "idToken";
   static const GOOGLE_ACCESS_TOKEN = "accessToken";

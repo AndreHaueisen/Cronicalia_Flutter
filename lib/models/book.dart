@@ -39,7 +39,7 @@ class Book {
   String localPosterUri;
   String remoteCoverUri;
   String remotePosterUri;
-  bool isLaunchedComplete;
+  bool isSingleFileBook;
   bool isCurrentlyComplete;
   ChapterPeriodicity periodicity;
   String synopsis;
@@ -64,8 +64,8 @@ class Book {
       this.localPosterUri,
       this.remoteCoverUri,
       this.remotePosterUri,
-      this.isLaunchedComplete = true,
-      this.isCurrentlyComplete = true,
+      this.isSingleFileBook = true,
+      this.isCurrentlyComplete = false,
       this.periodicity = ChapterPeriodicity.NONE,
       this.synopsis});
 
@@ -82,7 +82,7 @@ class Book {
       this.ratingCounter = snapshot.data['ratingCounter'];
       this.authorName = snapshot.data['authorName'];
       this.remoteCoverUri = snapshot.data['remoteCoverUri'];
-      this.isLaunchedComplete = snapshot.data['isLaunchedComplete'];
+      this.isSingleFileBook = snapshot.data['isSingleFileBook'];
       this.authorEmailId = snapshot.data['authorEmailId'];
       this.localFullBookUri = snapshot.data['localFullBookUri'];
       this.title = snapshot.data['title'];
@@ -92,8 +92,8 @@ class Book {
       this.localCoverUri = snapshot.data['localCoverUri'];
       this.synopsis = snapshot.data['synopsis'];
       this.chaptersLaunchDates.addAll(snapshot.data['chaptersLaunchDates']);
-      this.chapterUris.addAll(snapshot.data['remoteChapterUris']);
-      this.chapterTitles.addAll(snapshot.data['remoteChapterTitles']);
+      this.chapterUris.addAll(snapshot.data['chapterUris']);
+      this.chapterTitles.addAll(snapshot.data['chapterTitles']);
 
       this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
         return periodicity.toString() == "ChapterPeriodicity.${snapshot.data['periodicity']}";
@@ -119,7 +119,7 @@ class Book {
     this.ratingCounter = linkedMap['ratingCounter'];
     this.authorName = linkedMap['authorName'];
     this.remoteCoverUri = linkedMap['remoteCoverUri'];
-    this.isLaunchedComplete = linkedMap['isLaunchedComplete'];
+    this.isSingleFileBook = linkedMap['isSingleFileBook'];
     this.authorEmailId = linkedMap['authorEmailId'];
     this.localFullBookUri = linkedMap['localFullBookUri'];
     this.title = linkedMap['title'];
@@ -129,8 +129,8 @@ class Book {
     this.localCoverUri = linkedMap['localCoverUri'];
     this.synopsis = linkedMap['synopsis'];
     this.chaptersLaunchDates.addAll(linkedMap['chaptersLaunchDates']);
-    this.chapterUris.addAll(linkedMap['remoteChapterUris']);
-    this.chapterTitles.addAll(linkedMap['remoteChapterTitles']);
+    this.chapterUris.addAll(linkedMap['chapterUris']);
+    this.chapterTitles.addAll(linkedMap['chapterTitles']);
 
     this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
       return periodicity.toString() == "ChapterPeriodicity.${linkedMap['periodicity']}";
@@ -168,7 +168,7 @@ class Book {
       localPosterUri: this.localPosterUri,
       remoteCoverUri: this.remoteCoverUri,
       remotePosterUri: this.remotePosterUri,
-      isLaunchedComplete: this.isLaunchedComplete,
+      isSingleFileBook: this.isSingleFileBook,
       isCurrentlyComplete: this.isCurrentlyComplete,
       periodicity: this.periodicity,
       synopsis: this.synopsis,
@@ -255,7 +255,7 @@ class Book {
       "ratingCounter": this.ratingCounter,
       "authorName": this.authorName,
       "remoteCoverUri": this.remoteCoverUri,
-      "isLaunchedComplete": this.isLaunchedComplete,
+      "isSingleFileBook": this.isSingleFileBook,
       "authorEmailId": this.authorEmailId,
       "localFullBookUri": this.localFullBookUri,
       "title": this.title,
@@ -265,8 +265,8 @@ class Book {
       "localCoverUri": this.localCoverUri,
       "synopsis": this.synopsis,
       "chaptersLaunchDates": this.chaptersLaunchDates,
-      "remoteChapterUris": this.chapterUris,
-      "remoteChapterTitles": this.chapterTitles,
+      "chapterUris": this.chapterUris,
+      "chapterTitles": this.chapterTitles,
       "periodicity": periodicity.toString().split(".")[1],
       "genre": genre.toString().split(".")[1],
       "language": language.toString().split(".")[1]

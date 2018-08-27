@@ -11,7 +11,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 
 class MyBookImagePicker {
-  static void pickImageFromGallery(ImageType imageType, User user, String bookUID) async {
+  static void pickImageFromGallery(ImageType imageType, User user, String bookUID, BuildContext context) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
@@ -20,18 +20,18 @@ class MyBookImagePicker {
             Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, posterPicFile);
 
-        updateBookPosterImageAction([bookUID, posterPicFile.path]);
+        updateBookPosterImageAction([bookUID, posterPicFile.path, context]);
       } else {
         File coverPicFile = await Utility.createFile(
             Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
-        updateBookCoverImageAction([bookUID, coverPicFile.path]);
+        updateBookCoverImageAction([bookUID, coverPicFile.path, context]);
       }
     }
   }
 
-  static void pickImageFromCamera(ImageType imageType, User user, String bookUID) async {
+  static void pickImageFromCamera(ImageType imageType, User user, String bookUID, BuildContext context) async {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
     if (imageFile != null) {
@@ -40,13 +40,13 @@ class MyBookImagePicker {
             Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, posterPicFile);
 
-        updateBookPosterImageAction([bookUID, posterPicFile.path]);
+        updateBookPosterImageAction([bookUID, posterPicFile.path, context]);
       } else {
         File coverPicFile = await Utility.createFile(
             Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
         await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
-        updateBookCoverImageAction([bookUID, coverPicFile.path]);
+        updateBookCoverImageAction([bookUID, coverPicFile.path, context]);
       }
     }
   }
@@ -96,12 +96,12 @@ class MyBookImagePicker {
   }
 
   static ImageProvider getPosterImageProvider(String localPosterPictureUri, String remotePosterPictureUri) {
-    ImageProvider imageProvider = AssetImage("images/horizon.png");
+    ImageProvider imageProvider = AssetImage("images/poster_placeholder.png");
 
     if (localPosterPictureUri != null) {
-      File profileFile = File(localPosterPictureUri);
-      if (profileFile.existsSync()) {
-        imageProvider = FileImage(profileFile);
+      File posterFile = File(localPosterPictureUri);
+      if (posterFile.existsSync()) {
+        imageProvider = FileImage(posterFile);
       } else {
         if (remotePosterPictureUri != null) {
           imageProvider = NetworkImage(remotePosterPictureUri);
@@ -114,15 +114,15 @@ class MyBookImagePicker {
     return imageProvider;
   }
 
-  static ImageProvider getProfileImageProvider(String localCoverPictureUri, String remoteCoverPictureUri) {
+  static ImageProvider getCoverImageProvider(String localCoverPictureUri, String remoteCoverPictureUri) {
     //TODO test with CachedNetworkImage()
 
-    ImageProvider imageProvider = AssetImage("images/profile.png");
+    ImageProvider imageProvider = AssetImage("images/cover_placeholder.png");
 
     if (localCoverPictureUri != null) {
-      File profileFile = File(localCoverPictureUri);
-      if (profileFile.existsSync()) {
-        imageProvider = FileImage(profileFile);
+      File coverFile = File(localCoverPictureUri);
+      if (coverFile.existsSync()) {
+        imageProvider = FileImage(coverFile);
       } else {
         if (remoteCoverPictureUri != null) {
           imageProvider = NetworkImage(remoteCoverPictureUri);

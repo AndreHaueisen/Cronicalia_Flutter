@@ -17,7 +17,7 @@ class FlushbarHelper {
             )
           : null
       ..backgroundColor = Colors.grey[100]
-      ..shadowColor = Colors.grey[300]
+      ..shadowColor = Colors.black
       ..icon = Icon(
         Icons.check_circle,
         color: Colors.green[400],
@@ -41,7 +41,7 @@ class FlushbarHelper {
             )
           : null
       ..backgroundColor = Colors.grey[100]
-      ..shadowColor = Colors.grey[300]
+      ..shadowColor = Colors.black
       ..icon = Icon(
         Icons.info_outline,
         size: 28.0,
@@ -65,7 +65,7 @@ class FlushbarHelper {
             )
           : null
       ..backgroundColor = Colors.grey[100]
-      ..shadowColor = Colors.grey[300]
+      ..shadowColor = Colors.black
       ..icon = Icon(
         Icons.warning,
         size: 28.0,
@@ -93,7 +93,7 @@ class FlushbarHelper {
             )
           : null
       ..backgroundColor = Colors.grey[100]
-      ..shadowColor = Colors.grey[300]
+      ..shadowColor = Colors.black
       ..duration = duration
       ..mainButton = button
       ..leftBarIndicatorColor = button.textColor;
@@ -118,7 +118,7 @@ class FlushbarHelper {
             )
           : null
       ..backgroundColor = Colors.grey[100]
-      ..shadowColor = Colors.grey[300]
+      ..shadowColor = Colors.black
       ..icon = Icon(
         Icons.cloud_upload,
         color: Colors.blue[400],
