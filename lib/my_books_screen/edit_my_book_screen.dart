@@ -100,9 +100,12 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       _replaceFileWidget(fileTitle: _immutableBook.title);
     } else {
       _addFileWidgets(
-          fileTitles: _immutableBook.chapterTitles.map((dynamic chapterTitle) {
-        return chapterTitle.toString();
-      }).toList());
+          filePaths: _immutableBook.chapterUris.map((chapterUri) {
+            return chapterUri.toString();
+          }).toList(),
+          fileTitles: _immutableBook.chapterTitles.map((chapterTitle) {
+            return chapterTitle.toString();
+          }).toList());
     }
   }
 
@@ -199,6 +202,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         textColor: TextColorDarkBackground.secondary,
         child: resolveFilePickButton(),
         onPressed: () {
+          // test if this can be erased
           _getPdfPaths().then((paths) {
             if (paths != null && paths.isNotEmpty) {
               setState(
@@ -223,34 +227,39 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
           if (_validateInformation()) {
             if (fileChangesBook.isSingleFileBook) {
-              String filePath = _filesWidgets[0].filePath;
-              if (fileChangesBook.localFullBookUri != filePath) {
-                fileChangesBook.localFullBookUri = _filesWidgets[0].filePath;
-                updateBookFilesAction(fileChangesBook);
-              }
+              updateSingleFileBookFile(fileChangesBook);
             } else {
-              int counter = 0;
-              _filesWidgets.forEach((BookFileWidget fileWidget) {
-                if (fileWidget.filePath != null && !Utility.isFileRemote(fileWidget.filePath)) {
-                  if (counter >= fileChangesBook.chapterUris.length) {
-                    fileChangesBook.chapterUris.add(fileWidget.filePath);
-                    fileChangesBook.chapterTitles.add(fileWidget.fileTitle);
-                    fileChangesBook.chaptersLaunchDates.add(DateTime.now().millisecondsSinceEpoch);
-                  } else {
-                    fileChangesBook.chapterUris[counter] = fileWidget.filePath;
-                    fileChangesBook.chapterTitles[counter] = fileWidget.fileTitle;
-                    fileChangesBook.chaptersLaunchDates[counter] = DateTime.now().millisecondsSinceEpoch;
-                  }
-                }
-                counter++;
-              });
-
-              updateBookFilesAction(fileChangesBook);
+              updateMultiFileBookFiles(fileChangesBook);
             }
           }
         },
       ),
     ];
+  }
+
+  void updateSingleFileBookFile(Book book) {
+    String filePath = _filesWidgets[0].filePath;
+    if (book.localFullBookUri != filePath) {
+      book.localFullBookUri = _filesWidgets[0].filePath;
+      updateBookFilesAction(book);
+    }
+  }
+
+  void updateMultiFileBookFiles(Book book) {
+    book.chapterUris.clear();
+    book.chapterTitles.clear();
+    book.chaptersLaunchDates.clear();
+
+    _filesWidgets.forEach((BookFileWidget fileWidget) {
+      //fileWidget.filePath & fileTitle are never null
+      book.chapterUris.add(fileWidget.filePath);
+      book.chapterTitles.add(fileWidget.fileTitle);
+      fileWidget.date == null
+          ? book.chaptersLaunchDates.add(DateTime.now().millisecondsSinceEpoch)
+          : book.chaptersLaunchDates.add(fileWidget.date);
+    });
+
+    updateBookFilesAction(book);
   }
 
   bool _validateInformation() {
@@ -351,7 +360,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                 ),
               ),
             ),
-            _bookStatsWidget(context),
+            _buildBookStatsWidget(context),
             _buildCompletionStatusButton(),
           ],
         ),
@@ -559,36 +568,35 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
           );
   }
 
-  //Use when _book.isLaunchedComplete == false
+  //Use when _book.isSingleFileBook == false
   void _addFileWidgets({List<String> filePaths, List<String> fileTitles}) {
-    int counter = _filesWidgets.length;
+    filePaths?.asMap()?.forEach((int index, String filePath) {
+      String fileTitle;
+      if (fileTitles != null && index < fileTitles.length) {
+        fileTitle = fileTitles[index];
+      }
 
-    filePaths?.forEach((String filePath) {
+      //if file is not present, chapterPosition is -1
+      int chapterPosition = _immutableBook.chapterUris.indexWhere((chapterUri) {
+        return chapterUri == filePath;
+      });
+
+      int date = chapterPosition != -1 ? _immutableBook.chaptersLaunchDates[chapterPosition] : null;
+
       _filesWidgets.add(
         BookFileWidget(
             key: Key(filePath),
-            isComplete: _immutableBook.isSingleFileBook,
+            isSingleFileBook: _immutableBook.isSingleFileBook,
             filePath: filePath,
-            index: counter,
+            date: date,
+            fileTitle: fileTitle,
             bookFileWidgetCallback: this,
             widgetHeight: FILE_WIDGET_HEIGHT),
       );
-      counter++;
-    });
-
-    fileTitles?.forEach((String fileTitle) {
-      _filesWidgets.add(BookFileWidget(
-          key: Key("${fileTitle}_$counter"),
-          isComplete: _immutableBook.isSingleFileBook,
-          fileTitle: fileTitle,
-          index: counter,
-          bookFileWidgetCallback: this,
-          widgetHeight: FILE_WIDGET_HEIGHT));
-      counter++;
     });
   }
 
-  //Use when _book.isLaunchedComplete == true
+  //Use when _book.isSingleFileBook == true
   void _replaceFileWidget({String filePath, String fileTitle}) {
     assert(filePath != null || fileTitle != null, "filePath or fileTitle must not be null");
 
@@ -597,11 +605,10 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     _filesWidgets.add(
       BookFileWidget(
         key: Key(filePath ?? _immutableBook.title),
-        isComplete: _immutableBook.isSingleFileBook,
+        isSingleFileBook: _immutableBook.isSingleFileBook,
         isReorderable: false,
         filePath: filePath,
         fileTitle: fileTitle,
-        index: -1,
         widgetHeight: FILE_WIDGET_HEIGHT,
       ),
     );
@@ -640,7 +647,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     }
   }
 
-  Widget _bookStatsWidget(BuildContext context) {
+  Widget _buildBookStatsWidget(BuildContext context) {
     return new Padding(
       padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
       child: new Row(
@@ -846,7 +853,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         }
 
         if (fileTitle != null) {
-          return bookFileWidget.fileTitle == filePath;
+          return bookFileWidget.fileTitle == fileTitle;
         }
 
         return false;

@@ -5,6 +5,7 @@ import 'package:cronicalia_flutter/backend/data_repository.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
+import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -99,11 +100,172 @@ class FileRepository {
     }
   }
 
-  Future<String> updateBookFiles({@required originalBook, @required modifiedBook}){
-    
+  Future<void> updateBookFiles(
+      {@required Book originalBook,
+      @required Book modifiedBook,
+      DataRepository dataRepository,
+      ProgressStream progressStream}) async {
+    if (modifiedBook.isSingleFileBook) {
+      progressStream.filesTotalNumber = 1;
+      await _updateSingleFileBook(
+          originalBook: originalBook,
+          editedBook: modifiedBook,
+          dataRepository: dataRepository,
+          progressStream: progressStream);
+    } else {
+      await _updateMultiFileBook(
+          originalBook: originalBook,
+          modifiedBook: modifiedBook,
+          dataRepository: dataRepository,
+          progressStream: progressStream);
+    }
   }
 
-  Future<void> createNewCompleteBook(String encodedEmail, Book book, DataRepository dataRepository,
+  Future<void> _updateSingleFileBook(
+      {@required Book originalBook,
+      @required Book editedBook,
+      DataRepository dataRepository,
+      ProgressStream progressStream}) async {
+    try {
+      if (editedBook.localFullBookUri != null) {
+        UploadTaskSnapshot fileTaskSnapshot =
+            await _uploadPDFFile(editedBook.authorEmailId, editedBook, editedBook.localFullBookUri);
+        editedBook.remoteFullBookUri =
+            fileTaskSnapshot.downloadUrl == null ? throw ("PDF update failed") : fileTaskSnapshot.downloadUrl.toString();
+
+        progressStream?.notifySuccess();
+
+        await dataRepository.updateSingleFileBookFile(editedBook.authorEmailId, editedBook);
+
+        _deleteUnusedFiles(originalBook: originalBook, modifiedBook: editedBook);
+      }
+    } catch (error) {
+      print(error);
+      progressStream?.notifyError();
+    }
+  }
+
+  Future<void> _updateMultiFileBook(
+      {@required Book originalBook,
+      @required Book modifiedBook,
+      DataRepository dataRepository,
+      ProgressStream progressStream}) async {
+    StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
+    try {
+      int taskCounter = 0;
+      int completedTaskCounter = 0;
+      modifiedBook.chapterUris.asMap().forEach(
+        (int index, chapterUri) {
+          if (!Utility.isFileRemote(chapterUri)) {
+            //save file
+            streamController.add(_uploadPDFFile(modifiedBook.authorEmailId, modifiedBook, modifiedBook.chapterUris[index]));
+            taskCounter++;
+          }
+        },
+      );
+
+      if (taskCounter > 0) {
+        progressStream.filesTotalNumber = taskCounter;
+
+        streamController.stream.listen((Future<UploadTaskSnapshot> pdfTaskSnapshotFuture) async {
+          UploadTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
+
+          String newRemoteUri =
+              pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf update failed") : pdfTaskSnapshot.downloadUrl.toString();
+
+          int newRemoteUriPosition = modifiedBook.chapterUris.indexWhere((uri) {
+            return Utility.resolveFileNameFromLocalFolder(uri) == Utility.resolveFileNameFromUrl(newRemoteUri);
+          });
+
+          modifiedBook.chapterUris[newRemoteUriPosition] = newRemoteUri;
+
+          progressStream?.notifySuccess();
+          completedTaskCounter++;
+
+          if (completedTaskCounter == taskCounter) {
+            await dataRepository.updateMultiFileBookFiles(modifiedBook.authorEmailId, modifiedBook);
+            streamController.close();
+          }
+
+          print("Uploaded file $newRemoteUriPosition");
+        }, onError: (_) {
+          throw ("Incomplete book files upload failed");
+        }, onDone: () {
+          _deleteUnusedFiles(originalBook: originalBook, modifiedBook: modifiedBook);
+          print("On done called");
+        }, cancelOnError: true);
+
+        await streamController.done;
+      } else {
+        _deleteUnusedFiles(originalBook: originalBook, modifiedBook: modifiedBook);
+        streamController.close();
+        return await dataRepository.updateMultiFileBookFiles(modifiedBook.authorEmailId, modifiedBook);
+      }
+    } catch (error) {
+      print(error);
+      if (!streamController.isClosed) streamController.close();
+      progressStream.notifyError();
+    }
+  }
+
+  void _deleteUnusedFiles({@required Book originalBook, @required Book modifiedBook}) {
+    if (modifiedBook.isSingleFileBook) {
+      String oldFileName = Utility.resolveFileNameFromUrl(originalBook.remoteFullBookUri);
+      String newFileName = Utility.resolveFileNameFromUrl(modifiedBook.remoteFullBookUri);
+
+      //if the file names are equal, file has been overitten. There is no need to delete
+      if (oldFileName != newFileName) {
+        _storageReference
+            .child(_resolveStorageLanguageLocation(originalBook.language))
+            .child(originalBook.authorEmailId)
+            .child(originalBook.generateStorageFolder())
+            .child(oldFileName)
+            .delete()
+            .then((_) {
+          print("File $oldFileName deleted");
+        });
+      }
+    } else {
+      Map<String, bool> uriPresenceMap = Map<String, bool>();
+
+      //tells if the uri is present in the modifiedBook
+      originalBook.chapterUris.forEach((originalChapterUri) {
+        uriPresenceMap.putIfAbsent(originalChapterUri, () {
+          if (modifiedBook.chapterUris.contains(originalChapterUri)) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+      });
+
+      uriPresenceMap.forEach((String originalChapterUri, bool wasUriPresentInModifiedBook) {
+        //if the Uri was not present, check if there is a file with the same name. If there is not,
+        //the file is safe for deletion. If there is, the file was already overwriden and should not
+        //be deleted.
+        if (!wasUriPresentInModifiedBook) {
+          String oldFileName = Utility.resolveFileNameFromUrl(originalChapterUri);
+
+          //if the the is a file in modifiedBook with the same name as `oldFileName`, do not delete
+          if (!modifiedBook.chapterUris.map((modifiedChapterUri) {
+            return oldFileName == Utility.resolveFileNameFromUrl(modifiedChapterUri);
+          }).contains(true)) {
+            _storageReference
+                .child(_resolveStorageLanguageLocation(originalBook.language))
+                .child(originalBook.authorEmailId)
+                .child(originalBook.generateStorageFolder())
+                .child(oldFileName)
+                .delete()
+                .then((_) {});
+
+            print("File $oldFileName deleted");
+          }
+        }
+      });
+    }
+  }
+
+  Future<void> createNewSingleFileBook(String encodedEmail, Book book, DataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
       UploadTaskSnapshot posterTaskSnapshot = await _uploadBookPosterImage(encodedEmail, book, book.localPosterUri);
@@ -111,19 +273,19 @@ class FileRepository {
           ? throw ("Poster upload failed")
           : posterTaskSnapshot.downloadUrl.toString();
 
-      if (progressStream != null) progressStream.notifySuccess();
+      progressStream?.notifySuccess();
 
       UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
       book.remoteCoverUri =
           coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
 
-      if (progressStream != null) progressStream.notifySuccess();
+      progressStream?.notifySuccess();
 
-      UploadTaskSnapshot pdfTaskSnapshot = await _uploadTxtFile(encodedEmail, book, book.localFullBookUri);
+      UploadTaskSnapshot pdfTaskSnapshot = await _uploadPDFFile(encodedEmail, book, book.localFullBookUri);
       book.remoteFullBookUri =
           pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf upload failed") : pdfTaskSnapshot.downloadUrl.toString();
 
-      if (progressStream != null) progressStream.notifySuccess();
+      progressStream?.notifySuccess();
 
       await dataRepository.createNewBook(encodedEmail, book);
     } catch (error) {
@@ -131,28 +293,27 @@ class FileRepository {
     }
   }
 
-  Future<void> createNewIncompleteBook(
+  Future<void> createNewMultiFileBook(
       String encodedEmail, Book book, List<String> pdfLocalPaths, DataRepository dataRepository,
       {ProgressStream progressStream}) async {
+    StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
     try {
       UploadTaskSnapshot posterTaskSnapshot = await _uploadBookPosterImage(encodedEmail, book, book.localPosterUri);
       book.remotePosterUri = posterTaskSnapshot.downloadUrl == null
           ? throw ("Poster upload failed")
           : posterTaskSnapshot.downloadUrl.toString();
 
-      if (progressStream != null) progressStream.notifySuccess();
+      progressStream?.notifySuccess();
 
       UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
       book.remoteCoverUri =
           coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
 
-      if (progressStream != null) progressStream.notifySuccess();
+      progressStream?.notifySuccess();
       int counter = 0;
 
-      StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
-
       pdfLocalPaths.forEach((String localPath) {
-        streamController.add(_uploadTxtFile(encodedEmail, book, localPath));
+        streamController.add(_uploadPDFFile(encodedEmail, book, localPath));
       });
 
       streamController.stream.listen((Future<UploadTaskSnapshot> pdfTaskSnapshotFuture) async {
@@ -161,7 +322,7 @@ class FileRepository {
             ? throw ("Pdf #$counter upload failed")
             : pdfTaskSnapshot.downloadUrl.toString());
 
-        if (progressStream != null) progressStream.notifySuccess();
+        progressStream?.notifySuccess();
         if (counter == (pdfLocalPaths.length - 1)) {
           streamController.close();
         }
@@ -177,6 +338,7 @@ class FileRepository {
       await streamController.done;
     } catch (error) {
       print(error);
+      if (!streamController.isClosed) streamController.close();
       progressStream.notifyError();
     }
   }
@@ -221,9 +383,9 @@ class FileRepository {
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadTxtFile(String encodedEmail, Book book, String filePath) {
+  Future<UploadTaskSnapshot> _uploadPDFFile(String encodedEmail, Book book, String filePath) {
     final File file = File(filePath);
-    final metadata = new StorageMetadata(contentType: CONTENT_TYPE_TXT);
+    final metadata = new StorageMetadata(contentType: CONTENT_TYPE_PDF);
 
     if (file.existsSync()) {
       final StorageUploadTask uploadTask = _storageReference
@@ -264,7 +426,5 @@ class FileRepository {
     }
   }
 
-  void _resolveFilesDiff({@required Book originalBook, @required Book modifiedBook}) {
-
-  }
+  void _resolveFilesDiff({@required Book originalBook, @required Book modifiedBook}) {}
 }

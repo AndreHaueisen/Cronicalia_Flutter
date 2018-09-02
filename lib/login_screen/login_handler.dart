@@ -150,7 +150,7 @@ class LoginHandler {
 
   Future<Map<String, String>> _getCredentialsUsingTwitter() async {
     try {
-     
+      
 
       final TwitterLoginResult result = await twitterLogin.authorize();
 

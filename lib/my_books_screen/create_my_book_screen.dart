@@ -727,29 +727,26 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
       _filesWidgets.add(
         BookFileWidget(
           key: Key(filePaths[0]),
-          isComplete: _book.isSingleFileBook,
+          isSingleFileBook: _book.isSingleFileBook,
           isReorderable: false,
           filePath: filePaths[0],
-          index: -1,
           bookFileWidgetCallback: this,
           widgetHeight: FILE_WIDGET_HEIGHT,
         ),
       );
     } else {
-      int counter = _filesWidgets.length;
 
       filePaths.forEach((String filePath) {
         _filesWidgets.add(
           BookFileWidget(
             key: Key(filePath),
-            isComplete: _book.isSingleFileBook,
+            isSingleFileBook: _book.isSingleFileBook,
             filePath: filePath,
-            index: counter,
             bookFileWidgetCallback: this,
             widgetHeight: FILE_WIDGET_HEIGHT,
           ),
         );
-        counter++;
+
       });
     }
   }

@@ -119,11 +119,10 @@ class UserStore extends Store {
       _fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
-
             _user = user;
             print("user loaded in store");
             trigger();
-            
+
             FlushbarHelper.createSuccess(message: "Poster uploaded").show(context);
           }
         }, onError: () {
@@ -146,7 +145,6 @@ class UserStore extends Store {
       _fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
-
             _user = user;
             print("user loaded in store");
             trigger();
@@ -248,7 +246,23 @@ class UserStore extends Store {
 
     triggerOnConditionalAction(updateBookFilesAction, (Book modifiedBook) {
       Book originalBook = user.books[modifiedBook.uID];
-      _fileRepository.updateBookFiles(originalBook: originalBook, modifiedBook: modifiedBook);
+      _fileRepository
+          .updateBookFiles(
+              originalBook: originalBook,
+              modifiedBook: modifiedBook,
+              dataRepository: _dataRepository,
+              progressStream: _progressStream)
+          .then((_) {
+        _dataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
+            _user = user;
+            trigger();
+            print("user loaded in store");
+          }
+        });
+      }).catchError((_) {
+        print("Complete book creation failed");
+      });
 
       return false;
     });
@@ -258,7 +272,7 @@ class UserStore extends Store {
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
       _fileRepository
-          .createNewCompleteBook(_user.encodedEmail, book, _dataRepository, progressStream: _progressStream)
+          .createNewSingleFileBook(_user.encodedEmail, book, _dataRepository, progressStream: _progressStream)
           .then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
@@ -282,7 +296,7 @@ class UserStore extends Store {
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
       _fileRepository
-          .createNewIncompleteBook(_user.encodedEmail, book, pdfLocalPaths, _dataRepository, progressStream: _progressStream)
+          .createNewMultiFileBook(_user.encodedEmail, book, pdfLocalPaths, _dataRepository, progressStream: _progressStream)
           .then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {

@@ -32,6 +32,15 @@ class Utility {
     return encodedEmail.replaceAll(",", ".");
   }
 
+  static String resolveFileNameFromUrl(String remoteUri) {
+    String encodedFileName = remoteUri.split('?')[0].split('%2F').last;
+    return Uri.decodeFull(encodedFileName);
+  }
+
+  static String resolveFileNameFromLocalFolder(String localFileFolder){
+    return localFileFolder?.split("/")?.last;
+  }
+
   static Future<void> saveImageToLocalCache(File inputFile, File outputFile) async {
     IOSink ioSink = outputFile.openWrite();
 

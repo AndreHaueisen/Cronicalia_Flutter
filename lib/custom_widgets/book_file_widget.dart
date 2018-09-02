@@ -1,5 +1,6 @@
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
+import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:flutter/material.dart';
 
 abstract class BookFileWidgetCallback {
@@ -9,28 +10,37 @@ abstract class BookFileWidgetCallback {
 class BookFileWidget extends StatelessWidget {
   BookFileWidget(
       {Key key,
-      this.isComplete,
+      this.isSingleFileBook,
       this.isReorderable = true,
       this.filePath,
+      this.date,
       this.fileTitle,
-      this.index,
       this.bookFileWidgetCallback,
       this.widgetHeight})
-      : formattedFilePath = filePath?.split("/")?.last,
+      : assert(filePath != null, "File path can not be null"),
         _textController = (fileTitle != null) ? TextEditingController(text: fileTitle) : null,
-        super(key: key);
+        super(key: key) {
+    formattedFilePath = _formatFilePath(filePath);
+  }
 
-  final bool isComplete;
+  final bool isSingleFileBook;
   final bool isReorderable;
   final String filePath;
+  final int date;
   String fileTitle;
-  final String formattedFilePath;
-  final int index;
+  String formattedFilePath;
   final BookFileWidgetCallback bookFileWidgetCallback;
   final double widgetHeight;
- 
 
   TextEditingController _textController;
+
+  String _formatFilePath(String filePath) {
+    if (Utility.isFileRemote(filePath)) {
+      return Utility.resolveFileNameFromUrl(filePath);
+    } else {
+      return Utility.resolveFileNameFromLocalFolder(filePath);
+    }
+  }
 
   Widget _noInputFileRepresentation() {
     return SizedBox(
@@ -47,7 +57,7 @@ class BookFileWidget extends StatelessWidget {
                 color: Colors.black12,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(formattedFilePath ?? fileTitle,
+                  child: Text(fileTitle,
                       textAlign: TextAlign.right, style: TextStyle(color: TextColorBrightBackground.primary)),
                 ),
               ),
@@ -99,18 +109,13 @@ class BookFileWidget extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    formattedFilePath != null
-                        ? Padding(
-                            padding: const EdgeInsets.only(left: 10.0, top: 8.0),
-                            child: Text(
-                              formattedFilePath,
-                              style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 12.0),
-                            ),
-                          )
-                        : Container(
-                            height: 0.0,
-                            width: 0.0,
-                          ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        formattedFilePath,
+                        style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 12.0),
+                      ),
+                    ),
                     TextField(
                       maxLengthEnforced: true,
                       controller: _textController,
@@ -140,7 +145,7 @@ class BookFileWidget extends StatelessWidget {
             Flexible(
               flex: 1,
               child: Padding(
-                padding: EdgeInsets.only(left: 8.0, bottom: formattedFilePath == null ? 18.0 : 0.0),
+                padding: EdgeInsets.only(left: 8.0),
                 child: IconButton(
                   icon: Icon(
                     Icons.delete,
@@ -148,23 +153,18 @@ class BookFileWidget extends StatelessWidget {
                   ),
                   onPressed: () {
                     bookFileWidgetCallback.onRemoveFileClick(filePath: filePath, fileTitle: fileTitle);
-                    _textController?.dispose();
-                    _textController = null;
                   },
                 ),
               ),
             ),
             Flexible(
               flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: formattedFilePath == null ? 18.0 : 0.0),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.reorder,
-                    color: TextColorBrightBackground.primary,
-                  ),
-                  onPressed: () {},
+              child: IconButton(
+                icon: Icon(
+                  Icons.reorder,
+                  color: TextColorBrightBackground.primary,
                 ),
+                onPressed: () {},
               ),
             ),
           ],
@@ -175,7 +175,7 @@ class BookFileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isComplete) return _noInputFileRepresentation();
+    if (isSingleFileBook) return _noInputFileRepresentation();
 
     return _textInputFileRepresentation();
   }
