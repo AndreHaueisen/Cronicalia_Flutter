@@ -49,7 +49,7 @@ class Cronicalia extends StatelessWidget {
     _initializeFirebase();
   }
 
-  
+
 
   @override
   Widget build(BuildContext context) {

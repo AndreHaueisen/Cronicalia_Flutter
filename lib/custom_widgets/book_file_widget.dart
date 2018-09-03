@@ -4,33 +4,35 @@ import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:flutter/material.dart';
 
 abstract class BookFileWidgetCallback {
-  void onRemoveFileClick({String filePath, String fileTitle});
+  void onRemoveFileClick({int position});
 }
 
 class BookFileWidget extends StatelessWidget {
   BookFileWidget(
       {Key key,
       this.isSingleFileBook,
-      this.isReorderable = true,
       this.filePath,
       this.date,
+      this.position,
       this.fileTitle,
       this.bookFileWidgetCallback,
       this.widgetHeight})
       : assert(filePath != null, "File path can not be null"),
         _textController = (fileTitle != null) ? TextEditingController(text: fileTitle) : null,
         super(key: key) {
-    formattedFilePath = _formatFilePath(filePath);
+    _formattedFilePath = _formatFilePath(filePath);
   }
 
   final bool isSingleFileBook;
-  final bool isReorderable;
   final String filePath;
   final int date;
+  final int position;
   String fileTitle;
-  String formattedFilePath;
+  String _formattedFilePath;
   final BookFileWidgetCallback bookFileWidgetCallback;
   final double widgetHeight;
+
+  String get formattedFilePath => _formattedFilePath;
 
   TextEditingController _textController;
 
@@ -52,13 +54,13 @@ class BookFileWidget extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(left: 16.0),
               child: Container(
-                constraints: BoxConstraints.expand(height: 36.0),
+                constraints: BoxConstraints.expand(height: 56.0),
+                decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4.0)),
                 padding: EdgeInsets.all(8.0),
-                color: Colors.black12,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(fileTitle,
-                      textAlign: TextAlign.right, style: TextStyle(color: TextColorBrightBackground.primary)),
+                  child: Text(formattedFilePath,
+                      textAlign: TextAlign.left, style: TextStyle(color: TextColorBrightBackground.primary)),
                 ),
               ),
             ),
@@ -73,12 +75,12 @@ class BookFileWidget extends StatelessWidget {
                   color: TextColorBrightBackground.tertiary,
                 ),
                 onPressed: () {
-                  bookFileWidgetCallback.onRemoveFileClick(filePath: filePath, fileTitle: fileTitle);
+                  bookFileWidgetCallback.onRemoveFileClick(position: position);
                 },
               ),
             ),
           ),
-          isReorderable
+          isSingleFileBook
               ? Flexible(
                   flex: 1,
                   child: IconButton(
@@ -109,11 +111,16 @@ class BookFileWidget extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        formattedFilePath,
-                        style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 12.0),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 8.0),
+                        child: Text(
+                          formattedFilePath,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 13.0),
+                        ),
                       ),
                     ),
                     TextField(
@@ -121,7 +128,7 @@ class BookFileWidget extends StatelessWidget {
                       controller: _textController,
                       maxLength: Constants.MAX_TITLE_LENGTH,
                       keyboardType: TextInputType.text,
-                      textInputAction: TextInputAction.next,
+                      textInputAction: TextInputAction.done,
                       onChanged: (String title) {
                         fileTitle = title.trim();
                       },
@@ -130,7 +137,7 @@ class BookFileWidget extends StatelessWidget {
                       decoration: InputDecoration(
                           fillColor: Colors.black12,
                           filled: true,
-                          border: UnderlineInputBorder(),
+                          border: UnderlineInputBorder(borderRadius: BorderRadius.circular(4.0)),
                           labelText: "Chapter Title",
                           labelStyle: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 13.0),
                           counterStyle: TextStyle(
@@ -152,7 +159,7 @@ class BookFileWidget extends StatelessWidget {
                     color: TextColorBrightBackground.tertiary,
                   ),
                   onPressed: () {
-                    bookFileWidgetCallback.onRemoveFileClick(filePath: filePath, fileTitle: fileTitle);
+                    bookFileWidgetCallback.onRemoveFileClick(position: position);
                   },
                 ),
               ),

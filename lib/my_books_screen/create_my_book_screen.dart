@@ -286,6 +286,19 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   bool _validateChapterTitles() {
     if (_book.isSingleFileBook) return true;
 
+    Set<String> fileNamesSet = Set<String>();
+    _filesWidgets.forEach((BookFileWidget fileWidget) {
+      fileNamesSet.add(fileWidget.formattedFilePath);
+    });
+
+    //check if there are equal files
+    if (_filesWidgets.length != fileNamesSet.length) {
+      FlushbarHelper.createError(message: "Equal files detected. Remove one of the copies", duration: Duration(seconds: 3))
+          .show(context);
+      return false;
+    }
+
+    //check if there is a missing title
     for (int counter = 0; counter < _filesWidgets.length; counter++) {
       String title = _filesWidgets[counter].fileTitle;
       if (title == null || title.isEmpty) {
@@ -728,43 +741,33 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
         BookFileWidget(
           key: Key(filePaths[0]),
           isSingleFileBook: _book.isSingleFileBook,
-          isReorderable: false,
           filePath: filePaths[0],
+          position: 0,
           bookFileWidgetCallback: this,
           widgetHeight: FILE_WIDGET_HEIGHT,
         ),
       );
     } else {
-
       filePaths.forEach((String filePath) {
+        int position = _filesWidgets.length;
         _filesWidgets.add(
           BookFileWidget(
             key: Key(filePath),
             isSingleFileBook: _book.isSingleFileBook,
             filePath: filePath,
+            position: position,
             bookFileWidgetCallback: this,
             widgetHeight: FILE_WIDGET_HEIGHT,
           ),
         );
-
       });
     }
   }
 
   @override
-  void onRemoveFileClick({String filePath, String fileTitle}) {
+  void onRemoveFileClick({int position}) {
     setState(() {
-      _filesWidgets.removeWhere((BookFileWidget bookFileWidget) {
-        if (filePath != null) {
-          return bookFileWidget.filePath == filePath;
-        }
-
-        if (fileTitle != null) {
-          return bookFileWidget.fileTitle == filePath;
-        }
-
-        return false;
-      });
+      _filesWidgets.removeAt(position);
     });
   }
 }

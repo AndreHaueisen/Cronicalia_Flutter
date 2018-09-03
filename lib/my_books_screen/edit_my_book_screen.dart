@@ -8,7 +8,6 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
-import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:documents_picker/documents_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
@@ -97,7 +96,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
   void _initializeFilesWidgets() {
     if (_immutableBook.isSingleFileBook) {
-      _replaceFileWidget(fileTitle: _immutableBook.title);
+      _replaceFileWidget(filePath: _immutableBook.remoteFullBookUri, fileTitle: _immutableBook.title);
     } else {
       _addFileWidgets(
           filePaths: _immutableBook.chapterUris.map((chapterUri) {
@@ -198,41 +197,22 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     }
 
     return <Widget>[
-      FlatButton(
-        textColor: TextColorDarkBackground.secondary,
-        child: resolveFilePickButton(),
-        onPressed: () {
-          // test if this can be erased
-          _getPdfPaths().then((paths) {
-            if (paths != null && paths.isNotEmpty) {
-              setState(
-                () {
-                  if (_immutableBook.isSingleFileBook) {
-                    _replaceFileWidget(filePath: paths[0]);
-                  } else {
-                    _addFileWidgets(filePaths: paths);
-                  }
-                },
-              );
-              _scrollController.animateTo(MediaQuery.of(context).size.height,
-                  duration: Duration(seconds: 2), curve: Curves.decelerate);
-            }
-          });
-        },
-      ),
+      resolveFilePickButton(),
       FlatButton(
         child: Text("SAVE FILES"),
-        onPressed: () {
-          final Book fileChangesBook = _userStore.user.books[widget.bookUID].copy();
+        onPressed: _immutableBook.areFilesTheSame(_filesWidgets)
+            ? null
+            : () {
+                final Book fileChangesBook = _userStore.user.books[widget.bookUID].copy();
 
-          if (_validateInformation()) {
-            if (fileChangesBook.isSingleFileBook) {
-              updateSingleFileBookFile(fileChangesBook);
-            } else {
-              updateMultiFileBookFiles(fileChangesBook);
-            }
-          }
-        },
+                if (_validateInformation()) {
+                  if (fileChangesBook.isSingleFileBook) {
+                    updateSingleFileBookFile(fileChangesBook);
+                  } else {
+                    updateMultiFileBookFiles(fileChangesBook);
+                  }
+                }
+              },
       ),
     ];
   }
@@ -269,6 +249,19 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   bool _validateNewChapterTitles() {
     if (_immutableBook.isSingleFileBook) return true;
 
+    Set<String> fileNamesSet = Set<String>();
+    _filesWidgets.forEach((BookFileWidget fileWidget) {
+      fileNamesSet.add(fileWidget.formattedFilePath);
+    });
+
+    //check if there are equal files
+    if (_filesWidgets.length != fileNamesSet.length) {
+      FlushbarHelper.createError(message: "Equal files detected. Remove one of the copies", duration: Duration(seconds: 3))
+          .show(context);
+      return false;
+    }
+
+    //check if there is a missing title
     for (var counter = 0; counter < _filesWidgets.length; counter++) {
       String title = _filesWidgets[counter].fileTitle;
       if (title == null || title.isEmpty) {
@@ -548,12 +541,14 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                     : ReorderableListView(
                         children: _filesWidgets,
                         onReorder: (int oldIndex, int newIndex) {
-                          Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
+                          setState(() {
+                            Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
 
-                          if (oldIndex < newIndex) {
-                            newIndex -= 1;
-                          }
-                          _filesWidgets.insert(newIndex, toBeMovedFileWidget);
+                            if (oldIndex < newIndex) {
+                              newIndex -= 1;
+                            }
+                            _filesWidgets.insert(newIndex, toBeMovedFileWidget);
+                          });
                         },
                         header: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -582,6 +577,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       });
 
       int date = chapterPosition != -1 ? _immutableBook.chaptersLaunchDates[chapterPosition] : null;
+      int position = _filesWidgets.length;
 
       _filesWidgets.add(
         BookFileWidget(
@@ -590,6 +586,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
             filePath: filePath,
             date: date,
             fileTitle: fileTitle,
+            position: position,
             bookFileWidgetCallback: this,
             widgetHeight: FILE_WIDGET_HEIGHT),
       );
@@ -598,17 +595,17 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
   //Use when _book.isSingleFileBook == true
   void _replaceFileWidget({String filePath, String fileTitle}) {
-    assert(filePath != null || fileTitle != null, "filePath or fileTitle must not be null");
+    assert(filePath != null, "filePath must not be null");
 
     if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
 
     _filesWidgets.add(
       BookFileWidget(
-        key: Key(filePath ?? _immutableBook.title),
+        key: Key(filePath),
         isSingleFileBook: _immutableBook.isSingleFileBook,
-        isReorderable: false,
         filePath: filePath,
         fileTitle: fileTitle,
+        position: 0,
         widgetHeight: FILE_WIDGET_HEIGHT,
       ),
     );
@@ -845,19 +842,9 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   @override
-  void onRemoveFileClick({String filePath, String fileTitle}) {
+  void onRemoveFileClick({int position}) {
     setState(() {
-      _filesWidgets.removeWhere((BookFileWidget bookFileWidget) {
-        if (filePath != null) {
-          return bookFileWidget.filePath == filePath;
-        }
-
-        if (fileTitle != null) {
-          return bookFileWidget.fileTitle == fileTitle;
-        }
-
-        return false;
-      });
+      _filesWidgets.removeAt(position);
     });
   }
 }

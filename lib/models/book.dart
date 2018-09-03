@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cronicalia_flutter/custom_widgets/book_file_widget.dart';
 
 enum BookGenre { UNDEFINED, ACTION, ADVENTURE, COMEDY, DRAMA, FANTASY, FICTION, HORROR, MYTHOLOGY, ROMANCE, SATIRE }
 
@@ -271,6 +272,31 @@ class Book {
       "genre": genre.toString().split(".")[1],
       "language": language.toString().split(".")[1]
     };
+  }
+
+  bool areFilesTheSame(List<BookFileWidget> fileWidgets) {
+
+    
+    if (fileWidgets[0].isSingleFileBook) {
+      return (this.remoteFullBookUri == fileWidgets[0].filePath);
+    }
+
+    //return false if there is a diference in chapter lengths
+    if (fileWidgets.length != this.chapterUris.length) return false;
+
+    for (var i = 0; i < fileWidgets.length; i++) {
+      BookFileWidget fileWidget = fileWidgets[i];
+
+      if (this.chapterUris[i] != fileWidget.filePath) {
+        return false;
+      }
+      if (this.chapterTitles[i] != fileWidget.fileTitle) {
+        return false;
+      }
+    }
+
+    return true;
+
   }
 
   @override
