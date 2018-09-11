@@ -9,6 +9,7 @@ import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:documents_picker/documents_picker.dart';
+import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
@@ -42,6 +43,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   void initState() {
     _textController = new TextEditingController();
     _scrollController = new ScrollController();
+    _uploadProgressController = AnimationController(vsync: this, value: 0.0);
     _userStore = listenToStore(userStoreToken);
 
     _immutableBook = _userStore.user.books[widget.bookUID];
@@ -111,6 +113,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text("Edit ${_immutableBook.title}")),
       persistentFooterButtons: _immutableBook.isCurrentlyComplete ? null : _buildPersistentButtons(context),
       body: new Stack(children: [
         _buildBackground(),
@@ -211,10 +214,54 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                   } else {
                     updateMultiFileBookFiles(fileChangesBook);
                   }
+                  _showProgressFlushbar();
+                  print("Updatin book files");
                 }
               },
       ),
     ];
+  }
+
+   bool _validateInformation() {
+    return (_validateMinimumFileSize() && _validateNewChapterTitles());
+  }
+
+  bool _validateMinimumFileSize(){
+    if(_filesWidgets.length < 1){
+      FlushbarHelper.createError(message: "You need at least one file").show(context);
+      return false;
+    }
+
+    return true;
+  }
+
+  bool _validateNewChapterTitles() {
+    if (_immutableBook.isSingleFileBook) return true;
+
+    Set<String> fileNamesSet = Set<String>();
+    _filesWidgets.forEach((BookFileWidget fileWidget) {
+      fileNamesSet.add(fileWidget.formattedFilePath);
+    });
+
+    //check if there are equal files
+    if (_filesWidgets.length != fileNamesSet.length) {
+      FlushbarHelper.createError(message: "Equal files detected. Remove one of the copies")
+          .show(context);
+      return false;
+    }
+
+    //check if there is a missing title
+    for (var counter = 0; counter < _filesWidgets.length; counter++) {
+      String title = _filesWidgets[counter].fileTitle;
+      if (title == null || title.isEmpty) {
+        FlushbarHelper.createError(
+                message: "Your chapter title number ${counter + 1} is missing")
+            .show(context);
+        return false;
+      }
+    }
+
+    return true;
   }
 
   void updateSingleFileBookFile(Book book) {
@@ -242,37 +289,40 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     updateBookFilesAction(book);
   }
 
-  bool _validateInformation() {
-    return (_validateNewChapterTitles());
-  }
+  //do not dispose. Flushbar already randles it
+  AnimationController _uploadProgressController;
 
-  bool _validateNewChapterTitles() {
-    if (_immutableBook.isSingleFileBook) return true;
+  void _showProgressFlushbar() {
+    UserStore userStore = listenToStore(userStoreToken);
 
-    Set<String> fileNamesSet = Set<String>();
-    _filesWidgets.forEach((BookFileWidget fileWidget) {
-      fileNamesSet.add(fileWidget.formattedFilePath);
-    });
-
-    //check if there are equal files
-    if (_filesWidgets.length != fileNamesSet.length) {
-      FlushbarHelper.createError(message: "Equal files detected. Remove one of the copies", duration: Duration(seconds: 3))
-          .show(context);
-      return false;
-    }
-
-    //check if there is a missing title
-    for (var counter = 0; counter < _filesWidgets.length; counter++) {
-      String title = _filesWidgets[counter].fileTitle;
-      if (title == null || title.isEmpty) {
-        FlushbarHelper.createError(
-                message: "Your chapter title number ${counter + 1} is missing", duration: Duration(seconds: 3))
-            .show(context);
-        return false;
+    Flushbar progressFlushbar = FlushbarHelper.createLoading(
+      message: "Wait while we update your book files",
+      indicatorBackgroundColor: Colors.blue[300],
+      indicatorController: _uploadProgressController,
+      duration: null,
+    )
+      ..onStatusChanged = (FlushbarStatus status) {
+        switch (status) {
+          case FlushbarStatus.DISMISSED:
+            {
+              Navigator.of(context).pop();
+              break;
+            }
+          default:
+            {}
+        }
       }
-    }
+      ..show(context);
 
-    return true;
+    if (userStore.getProgressStream() != null) {
+      userStore.getProgressStream().controller.stream.listen((progress) {
+        _uploadProgressController.animateTo(progress, duration: Duration(milliseconds: 300));
+      }, onDone: () {
+        progressFlushbar.dismiss();
+      }, onError: (error) {
+        FlushbarHelper.createError(title: "Update failed", message: "One or more files failed. Try again");
+      }, cancelOnError: true);
+    }
   }
 
   Future<List<String>> _getPdfPaths() async {
@@ -514,7 +564,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   final List<BookFileWidget> _filesWidgets = List<BookFileWidget>();
 
   Widget _buildFilesListCard() {
-    return _immutableBook.isCurrentlyComplete
+    return _immutableBook.isCurrentlyComplete || _filesWidgets.length < 1
         ? Container(
             height: 0.0,
             width: 0.0,
@@ -845,6 +895,13 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   void onRemoveFileClick({int position}) {
     setState(() {
       _filesWidgets.removeAt(position);
+      _updateFileWidgetsPositions();
+    });
+  }
+
+  void _updateFileWidgetsPositions(){
+    _filesWidgets.asMap().forEach((int position, BookFileWidget fileWidget){
+      fileWidget.position = position;
     });
   }
 }

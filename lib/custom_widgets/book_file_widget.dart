@@ -26,11 +26,11 @@ class BookFileWidget extends StatelessWidget {
   final bool isSingleFileBook;
   final String filePath;
   final int date;
-  final int position;
-  String fileTitle;
-  String _formattedFilePath;
   final BookFileWidgetCallback bookFileWidgetCallback;
   final double widgetHeight;
+  int position;
+  String fileTitle;
+  String _formattedFilePath;
 
   String get formattedFilePath => _formattedFilePath;
 

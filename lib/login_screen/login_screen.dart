@@ -1,83 +1,21 @@
 import 'dart:async';
 
-import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/old_user_login_widget.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/user_email_collector_widget.dart';
-import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
+import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flushbar/flushbar.dart';
-import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/new_user_login_widget.dart';
 
-void dismissFlushbar(Flushbar flushbar) {
-  if (flushbar != null) {
-    flushbar.dismiss();
-  }
-}
-
 class LoginScreen extends StatefulWidget {
-  LoginHandler _loginHandler;
-  Flushbar _flushbar;
-  final BuildContext context;
 
-  LoginScreen(FirebaseAuth firebaseAuth, Firestore firestore, this.context) {
-    _loginHandler = LoginHandler(firebaseAuth, firestore, (LoginState loginState,
-        {String title, String message, User newUser}) {
+  final FirebaseAuth firebaseAuth;
 
-      switch (loginState) {
-        case LoginState.LOGGED_IN:
-          {
-
-            FlushbarHelper.createSuccess(title: title, message: message)
-              ..onStatusChanged = (FlushbarStatus status) {
-                if (status == FlushbarStatus.DISMISSED) {
-                  getUserFromServerAction.call(newUser);
-
-                  _loginHandler.isSignedIn().then((isSignedIn) {
-                    changeLoginStatusAction(isSignedIn);
-                  });
-
-                  Navigator.of(context).pop();
-                
-                }
-              }
-              ..show(context);
-            break;
-          }
-
-        case LoginState.LOADING:
-          {
-            _flushbar = FlushbarHelper.createInformation(title: title, message: message, duration: Duration(seconds: 5));
-            _flushbar.show(context);
-
-            break;
-          }
-
-        case LoginState.ERROR:
-          {
-            _flushbar = FlushbarHelper.createError(title: title, message: message);
-            _flushbar.show(context);
-
-            break;
-          }
-
-        case LoginState.PASSWORD_RESET:
-          {
-            _flushbar = FlushbarHelper.createSuccess(title: title, message: message);
-            _flushbar.show(context);
-            break;
-          }
-
-        case LoginState.LOGGED_OUT:
-          break;
-      }
-    });
-  }
+  LoginScreen(this.firebaseAuth);
 
   @override
   State createState() {
@@ -90,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<List<String>> _providers = new Future.value(<String>[]);
 
   @override
-  Widget build(BuildContext widgetContext) {
+  Widget build(BuildContext context) {
     return Scaffold(
         body: new AnimatedCrossFade(
       duration: new Duration(seconds: 1),
@@ -103,14 +41,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _emailCollectorWidget() {
     return new UserEmailCollectorWidget(
-      loginHandler: widget._loginHandler,
       onEmailReady: (String email) {
         setState(() {
           _email = email;
-          _providers = widget._loginHandler.resolveProviders(email);
+          _providers = resolveProviders(email);
         });
       },
     );
+  }
+
+  Future<List<String>> resolveProviders(String email) async {
+    if (email != null) {
+      List<String> providers = await widget.firebaseAuth.fetchProvidersForEmail(email: email);
+      return providers;
+    }
+    return null;
   }
 
   Widget _loginButtonsWidget() {
@@ -133,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isNewUser = providers.isEmpty;
 
     if (isNewUser) {
-      return NewUserLoginWidget(loginHandler: widget._loginHandler, email: _email);
+      return NewUserLoginWidget(email: _email);
     } else {
       bool shouldShowGoogle = providers.contains(Constants.PROVIDER_OPTIONS[ProviderOptions.GOOGLE]);
       bool shouldShowFacebook = providers.contains(Constants.PROVIDER_OPTIONS[ProviderOptions.FACEBOOK]);
@@ -141,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
       bool shouldShowEmailAndPassword = providers.contains(Constants.PROVIDER_OPTIONS[ProviderOptions.PASSWORD]);
 
       return OldUserLoginWidget(
-          loginHandler: widget._loginHandler,
           email: _email,
           shouldShowGoogle: shouldShowGoogle,
           shouldShowFacebook: shouldShowFacebook,
@@ -149,4 +93,5 @@ class _LoginScreenState extends State<LoginScreen> {
           shouldShowEmailAndPassword: shouldShowEmailAndPassword);
     }
   }
+
 }

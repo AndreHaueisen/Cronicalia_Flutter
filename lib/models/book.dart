@@ -275,8 +275,8 @@ class Book {
   }
 
   bool areFilesTheSame(List<BookFileWidget> fileWidgets) {
+    if (fileWidgets == null || fileWidgets.length < 1) return false;
 
-    
     if (fileWidgets[0].isSingleFileBook) {
       return (this.remoteFullBookUri == fileWidgets[0].filePath);
     }
@@ -296,7 +296,6 @@ class Book {
     }
 
     return true;
-
   }
 
   @override

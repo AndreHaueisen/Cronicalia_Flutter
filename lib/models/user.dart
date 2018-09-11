@@ -47,6 +47,19 @@ class User {
     }
   }
 
+  User.empty(){
+    this.name = "";
+    this.encodedEmail = "";
+    this.twitterProfile = "";
+    this.aboutMe =  "";
+    this.localProfilePictureUri = "";
+    this.localBackgroundPictureUri = "";
+    this.remoteProfilePictureUri = "";
+    this.remoteBackgroundPictureUri = "";
+    this.fans = 0;
+    this.books = Map<String, Book>();
+  }
+
   Map<String, dynamic> toMap(){
     return {
       "name" : this.name,

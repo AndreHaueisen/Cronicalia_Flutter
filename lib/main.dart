@@ -55,7 +55,7 @@ class Cronicalia extends StatelessWidget {
   Widget build(BuildContext context) {
     return new MaterialApp(
       routes: <String, WidgetBuilder>{
-        Constants.ROUTE_LOGIN_SCREEN: (BuildContext context) => new LoginScreen(firebaseAuth, firestore, context),
+        Constants.ROUTE_LOGIN_SCREEN: (BuildContext context) => new LoginScreen(firebaseAuth),
         Constants.ROUTE_SUGGESTIONS_SCREEN: (BuildContext context) => new SuggestionsScreen(),
         Constants.ROUTE_SEARCH_SCREEN: (BuildContext context) => new SearchScreen(),
         Constants.ROUTE_BOOKMARKS_SCREEN: (BuildContext context) => new BookmarksScreen(),

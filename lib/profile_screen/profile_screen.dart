@@ -79,126 +79,190 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(children: [
-        Expanded(
-          child: new Stack(
-            children: [
-              new Container(
-                height: double.infinity,
-                child: Image(
-                  image: ProfileImagePicker.getBackgroundImageProvider(
-                      _userStore.user.localBackgroundPictureUri, _userStore.user.remoteBackgroundPictureUri),
-                  alignment: Alignment.topCenter,
-                ),
-                foregroundDecoration: new BoxDecoration(
-                  gradient: new LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
+        appBar: AppBar(
+          title: Text("Profile Screen"),
+          actions: <Widget>[
+            _userStore.isLoggedIn
+                ? FlatButton(
+                    child: Text("LOG OUT"),
+                    onPressed: () {
+                      logoutAction();
+                    },
+                  )
+                : Container(height: 0.0, width: 0.0),
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: AnimatedCrossFade(
+                  duration: Duration(seconds: 1),
+                  firstChild: _buildLoggedOutScreen(),
+                  secondChild: _buildLoggedInScreen(),
+                  crossFadeState: _userStore.isLoggedIn ? CrossFadeState.showSecond : CrossFadeState.showFirst),
+            ),
+            PersistentBottomBar(
+              selectedItemIdex: 4,
+            ),
+          ],
+        ));
+  }
+
+  Widget _buildLoggedOutScreen() {
+    return Container(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "Log in so you can create books, save your progress when reading one and much more",
+                textAlign: TextAlign.center,
+              ),
+            ),
+            _buildLoginButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return ButtonTheme(
+      minWidth: 135.0,
+      child: RaisedButton(
+        elevation: 0.0,
+        child: Text(
+          "LOG IN",
+          style: TextStyle(fontSize: 12.0, color: TextColorBrightBackground.secondary),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+        onPressed: () {
+          Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+        },
+        highlightColor: Colors.grey[200],
+        color: Colors.grey[350],
+      ),
+    );
+  }
+
+  Widget _buildLoggedInScreen() {
+    return new Stack(
+      children: [
+        new Container(
+          height: MediaQuery.of(context).size.height,
+          child: Image(
+            image: ProfileImagePicker.getBackgroundImageProvider(
+                _userStore.user.localBackgroundPictureUri, _userStore.user.remoteBackgroundPictureUri),
+            alignment: Alignment.topCenter,
+          ),
+          foregroundDecoration: new BoxDecoration(
+            gradient: new LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
+            ),
+          ),
+        ),
+        new Center(
+          child: new SingleChildScrollView(
+            padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
+            child: new Stack(children: [
+              Card(
+                child: new FractionallySizedBox(
+                  widthFactor: 0.90,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      _buildEditButton(
+                          buttonTitle: "CHANGE POSTER",
+                          onClick: () {
+                            if (_userStore.isLoggedIn) {
+                              print("User logged in");
+                              _showImageOriginDialog(ImageType.BACKGROUND);
+                            } else {
+                              Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                            }
+                          },
+                          padding: const EdgeInsets.only(top: 8.0, right: 16.0, left: 8.0)),
+                      _buildEditButton(
+                        buttonTitle: "CHANGE PROFILE",
+                        onClick: () {
+                          if (_userStore.isLoggedIn) {
+                            print("User logged in");
+                            _showImageOriginDialog(ImageType.PROFILE);
+                          } else {
+                            Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
+                          }
+                        },
+                      ),
+                      _buildEditButton(
+                        buttonTitle: "CHANGE TEXTS",
+                        onClick: () {
+                          _isEditModeOn = !_isEditModeOn;
+                          if (_isEditModeOn) {
+                            _wiggleController.forward();
+                          }
+                        },
+                      ),
+                      new Padding(
+                        padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0, bottom: 8.0),
+                        child: new GestureDetector(
+                          onTap: () {
+                            if (_isEditModeOn) {
+                              _showAboutMeTextInputDialog();
+                              _isEditModeOn = false;
+                            }
+                          },
+                          child: new Transform.rotate(
+                            angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
+                            child: new Text(
+                              _userStore.user.aboutMe != null ? _userStore.user.aboutMe : "Tell your readers about you",
+                              textAlign: TextAlign.justify,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 8,
+                              style: TextStyle(color: TextColorDarkBackground.secondary),
+                            ),
+                          ),
+                        ),
+                      ),
+                      _userStatsWidget(context)
+                    ],
                   ),
                 ),
               ),
-              new Center(
-                child: new SingleChildScrollView(
-                  padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
-                  child: new Stack(children: [
-                    Card(
-                      child: new FractionallySizedBox(
-                        widthFactor: 0.90,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            _buildEditButton(
-                                buttonTitle: "CHANGE POSTER",
-                                onClick: () {
-                                  if (_userStore.isLoggedIn) {
-                                    print("User logged in");
-                                    _showImageOriginDialog(ImageType.BACKGROUND);
-                                  } else {
-                                    Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                                  }
-                                },
-                                padding: const EdgeInsets.only(top: 8.0, right: 12.0, left: 8.0)),
-                            _buildEditButton(
-                              buttonTitle: "CHANGE PROFILE",
-                              onClick: () {
-                                if (_userStore.isLoggedIn) {
-                                  print("User logged in");
-                                  _showImageOriginDialog(ImageType.PROFILE);
-                                } else {
-                                  Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
-                                }
-                              },
-                            ),
-                            _buildEditButton(
-                              buttonTitle: "CHANGE TEXTS",
-                              onClick: () {
-                                _isEditModeOn = !_isEditModeOn;
-                                if (_isEditModeOn) {
-                                  _wiggleController.forward();
-                                }
-                              },
-                            ),
-                            new Padding(
-                              padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0, bottom: 8.0),
-                              child: new GestureDetector(
-                                onTap: () {
-                                  if (_isEditModeOn) {
-                                    _showAboutMeTextInputDialog();
-                                    _isEditModeOn = false;
-                                  }
-                                },
-                                child: new Transform.rotate(
-                                  angle: (_isEditModeOn == true) ? _wiggleAnimation.value : 0.0,
-                                  child: new Text(
-                                    _userStore.user.aboutMe != null ? _userStore.user.aboutMe : "Tell your readers about you",
-                                    textAlign: TextAlign.justify,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 8,
-                                    style: TextStyle(color: TextColorDarkBackground.secondary),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            _userStatsWidget(context)
-                          ],
-                        ),
-                      ),
-                    ),
-                    userIdentificationWidget(context),
-                  ]),
-                ),
-              ),
-            ],
+              userIdentificationWidget(context),
+            ]),
           ),
         ),
-        PersistentBottomBar(
-          selectedItemIdex: 4,
-        ),
-      ]),
+      ],
     );
   }
 
   Widget _buildEditButton(
-      {@required String buttonTitle, @required Function onClick, EdgeInsets padding = const EdgeInsets.only(left: 8.0, right: 16.0)}) {
+      {@required String buttonTitle,
+      @required Function onClick,
+      EdgeInsets padding = const EdgeInsets.only(left: 8.0, right: 16.0)}) {
     return new Align(
       alignment: Alignment.centerRight,
       child: new Padding(
         padding: padding,
         child: ButtonTheme(
           minWidth: 135.0,
-          child: OutlineButton(
+          child: RaisedButton(
+            elevation: 0.0,
             child: Text(
               buttonTitle,
-              style: TextStyle(fontSize: 12.0),
+              style: TextStyle(fontSize: 12.0, color: TextColorBrightBackground.secondary),
             ),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
             onPressed: onClick,
-            textColor: AppThemeColors.accentColor,
-            borderSide: BorderSide(color: AppThemeColors.accentColor, width: 1.5),
-            highlightColor: Colors.white,
-            color: Colors.grey[600],
+            highlightColor: Colors.grey[200],
+            color: Colors.grey[350],
           ),
         ),
       ),
@@ -307,8 +371,9 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
 
   Future<Null> _showTwitterTextInputDialog() async {
     if (_userStore.user.twitterProfile != null) {
-      _textController.text =
-          (_userStore.user.twitterProfile.startsWith('@') ? _userStore.user.twitterProfile.substring(1) : _userStore.user.twitterProfile);
+      _textController.text = (_userStore.user.twitterProfile.startsWith('@')
+          ? _userStore.user.twitterProfile.substring(1)
+          : _userStore.user.twitterProfile);
     } else {
       _textController.text = '';
     }
@@ -470,7 +535,10 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.favorite, color: TextColorDarkBackground.tertiary,),
+                child: Icon(
+                  Icons.favorite,
+                  color: TextColorDarkBackground.tertiary,
+                ),
               ),
               Text(
                 _userStore.user.fans.toString(),
@@ -483,7 +551,10 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.remove_red_eye, color: TextColorDarkBackground.tertiary,),
+                child: Icon(
+                  Icons.remove_red_eye,
+                  color: TextColorDarkBackground.tertiary,
+                ),
               ),
               Text(
                 _calculateUserTotalViews().toString(),
@@ -496,7 +567,10 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
             children: <Widget>[
               new Padding(
                 padding: const EdgeInsets.only(top: 8.0, left: 8.0, bottom: 8.0),
-                child: Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary,),
+                child: Icon(
+                  Icons.attach_money,
+                  color: TextColorDarkBackground.tertiary,
+                ),
               ),
               new Padding(
                 padding: const EdgeInsets.only(right: 8.0),
@@ -585,12 +659,14 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
       width: 120.0,
       height: 120.0,
       foregroundDecoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)],
+        boxShadow: [
+          BoxShadow(color: Theme.of(context).primaryColor, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)
+        ],
         border: Border.all(color: Theme.of(context).accentColor),
         shape: BoxShape.circle,
         image: DecorationImage(
-            image:
-                ProfileImagePicker.getProfileImageProvider(_userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
+            image: ProfileImagePicker.getProfileImageProvider(
+                _userStore.user.localProfilePictureUri, _userStore.user.remoteProfilePictureUri),
             fit: BoxFit.fill),
       ),
     );

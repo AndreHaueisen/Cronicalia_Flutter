@@ -197,9 +197,12 @@ class FileRepository {
 
         await streamController.done;
       } else {
+        progressStream.filesTotalNumber = 1;
         _deleteUnusedFiles(originalBook: originalBook, modifiedBook: modifiedBook);
         streamController.close();
-        return await dataRepository.updateMultiFileBookFiles(modifiedBook.authorEmailId, modifiedBook);
+        return await dataRepository.updateMultiFileBookFiles(modifiedBook.authorEmailId, modifiedBook).then((_) {
+          progressStream.notifySuccess();
+        });
       }
     } catch (error) {
       print(error);

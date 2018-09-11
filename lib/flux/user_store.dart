@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/backend/data_repository.dart';
 import 'package:cronicalia_flutter/backend/file_repository.dart';
+import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/models/user.dart';
@@ -10,6 +11,7 @@ import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flushbar/flushbar.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
@@ -19,24 +21,125 @@ class UserStore extends Store {
   final StorageReference _storageReference = FirebaseStorage.instance.ref();
   FileRepository _fileRepository;
   DataRepository _dataRepository;
+  LoginHandler _loginHandler;
+
   ProgressStream _progressStream = new ProgressStream();
 
   bool _isLoggedIn = false;
-  User _user = new User(
-      name: "Unknown",
-      encodedEmail: "Unknown",
-      twitterProfile: "",
-      aboutMe: "",
-      /*localProfilePictureUri: "",
-      remoteProfilePictureUri: "",*/
-      localBackgroundPictureUri: "",
-      remoteBackgroundPictureUri: "",
-      books: new Map<String, Book>(),
-      fans: 0);
+  User _user = User.empty();
 
   UserStore() {
     _fileRepository = FileRepository(_storageReference);
     _dataRepository = DataRepository(_firestore);
+    _loginHandler = LoginHandler(_firebaseAuth, _firestore);
+
+    triggerOnConditionalAction(loginWithEmailAction, (List<dynamic> payload) {
+      String email = payload[0];
+      String password = payload[1];
+      bool isUserNew = payload[2];
+      BuildContext context = payload[3];
+      Completer<bool> _loggedStatusCompleter = payload[4];
+
+      Flushbar infoFlushbar = FlushbarHelper.createInformation(message: "Loading credentials", duration: null);
+      infoFlushbar.show(context);
+
+      if (isUserNew) {
+        _loginHandler.createUserOnFirebaseWithEmailAndPassword(email, password).then((User user) {
+          _onLogin(infoFlushbar, user, context, isUserNew, _loggedStatusCompleter);
+        }).catchError((error) {
+          _onLoginError(infoFlushbar, error, context, _loggedStatusCompleter);
+        });
+      } else {
+        _loginHandler.signIntoFirebaseWithEmailAndPassword(email, password).then((User user) {
+          _onLogin(infoFlushbar, user, context, isUserNew, _loggedStatusCompleter);
+        }).catchError((error) {
+          _onLoginError(infoFlushbar, error, context, _loggedStatusCompleter);
+        });
+      }
+
+      return false;
+    });
+    triggerOnConditionalAction(loginWithGoogleAction, (List<dynamic> payload) {
+      bool isUserNew = payload[0];
+      BuildContext context = payload[1];
+      Completer<bool> _loggedStatusCompleter = payload[2];
+
+      Flushbar infoFlushbar = FlushbarHelper.createInformation(
+        message: "Loading Google credentials",
+        duration: null,
+      );
+      infoFlushbar.show(context);
+
+      _loginHandler.signIntoFirebaseWithGoogle(isUserNew).then((User user) {
+        _onLogin(infoFlushbar, user, context, isUserNew, _loggedStatusCompleter);
+      }).catchError((error) {
+        _onLoginError(infoFlushbar, error, context, _loggedStatusCompleter);
+      });
+
+      return false;
+    });
+    triggerOnConditionalAction(loginWithFacebookAction, (List<dynamic> payload) {
+      bool isUserNew = payload[0];
+      BuildContext context = payload[1];
+      Completer<bool> _loggedStatusCompleter = payload[2];
+
+      Flushbar infoFlushbar = FlushbarHelper.createInformation(
+        message: "Loading Facebook credentials",
+        duration: null,
+      );
+      infoFlushbar.show(context);
+
+      _loginHandler.signIntoFirebaseWithFacebook(isUserNew).then((User user) {
+        _onLogin(infoFlushbar, user, context, isUserNew, _loggedStatusCompleter);
+      }).catchError((error) {
+        _onLoginError(infoFlushbar, error, context, _loggedStatusCompleter);
+      });
+
+      return false;
+    });
+    triggerOnConditionalAction(loginWithTwitterAction, (List<dynamic> payload) {
+      bool isUserNew = payload[0];
+      BuildContext context = payload[1];
+      Completer<bool> _loggedStatusCompleter = payload[2];
+
+      Flushbar infoFlushbar = FlushbarHelper.createInformation(
+        message: "Loading Twitter credentials",
+        duration: null,
+      );
+      infoFlushbar.show(context);
+
+      _loginHandler.signIntoFirebaseWithTwitter(isUserNew).then((User user) {
+        _onLogin(infoFlushbar, user, context, isUserNew, _loggedStatusCompleter);
+      }).catchError((error) {
+        _onLoginError(infoFlushbar, error, context, _loggedStatusCompleter);
+      });
+
+      return false;
+    });
+
+    triggerOnConditionalAction(changeLoginStatusAction, (bool isLoggedIn) {
+      this._isLoggedIn = isLoggedIn;
+      return false;
+    });
+
+    triggerOnConditionalAction(logoutAction, (_) {
+      _logout().then((_) {
+        trigger();
+      });
+      return false;
+    });
+
+    triggerOnConditionalAction(requestNewPasswordAction, (List<dynamic> payload) {
+      String email = payload[0];
+      BuildContext context = payload[1];
+
+      _loginHandler.requestForgotPasswordEmail(email).then((_) {
+        FlushbarHelper.createInformation(message: "Email sent. Check your inbox").show(context);
+      }).catchError((error) {
+        FlushbarHelper.createError(message: error.toString()).show(context);
+      });
+      return false;
+    });
 
     triggerOnAction(getUserFromCacheAction, (User newUser) {
       _user = newUser;
@@ -80,11 +183,6 @@ class UserStore extends Store {
         });
         return false;
       });
-    });
-
-    triggerOnConditionalAction(changeLoginStatusAction, (bool isLoggedIn) {
-      this._isLoggedIn = isLoggedIn;
-      return false;
     });
 
     triggerOnAction(updateUserNameAction, (String newName) {
@@ -321,6 +419,23 @@ class UserStore extends Store {
 
   bool get isLoggedIn => _isLoggedIn;
 
+  void _onLogin(Flushbar infoFlushbar, User user, BuildContext context, bool isUserNew, Completer<bool> logInCompleter) {
+    _isLoggedIn = true;
+
+    isUserNew ? getUserFromCacheAction(user) : getUserFromServerAction(user);
+    infoFlushbar.dismiss().then((_) {
+      logInCompleter.complete(true);
+    });
+  }
+
+  void _onLoginError(Flushbar infoFlushbar, Error error, BuildContext context, Completer<bool> logInCompleter) {
+    _isLoggedIn = false;
+    infoFlushbar.dismiss().then((_) {
+      logInCompleter.complete(false);
+      FlushbarHelper.createError(message: error.toString(), duration: null).show(context);
+    });
+  }
+
   Future<bool> isLoggedInAsync() async {
     FirebaseUser firebaseUser = await _firebaseAuth.currentUser();
 
@@ -335,15 +450,51 @@ class UserStore extends Store {
       return false;
     }
   }
+
+  Future<void> _logout() async {
+    await _firebaseAuth.signOut();
+    await _loginHandler.signOutFromGoogle();
+    _user = User.empty();
+    _isLoggedIn = false;
+
+    return;
+  }
 }
 
 final StoreToken userStoreToken = new StoreToken(UserStore());
+
+/// payload[0] contains user email
+/// payload[1] contains user password
+/// payload[2] contains bool indicating if user is new
+/// payload[3] contains context
+/// payload[4] contains a completer to report when log in process finished
+final Action<List<dynamic>> loginWithEmailAction = Action<List<dynamic>>();
+
+/// payload[0] contains isUserNew
+/// payload[1] contains context
+/// payload[2] contains a completer to report when log in process finished
+final Action<List<dynamic>> loginWithGoogleAction = Action<List<dynamic>>();
+
+/// payload[0] contains isUserNew
+/// payload[1] contains context
+/// payload[2] contains a completer to report when log in process finished
+final Action<List<dynamic>> loginWithFacebookAction = Action<List<dynamic>>();
+
+/// payload[0] contains isUserNew
+/// payload[1] contains context
+/// payload[2] contains a completer to report when log in process finished
+final Action<List<dynamic>> loginWithTwitterAction = Action<List<dynamic>>();
+
+/// payload[0] contains user email
+/// payload[1] contains context
+final Action<List<dynamic>> requestNewPasswordAction = Action<List<dynamic>>();
 
 /// userInitialData[0] contains user email
 /// userInitialData[1] contains user photoUrl
 final Action<User> getUserFromServerAction = new Action<User>();
 final Action<User> getUserFromCacheAction = new Action<User>();
 final Action<bool> changeLoginStatusAction = new Action<bool>();
+final Action<void> logoutAction = new Action();
 
 final Action<String> updateUserProfileImageAction = new Action<String>();
 final Action<String> updateUserBackgroundImageAction = new Action<String>();

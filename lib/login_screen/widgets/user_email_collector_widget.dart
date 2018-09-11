@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 typedef EmailCallback(String email);
 
 class UserEmailCollectorWidget extends StatefulWidget {
-  UserEmailCollectorWidget({@required this.loginHandler, @required this.onEmailReady});
+  UserEmailCollectorWidget({@required this.onEmailReady});
 
-  final LoginHandler loginHandler;
   EmailCallback onEmailReady;
 
   @override

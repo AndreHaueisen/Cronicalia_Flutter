@@ -47,7 +47,7 @@ class MyBookWidget extends StatelessWidget {
 
     return Card(
       child: SizedBox(
-        height: 215.0,
+        height: 233.0,
         child: Column(
           children: <Widget>[
             Padding(
@@ -80,15 +80,27 @@ class MyBookWidget extends StatelessWidget {
               ),
             ),
             Align(
-              alignment: FractionalOffset.bottomRight,
+              alignment: Alignment.bottomRight,
               child: Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+                padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 4.0),
                 child: Text(
-                  _book.isSingleFileBook ? "Book complete" : "${_book.chapterTitles.length} chapters",
+                  _book.isCurrentlyComplete ? "Completed" : "Under development",
                   style: TextStyle(fontSize: 12.0, color: TextColorDarkBackground.secondary),
                 ),
               ),
             ),
+            _book.isSingleFileBook
+                ? Container(height: 0.0, width: 0.0)
+                : Align(
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+                      child: Text(
+                        "${_book.chapterTitles.length} chapters",
+                        style: TextStyle(fontSize: 12.0, color: TextColorDarkBackground.secondary),
+                      ),
+                    ),
+                  ),
           ],
         ),
       ),

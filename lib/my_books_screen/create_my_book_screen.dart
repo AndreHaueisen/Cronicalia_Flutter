@@ -138,13 +138,13 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
     ];
   }
 
+  //do not dispose. Flushbar already randles it
   AnimationController _uploadProgressController;
 
   void _showProgressFlushbar() {
     UserStore userStore = listenToStore(userStoreToken);
 
     Flushbar progressFlushbar = FlushbarHelper.createLoading(
-      title: "Uploading files",
       message: "Wait while we create your new masterpiece",
       indicatorBackgroundColor: Colors.blue[300],
       indicatorController: _uploadProgressController,
@@ -768,6 +768,13 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   void onRemoveFileClick({int position}) {
     setState(() {
       _filesWidgets.removeAt(position);
+      _updateFileWidgetsPositions();
+    });
+  }
+
+  void _updateFileWidgetsPositions(){
+    _filesWidgets.asMap().forEach((int position, BookFileWidget fileWidget){
+      fileWidget.position = position;
     });
   }
 }
