@@ -132,6 +132,7 @@ class FlushbarHelper {
   static Flushbar createInput({@required Form textForm}) {
     return Flushbar()
       ..backgroundColor = Colors.grey[100]
+      ..shadowColor = Colors.grey[900]
       ..duration = null
       ..userInputForm = textForm;
   }

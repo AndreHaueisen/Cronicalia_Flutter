@@ -35,16 +35,17 @@ class UserStore extends Store {
 
     triggerOnConditionalAction(loginWithEmailAction, (List<dynamic> payload) {
       String email = payload[0];
-      String password = payload[1];
-      bool isUserNew = payload[2];
-      BuildContext context = payload[3];
-      Completer<bool> _loggedStatusCompleter = payload[4];
+      String name = payload[1];
+      String password = payload[2];
+      bool isUserNew = payload[3];
+      BuildContext context = payload[4];
+      Completer<bool> _loggedStatusCompleter = payload[5];
 
       Flushbar infoFlushbar = FlushbarHelper.createInformation(message: "Loading credentials", duration: null);
       infoFlushbar.show(context);
 
       if (isUserNew) {
-        _loginHandler.createUserOnFirebaseWithEmailAndPassword(email, password).then((User user) {
+        _loginHandler.createUserOnFirebaseWithEmailAndPassword(email, name, password).then((User user) {
           _onLogin(infoFlushbar, user, context, isUserNew, _loggedStatusCompleter);
         }).catchError((error) {
           _onLoginError(infoFlushbar, error, context, _loggedStatusCompleter);
@@ -428,7 +429,7 @@ class UserStore extends Store {
     });
   }
 
-  void _onLoginError(Flushbar infoFlushbar, Error error, BuildContext context, Completer<bool> logInCompleter) {
+  void _onLoginError(Flushbar infoFlushbar, dynamic error, BuildContext context, Completer<bool> logInCompleter) {
     _isLoggedIn = false;
     infoFlushbar.dismiss().then((_) {
       logInCompleter.complete(false);
@@ -464,10 +465,11 @@ class UserStore extends Store {
 final StoreToken userStoreToken = new StoreToken(UserStore());
 
 /// payload[0] contains user email
-/// payload[1] contains user password
-/// payload[2] contains bool indicating if user is new
-/// payload[3] contains context
-/// payload[4] contains a completer to report when log in process finished
+/// payload[1] contains user name. name == null is user is not new
+/// payload[2] contains user password
+/// payload[3] contains bool indicating if user is new
+/// payload[4] contains context
+/// payload[5] contains a completer to report when log in process finished
 final Action<List<dynamic>> loginWithEmailAction = Action<List<dynamic>>();
 
 /// payload[0] contains isUserNew

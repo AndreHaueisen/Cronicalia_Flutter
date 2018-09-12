@@ -58,6 +58,8 @@ flutter:
      - images/cover_placeholder.png
      - images/empty_book_list_land.png
      - images/empty_book_list_port.png
+     - images/book_background.png
+     - images/icon_stub.png
      
      - assets/test_file.txt
 

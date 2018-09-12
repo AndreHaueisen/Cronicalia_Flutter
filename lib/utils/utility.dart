@@ -24,6 +24,14 @@ class Utility {
     return null;
   }
 
+  static String validateName(String name) {
+    if (name == null || name.isEmpty) return "Invalid name";
+    if (name.length < 4) return "Minimum lenght is 4";
+    if (name.length > 30) return "Maximum lenght is 30";
+
+    return null;
+  }
+
   static String encodeEmail(String decodedEmail) {
     return decodedEmail.replaceAll(".", ",");
   }
@@ -37,7 +45,7 @@ class Utility {
     return Uri.decodeFull(encodedFileName);
   }
 
-  static String resolveFileNameFromLocalFolder(String localFileFolder){
+  static String resolveFileNameFromLocalFolder(String localFileFolder) {
     return localFileFolder?.split("/")?.last;
   }
 

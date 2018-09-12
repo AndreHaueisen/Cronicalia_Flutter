@@ -4,15 +4,12 @@ import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/old_user_login_widget.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/user_email_collector_widget.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
-import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:cronicalia_flutter/login_screen/widgets/new_user_login_widget.dart';
 
 class LoginScreen extends StatefulWidget {
-
   final FirebaseAuth firebaseAuth;
 
   LoginScreen(this.firebaseAuth);
@@ -30,13 +27,24 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: new AnimatedCrossFade(
-      duration: new Duration(seconds: 1),
-      firstChild: _emailCollectorWidget(),
-      secondChild: _loginButtonsWidget(),
-      alignment: Alignment.bottomCenter,
-      crossFadeState: Utility.isEmailValid(_email) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-    ));
+      resizeToAvoidBottomPadding: false,
+      body: Container(
+        
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("images/book_background.png"),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: new AnimatedCrossFade(
+          duration: new Duration(seconds: 1),
+          firstChild: _emailCollectorWidget(),
+          secondChild: _loginButtonsWidget(),
+          alignment: Alignment.center,
+          crossFadeState: Utility.isEmailValid(_email) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+        ),
+      ),
+    );
   }
 
   Widget _emailCollectorWidget() {
@@ -93,5 +101,4 @@ class _LoginScreenState extends State<LoginScreen> {
           shouldShowEmailAndPassword: shouldShowEmailAndPassword);
     }
   }
-
 }

@@ -4,6 +4,7 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_twitter_login/flutter_twitter_login.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
@@ -38,13 +39,13 @@ class LoginHandler {
           accessToken: googleCredentials[Constants.GOOGLE_ACCESS_TOKEN]);
 
       if (firebaseUser == null) {
-        throw ("firebase user returned null");
+        throw ("Firebase user returned null");
       }
 
       return _saveUserLoginDataOnDatabase(firebaseUser, isUserNew);
     } catch (error) {
-      print(error);
-      rethrow;
+      _handleError(error);
+      return null;
     }
   }
 
@@ -75,7 +76,7 @@ class LoginHandler {
   }
 
   //remove this method when FirebaseAuth supports full signOut
-  Future<void> signOutFromGoogle() async{
+  Future<void> signOutFromGoogle() async {
     GoogleSignIn _googleSignIn = new GoogleSignIn(
       scopes: [
         'profile',
@@ -102,8 +103,8 @@ class LoginHandler {
 
       return _saveUserLoginDataOnDatabase(firebaseUser, isUserNew);
     } catch (error) {
-      print(error);
-      rethrow;
+      _handleError(error);
+      return null;
     }
   }
 
@@ -128,9 +129,8 @@ class LoginHandler {
     try {
       TwitterSession session = await _getCredentialsUsingTwitter();
 
-      FirebaseUser firebaseUser = await firebaseAuth.signInWithTwitter(
-          authToken: session.token,
-          authTokenSecret: session.secret);
+      FirebaseUser firebaseUser =
+          await firebaseAuth.signInWithTwitter(authToken: session.token, authTokenSecret: session.secret);
 
       if (firebaseUser == null) {
         throw ("firebase user returned null");
@@ -138,8 +138,8 @@ class LoginHandler {
 
       return _saveUserLoginDataOnDatabase(firebaseUser, isUserNew, twitterHandle: session.username);
     } catch (error) {
-      print(error);
-      rethrow;
+      _handleError(error);
+      return null;
     }
   }
 
@@ -150,7 +150,6 @@ class LoginHandler {
 
     switch (result.status) {
       case TwitterLoginStatus.loggedIn:
-        
         return result.session;
 
       case TwitterLoginStatus.cancelledByUser:
@@ -164,14 +163,14 @@ class LoginHandler {
     }
   }
 
-  Future<User> createUserOnFirebaseWithEmailAndPassword(String email, String password) async {
+  Future<User> createUserOnFirebaseWithEmailAndPassword(String email, String name, String password) async {
     try {
       FirebaseUser firebaseUser = await firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
 
-      return _saveUserLoginDataOnDatabase(firebaseUser, true);
+      return _saveUserLoginDataOnDatabase(firebaseUser, true, name: name);
     } catch (error) {
-      print(error);
-      rethrow;
+      _handleError(error);
+      return null;
     }
   }
 
@@ -181,8 +180,8 @@ class LoginHandler {
 
       return _saveUserLoginDataOnDatabase(firebaseUser, false);
     } catch (error) {
-      print(error);
-      rethrow;
+      _handleError(error);
+      return null;
     }
   }
 
@@ -190,12 +189,20 @@ class LoginHandler {
     try {
       return firebaseAuth.sendPasswordResetEmail(email: email);
     } catch (error) {
-      print(error);
-      rethrow;
+      _handleError(error);
+      return null;
     }
   }
 
-  Future<User> _saveUserLoginDataOnDatabase(FirebaseUser firebaseUser, bool isUserNew, {String twitterHandle}) async {
+  void _handleError(dynamic error){
+    if(error is PlatformException){
+        throw(error.message);
+      } else {
+        throw(error.toString());
+      }
+  }
+
+  Future<User> _saveUserLoginDataOnDatabase(FirebaseUser firebaseUser, bool isUserNew, {String name, String twitterHandle}) async {
     if (firestore == null) {
       throw ("Firestore returned null");
     }
@@ -208,7 +215,7 @@ class LoginHandler {
     final Map<String, String> emailUIDMap = {userEncodedEmail: userUID};
 
     User user = User(
-        name: firebaseUser.displayName,
+        name: firebaseUser.displayName ?? name,
         twitterProfile: twitterHandle != null ? "@$twitterHandle" : null,
         encodedEmail: userEncodedEmail,
         remoteProfilePictureUri: firebaseUser.photoUrl,

@@ -26,7 +26,7 @@ class TextColorBrightBackground {
 }
 
 class AppThemeColors {
-  static final Color primaryColor = Colors.grey[850];
+  static final Color primaryColor = Colors.grey[900];
   static final Color primaryColorDark = Colors.black;
   static final Color primaryColorLight = Colors.grey[700];
   static final Color accentColor = Colors.amberAccent;
@@ -49,7 +49,7 @@ class Cronicalia extends StatelessWidget {
     _initializeFirebase();
   }
 
-
+  
 
   @override
   Widget build(BuildContext context) {
