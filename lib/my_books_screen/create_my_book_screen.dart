@@ -465,6 +465,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
                 },
                 maxLength: Constants.MAX_TITLE_LENGTH,
                 maxLines: 1,
+                textCapitalization: TextCapitalization.words,
                 maxLengthEnforced: true,
                 decoration: InputDecoration(
                     fillColor: Colors.black26,
@@ -496,6 +497,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
                 },
                 maxLength: Constants.MAX_SYNOPSIS_LENGTH,
                 maxLines: 7,
+                textCapitalization: TextCapitalization.sentences,
                 maxLengthEnforced: true,
                 decoration: InputDecoration(
                     fillColor: Colors.black26,

@@ -15,8 +15,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 class TextColorDarkBackground {
   static final Color primary = Colors.white;
-  static final Color secondary = Colors.grey[350];
-  static final Color tertiary = Colors.grey[500];
+  static final Color secondary = Colors.grey[500];
+  static final Color tertiary = Colors.grey[700];
 }
 
 class TextColorBrightBackground {
@@ -26,14 +26,14 @@ class TextColorBrightBackground {
 }
 
 class AppThemeColors {
-  static final Color primaryColor = Colors.grey[900];
   static final Color primaryColorDark = Colors.black;
-  static final Color primaryColorLight = Colors.grey[700];
+  static final Color primaryColor = Colors.grey[900];
+  static final Color primaryColorLight = Colors.grey[800];
   static final Color accentColor = Colors.amberAccent;
   static final Color errorColor = Colors.orange[700];
   static final Color backgroundColor = Colors.grey[850];
   static final Color canvasColor = Colors.grey[850];
-  static final Color cardColor = Colors.grey[700];
+  static final Color cardColor = Colors.grey[800];
 }
 
 void main() {
@@ -49,7 +49,7 @@ class Cronicalia extends StatelessWidget {
     _initializeFirebase();
   }
 
-  
+
 
   @override
   Widget build(BuildContext context) {

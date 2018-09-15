@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
+import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/profile_screen/profile_image_picker.dart';
@@ -133,13 +134,11 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
   Widget _buildLoginButton() {
     return ButtonTheme(
       minWidth: 135.0,
-      child: RaisedButton(
-        elevation: 0.0,
+      child: RoundedButton(
         child: Text(
           "LOG IN",
           style: TextStyle(fontSize: 12.0, color: TextColorBrightBackground.secondary),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
         onPressed: () {
           Navigator.of(context).pushNamed(Constants.ROUTE_LOGIN_SCREEN);
         },
@@ -253,13 +252,11 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
         padding: padding,
         child: ButtonTheme(
           minWidth: 135.0,
-          child: RaisedButton(
-            elevation: 0.0,
+          child: RoundedButton(
             child: Text(
               buttonTitle,
               style: TextStyle(fontSize: 12.0, color: TextColorBrightBackground.secondary),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
             onPressed: onClick,
             highlightColor: Colors.grey[200],
             color: Colors.grey[350],
@@ -557,7 +554,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
                 ),
               ),
               Text(
-                _calculateUserTotalViews().toString(),
+                _userStore.user.calculateTotalBookViews().toString(),
                 style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold, fontSize: 16.0),
               ),
             ],
@@ -575,7 +572,7 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
               new Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
-                  _calculateUserTotalIncome().toString(),
+                  _userStore.user.calculateTotalIncome().toString(),
                   style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold, fontSize: 16.0),
                 ),
               )
@@ -584,24 +581,6 @@ class ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderS
         ],
       ),
     );
-  }
-
-  int _calculateUserTotalViews() {
-    int userTotalViews = 0;
-    _userStore.user.books.forEach((_, book) {
-      userTotalViews += book.readingsNumber;
-    });
-
-    return userTotalViews;
-  }
-
-  double _calculateUserTotalIncome() {
-    double userTotalIncome = 0.0;
-    _userStore.user.books.forEach((_, book) {
-      userTotalIncome += book.income;
-    });
-
-    return userTotalIncome;
   }
 
   Widget userIdentificationWidget(BuildContext context) {

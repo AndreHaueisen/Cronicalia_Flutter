@@ -1,3 +1,4 @@
+import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
@@ -110,46 +111,10 @@ class MyBookWidget extends StatelessWidget {
   Widget _bookStatsWidget() {
     return Padding(
       padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: Icon(
-                  Icons.remove_red_eye,
-                  color: TextColorDarkBackground.tertiary,
-                ),
-              ),
-              Text(_book.readingsNumber.toString(),
-                  style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 6.0),
-                child: Icon(Icons.star, color: TextColorDarkBackground.tertiary),
-              ),
-              Text(_book.rating.toString(),
-                  style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold))
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Text(_book.income.toString(),
-                    style: TextStyle(color: TextColorDarkBackground.secondary, fontWeight: FontWeight.bold)),
-              )
-            ],
-          )
-        ],
+      child: BookStatsWidget(
+        readingsNumber: _book.readingsNumber,
+        rating: _book.rating,
+        income: _book.income,
       ),
     );
   }

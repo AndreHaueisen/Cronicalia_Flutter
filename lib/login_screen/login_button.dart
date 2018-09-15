@@ -1,11 +1,9 @@
+import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:flutter/material.dart';
 
 class LoginButton {
-  
   static Widget getGoogleButton({@required Function onPressed}) {
-    return RaisedButton(
-      elevation: 0.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+    return RoundedButton(
       onPressed: onPressed,
       child: Text("LOGIN WITH GOOGLE"),
       textColor: Colors.white,
@@ -15,9 +13,7 @@ class LoginButton {
   }
 
   static Widget getFacebookButton({@required Function onPressed}) {
-    return RaisedButton(
-      elevation: 0.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+    return RoundedButton(
       onPressed: onPressed,
       child: Text("LOGIN WITH FACEBOOK"),
       textColor: Colors.white,
@@ -27,9 +23,7 @@ class LoginButton {
   }
 
   static Widget getTwitterButton({@required Function onPressed}) {
-    return RaisedButton(
-      elevation: 0.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+    return RoundedButton(
       onPressed: onPressed,
       child: Text("LOGIN WITH TWITTER"),
       textColor: Colors.white,
@@ -39,9 +33,7 @@ class LoginButton {
   }
 
   static Widget getEmailButton({@required Function onPressed}) {
-    return RaisedButton(
-      elevation: 0.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+    return RoundedButton(
       onPressed: onPressed,
       child: Text("LOGIN WITH EMAIL"),
       textColor: Colors.white,

@@ -75,6 +75,24 @@ class User {
     };
   }
 
+  int calculateTotalBookViews(){
+    int bookTotalViews = 0;
+    this.books.forEach((_, book){
+      bookTotalViews += book.readingsNumber;
+    });
+
+    return bookTotalViews;
+  }
+
+  double calculateTotalIncome(){
+    double totalIncome = 0.0;
+    this.books.forEach((_, book){
+      totalIncome += book.income;
+    });
+
+    return totalIncome;
+  }
+
   @override
   bool operator ==(other) {
     if (identical(this, other)) {

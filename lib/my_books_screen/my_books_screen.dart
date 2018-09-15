@@ -1,5 +1,6 @@
 import 'package:cronicalia_flutter/custom_widgets/my_book_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
+import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/my_books_screen/create_my_book_screen.dart';
@@ -63,10 +64,10 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 48.0),
-            child: RaisedButton(
+            child: RoundedButton(
+              elevation: 4.0,
               color: AppThemeColors.accentColor,
               textColor: TextColorBrightBackground.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
               onPressed: () {
                 if (_userStore.isLoggedIn) {
                   print("User logged in");

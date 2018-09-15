@@ -1,4 +1,5 @@
 import 'package:cronicalia_flutter/book_read_screen/selected_book_screen.dart';
+import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:flutter/material.dart';
@@ -70,7 +71,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: ClipRRect(
               borderRadius: BorderRadius.only(topRight: Radius.circular(4.0), bottomRight: Radius.circular(4.0)),
-                          child: Image.network(
+              child: Image.network(
                 book.remoteCoverUri,
                 fit: BoxFit.fill,
                 height: _BOX_HEIGHT,
@@ -88,11 +89,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
                 child: Text(
                   book.title,
-                  style: TextStyle(
-                    color: TextColorDarkBackground.primary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 18.0
-                  ),
+                  style: TextStyle(color: TextColorDarkBackground.primary, fontWeight: FontWeight.w500, fontSize: 18.0),
                 ),
               ),
               Padding(
@@ -106,10 +103,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Text(
                   book.synopsis,
-                  style: TextStyle(
-                    color: TextColorDarkBackground.secondary,
-                    fontSize: 12.0
-                  ),
+                  style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 12.0),
                   maxLines: 5,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.justify,
@@ -125,57 +119,11 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
 
   Widget _buildBookStats(Book book) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: Icon(
-                  Icons.remove_red_eye,
-                  color: TextColorDarkBackground.tertiary,
-                ),
-              ),
-              Text(book.readingsNumber.toString(),
-                  style: TextStyle(
-                    color: TextColorDarkBackground.secondary,
-                    fontWeight: FontWeight.bold,
-                  ))
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 6.0),
-                child: Icon(Icons.star, color: TextColorDarkBackground.tertiary),
-              ),
-              Text(book.rating.toString(),
-                  style: TextStyle(
-                    color: TextColorDarkBackground.secondary,
-                    fontWeight: FontWeight.bold,
-                  ))
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary),
-              Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: Text(book.income.toString(),
-                    style: TextStyle(
-                      color: TextColorDarkBackground.secondary,
-                      fontWeight: FontWeight.bold,
-                    )),
-              )
-            ],
-          )
-        ],
-      ),
-    );
+        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
+        child: BookStatsWidget(
+          readingsNumber: book.readingsNumber,
+          rating: book.rating,
+          income: book.income,
+        ));
   }
 }

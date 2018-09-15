@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cronicalia_flutter/custom_widgets/book_file_widget.dart';
+import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
+import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
@@ -222,12 +224,12 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     ];
   }
 
-   bool _validateInformation() {
+  bool _validateInformation() {
     return (_validateMinimumFileSize() && _validateNewChapterTitles());
   }
 
-  bool _validateMinimumFileSize(){
-    if(_filesWidgets.length < 1){
+  bool _validateMinimumFileSize() {
+    if (_filesWidgets.length < 1) {
       FlushbarHelper.createError(message: "You need at least one file").show(context);
       return false;
     }
@@ -245,8 +247,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
     //check if there are equal files
     if (_filesWidgets.length != fileNamesSet.length) {
-      FlushbarHelper.createError(message: "Equal files detected. Remove one of the copies")
-          .show(context);
+      FlushbarHelper.createError(message: "Equal files detected. Remove one of the copies").show(context);
       return false;
     }
 
@@ -254,9 +255,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     for (var counter = 0; counter < _filesWidgets.length; counter++) {
       String title = _filesWidgets[counter].fileTitle;
       if (title == null || title.isEmpty) {
-        FlushbarHelper.createError(
-                message: "Your chapter title number ${counter + 1} is missing")
-            .show(context);
+        FlushbarHelper.createError(message: "Your chapter title number ${counter + 1} is missing").show(context);
         return false;
       }
     }
@@ -421,13 +420,11 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         padding: padding,
         child: ButtonTheme(
           minWidth: 130.0,
-          child: RaisedButton(
-            elevation: 0.0,
+          child: RoundedButton(
             child: Text(
               buttonTitle,
               style: TextStyle(fontSize: 12.0, color: TextColorBrightBackground.secondary),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
             onPressed: onClick,
             highlightColor: Colors.grey[200],
             color: Colors.grey[350],
@@ -696,58 +693,12 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
   Widget _buildBookStatsWidget(BuildContext context) {
     return new Padding(
-      padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
-      child: new Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          new Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              new Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(
-                  Icons.remove_red_eye,
-                  color: TextColorDarkBackground.tertiary,
-                ),
-              ),
-              Text(
-                _immutableBook.readingsNumber.toString(),
-                style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 16.0),
-              ),
-            ],
-          ),
-          new Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              new Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.star, color: TextColorDarkBackground.tertiary),
-              ),
-              Text(
-                _immutableBook.rating.toString(),
-                style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 16.0),
-              ),
-            ],
-          ),
-          new Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              new Padding(
-                padding: const EdgeInsets.only(top: 8.0, left: 8.0, bottom: 8.0),
-                child: Icon(Icons.attach_money, color: TextColorDarkBackground.tertiary),
-              ),
-              new Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Text(
-                  _immutableBook.income.toString(),
-                  style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 16.0),
-                ),
-              )
-            ],
-          ),
-        ],
-      ),
-    );
+        padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0, bottom: 8.0),
+        child: new BookStatsWidget(
+          readingsNumber: _immutableBook.readingsNumber,
+          rating: _immutableBook.rating,
+          income: _immutableBook.income,
+        ));
   }
 
   Future<Null> _showTitleTextInputDialog() async {
@@ -899,8 +850,8 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     });
   }
 
-  void _updateFileWidgetsPositions(){
-    _filesWidgets.asMap().forEach((int position, BookFileWidget fileWidget){
+  void _updateFileWidgetsPositions() {
+    _filesWidgets.asMap().forEach((int position, BookFileWidget fileWidget) {
       fileWidget.position = position;
     });
   }

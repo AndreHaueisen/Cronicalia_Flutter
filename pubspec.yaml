@@ -25,6 +25,10 @@ dependencies:
   flutter_native_image:
     git: https://github.com/btastic/flutter_native_image.git
 
+  #book files manipulation
+  #ePub files
+  epub: ^2.0.2
+
   validate: "1.6.1"
   flutter_flux: 
    git: https://github.com/google/flutter_flux

@@ -134,6 +134,7 @@ class BookFileWidget extends StatelessWidget {
                       },
                       style: TextStyle(color: TextColorBrightBackground.primary),
                       maxLines: 1,
+                      textCapitalization: TextCapitalization.words,
                       decoration: InputDecoration(
                           fillColor: Colors.black12,
                           filled: true,
