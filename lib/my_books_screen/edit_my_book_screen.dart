@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:cronicalia_flutter/custom_widgets/book_file_widget.dart';
+import 'package:cronicalia_flutter/custom_widgets/book_pdf_file_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:documents_picker/documents_picker.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
-enum ImageType { POSTER, COVER }
+enum ImageType { COVER }
 enum ImageOrigin { CAMERA, GALLERY }
 
 class EditMyBookScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     implements BookFileWidgetCallback {
   UserStore _userStore;
   bool _isEditModeOn = false;
-  Book _immutableBook;
+  BookPdf _immutableBook;
 
   AnimationController _wiggleController;
   Animation<double> _wiggleAnimation;
@@ -48,7 +49,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     _uploadProgressController = AnimationController(vsync: this, value: 0.0);
     _userStore = listenToStore(userStoreToken);
 
-    _immutableBook = _userStore.user.books[widget.bookUID];
+    _immutableBook = _userStore.user.booksPdf[widget.bookUID];
 
     _initializeFilesWidgets();
 
@@ -91,7 +92,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     _textController.dispose();
     _wiggleController.dispose();
 
-    _filesWidgets?.forEach((BookFileWidget fileWidget) {
+    _filesWidgets?.forEach((BookPdfFileWidget fileWidget) {
       fileWidget.cleanUp();
     });
 
@@ -117,42 +118,22 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     return Scaffold(
       appBar: AppBar(title: Text("Edit ${_immutableBook.title}")),
       persistentFooterButtons: _immutableBook.isCurrentlyComplete ? null : _buildPersistentButtons(context),
-      body: new Stack(children: [
-        _buildBackground(),
-        Center(
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
-            child: new Column(
-              children: <Widget>[
-                new Stack(
-                  children: [
-                    _buildBookInfoCard(),
-                    _buildCoverPicture(),
-                  ],
-                ),
-                _buildPeriodicityDropdownButton(),
-                _buildFilesListCard(),
-              ],
-            ),
+      body: Center(
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
+          child: new Column(
+            children: <Widget>[
+              new Stack(
+                children: [
+                  _buildBookInfoCard(),
+                  _buildCoverPicture(),
+                ],
+              ),
+              _buildPeriodicityDropdownButton(),
+              _buildFilesListCard(),
+            ],
           ),
-        ),
-      ]),
-    );
-  }
-
-  Widget _buildBackground() {
-    return new Container(
-      height: double.infinity,
-      child: Image(
-        image: MyBookImagePicker.getPosterImageProvider(_immutableBook.localPosterUri, _immutableBook.remotePosterUri),
-        alignment: Alignment.topCenter,
-      ),
-      foregroundDecoration: new BoxDecoration(
-        gradient: new LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.transparent, AppThemeColors.primaryColor, AppThemeColors.canvasColor],
         ),
       ),
     );
@@ -208,7 +189,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         onPressed: _immutableBook.areFilesTheSame(_filesWidgets)
             ? null
             : () {
-                final Book fileChangesBook = _userStore.user.books[widget.bookUID].copy();
+                final BookPdf fileChangesBook = _userStore.user.booksPdf[widget.bookUID].copy();
 
                 if (_validateInformation()) {
                   if (fileChangesBook.isSingleFileBook) {
@@ -241,7 +222,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     if (_immutableBook.isSingleFileBook) return true;
 
     Set<String> fileNamesSet = Set<String>();
-    _filesWidgets.forEach((BookFileWidget fileWidget) {
+    _filesWidgets.forEach((BookPdfFileWidget fileWidget) {
       fileNamesSet.add(fileWidget.formattedFilePath);
     });
 
@@ -263,7 +244,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     return true;
   }
 
-  void updateSingleFileBookFile(Book book) {
+  void updateSingleFileBookFile(BookPdf book) {
     String filePath = _filesWidgets[0].filePath;
     if (book.localFullBookUri != filePath) {
       book.localFullBookUri = _filesWidgets[0].filePath;
@@ -271,12 +252,12 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     }
   }
 
-  void updateMultiFileBookFiles(Book book) {
+  void updateMultiFileBookFiles(BookPdf book) {
     book.chapterUris.clear();
     book.chapterTitles.clear();
     book.chaptersLaunchDates.clear();
 
-    _filesWidgets.forEach((BookFileWidget fileWidget) {
+    _filesWidgets.forEach((BookPdfFileWidget fileWidget) {
       //fileWidget.filePath & fileTitle are never null
       book.chapterUris.add(fileWidget.filePath);
       book.chapterTitles.add(fileWidget.fileTitle);
@@ -341,16 +322,11 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             _buildEditButton(
-                buttonTitle: "CHANGE POSTER",
-                onClick: () {
-                  _showImageOriginDialog(ImageType.POSTER);
-                },
-                padding: EdgeInsets.only(top: 8.0, left: 8.0, right: 16.0)),
-            _buildEditButton(
                 buttonTitle: "CHANGE COVER",
                 onClick: () {
                   _showImageOriginDialog(ImageType.COVER);
-                }),
+                },
+                padding: EdgeInsets.only(top: 8.0, left: 8.0, right: 16.0)),
             _buildEditButton(
               buttonTitle: "CHANGE TEXTS",
               onClick: () {
@@ -547,7 +523,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   DropdownMenuItem<ChapterPeriodicity> _buildPeriodicityDropdownItem(ChapterPeriodicity chapterPeriodicity) {
-    String periodicityTitle = Book.convertPeriodicityToString(chapterPeriodicity);
+    String periodicityTitle = UtilityBook.convertPeriodicityToString(chapterPeriodicity);
 
     return DropdownMenuItem<ChapterPeriodicity>(
       child: SizedBox(
@@ -558,7 +534,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     );
   }
 
-  final List<BookFileWidget> _filesWidgets = List<BookFileWidget>();
+  final List<BookPdfFileWidget> _filesWidgets = List<BookPdfFileWidget>();
 
   Widget _buildFilesListCard() {
     return _immutableBook.isCurrentlyComplete || _filesWidgets.length < 1
@@ -627,8 +603,10 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       int position = _filesWidgets.length;
 
       _filesWidgets.add(
-        BookFileWidget(
+        BookPdfFileWidget(
             key: Key(filePath),
+            isReorderable: true,
+            allowUserInput: true,
             isSingleFileBook: _immutableBook.isSingleFileBook,
             filePath: filePath,
             date: date,
@@ -647,8 +625,10 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
     if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
 
     _filesWidgets.add(
-      BookFileWidget(
+      BookPdfFileWidget(
         key: Key(filePath),
+        isReorderable: false,
+        allowUserInput: false,
         isSingleFileBook: _immutableBook.isSingleFileBook,
         filePath: filePath,
         fileTitle: fileTitle,
@@ -851,7 +831,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   void _updateFileWidgetsPositions() {
-    _filesWidgets.asMap().forEach((int position, BookFileWidget fileWidget) {
+    _filesWidgets.asMap().forEach((int position, BookPdfFileWidget fileWidget) {
       fileWidget.position = position;
     });
   }

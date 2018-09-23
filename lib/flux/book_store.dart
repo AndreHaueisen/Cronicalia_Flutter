@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/backend/data_repository.dart';
 import 'package:cronicalia_flutter/backend/file_repository.dart';
 import 'package:cronicalia_flutter/flux/book_sorter.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:flutter_flux/flutter_flux.dart';
@@ -17,23 +18,23 @@ class BookStore extends Store {
   int _totalNumberOfBooks = 0;
   String _currentFileText = "Initial Text";
 
-  final List<Book> _actionBooks = List<Book>();
-  final List<Book> _adventureBooks = List<Book>();
-  final List<Book> _comedyBooks = List<Book>();
-  final List<Book> _dramaBooks = List<Book>();
-  final List<Book> _fantasyBooks = List<Book>();
-  final List<Book> _fictionBooks = List<Book>();
-  final List<Book> _horrorBooks = List<Book>();
-  final List<Book> _mythologyBooks = List<Book>();
-  final List<Book> _romanceBooks = List<Book>();
-  final List<Book> _satireBooks = List<Book>();
+  final List<BookPdf> _actionBooks = List<BookPdf>();
+  final List<BookPdf> _adventureBooks = List<BookPdf>();
+  final List<BookPdf> _comedyBooks = List<BookPdf>();
+  final List<BookPdf> _dramaBooks = List<BookPdf>();
+  final List<BookPdf> _fantasyBooks = List<BookPdf>();
+  final List<BookPdf> _fictionBooks = List<BookPdf>();
+  final List<BookPdf> _horrorBooks = List<BookPdf>();
+  final List<BookPdf> _mythologyBooks = List<BookPdf>();
+  final List<BookPdf> _romanceBooks = List<BookPdf>();
+  final List<BookPdf> _satireBooks = List<BookPdf>();
 
   BookStore() {
     _dataRepository = DataRepository(_firestore);
     _fileRepository = FileRepository(_storageReference);
 
     triggerOnAction(loadBookRecomendationsAction, (BookLanguage preferredLanguage) async {
-      final List<Book> recommendedBooks = await _dataRepository.getBookRecommendations(preferredLanguage);
+      final List<BookPdf> recommendedBooks = await _dataRepository.getBookRecommendations(preferredLanguage);
 
       BookSorter bookSorter = BookSorter(recommendedBooks: recommendedBooks);
       var actionBooks = bookSorter.getActionBooks();
@@ -89,16 +90,16 @@ class BookStore extends Store {
   int get totalNumberOfBook => _totalNumberOfBooks;
   String get currentFileText => _currentFileText;
 
-  List<Book> get actionBooks => _actionBooks;
-  List<Book> get adventureBooks => _adventureBooks;
-  List<Book> get comedyBooks => _comedyBooks;
-  List<Book> get dramaBooks => _dramaBooks;
-  List<Book> get fantasyBooks => _fantasyBooks;
-  List<Book> get fictionBooks => _fictionBooks;
-  List<Book> get horrorBooks => _horrorBooks;
-  List<Book> get mythologyBooks => _mythologyBooks;
-  List<Book> get romanceBooks => _romanceBooks;
-  List<Book> get satireBooks => _satireBooks;
+  List<BookPdf> get actionBooks => _actionBooks;
+  List<BookPdf> get adventureBooks => _adventureBooks;
+  List<BookPdf> get comedyBooks => _comedyBooks;
+  List<BookPdf> get dramaBooks => _dramaBooks;
+  List<BookPdf> get fantasyBooks => _fantasyBooks;
+  List<BookPdf> get fictionBooks => _fictionBooks;
+  List<BookPdf> get horrorBooks => _horrorBooks;
+  List<BookPdf> get mythologyBooks => _mythologyBooks;
+  List<BookPdf> get romanceBooks => _romanceBooks;
+  List<BookPdf> get satireBooks => _satireBooks;
 }
 
 final StoreToken bookStoreToken = StoreToken(BookStore());

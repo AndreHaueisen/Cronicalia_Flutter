@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_epub.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -220,7 +221,8 @@ class LoginHandler {
         encodedEmail: userEncodedEmail,
         remoteProfilePictureUri: firebaseUser.photoUrl,
         fans: 0,
-        books: Map<String, Book>());
+        booksPdf: Map<String, BookPdf>(),
+        booksEpub: Map<String, BookEpub>());
 
     final WriteBatch batch = firestore.batch();
     final DocumentReference messageTokensReference =

@@ -1,12 +1,12 @@
 import 'package:cronicalia_flutter/flux/book_store.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 class BookReadScreen extends StatefulWidget {
   BookReadScreen(this._book);
 
-  Book _book;
+  BookPdf _book;
 
   @override
   _BookReadScreenState createState() => _BookReadScreenState();

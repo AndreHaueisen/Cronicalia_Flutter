@@ -2,7 +2,8 @@ import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/custom_widgets/recommended_books_by_genre_widget.dart';
 import 'package:cronicalia_flutter/flux/book_store.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
@@ -44,7 +45,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
                     itemCount: _GENRE_COUNT,
                     scrollDirection: Axis.vertical,
                     itemBuilder: (BuildContext buildContext, int index) {
-                      List<Book> currentList = _getRecommendedBookListByIndex(index);
+                      List<BookPdf> currentList = _getRecommendedBookListByIndex(index);
 
                       return currentList.isNotEmpty
                           ? RecommendeBooksByGenreWidget(
@@ -70,7 +71,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
     );
   }
 
-  List<Book> _getRecommendedBookListByIndex(int index) {
+  List<BookPdf> _getRecommendedBookListByIndex(int index) {
     switch (index) {
       case 0:
         return _bookStore.actionBooks;
@@ -93,7 +94,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
       case 9:
         return _bookStore.satireBooks;
       default:
-        return List<Book>();
+        return List<BookPdf>();
     }
   }
 

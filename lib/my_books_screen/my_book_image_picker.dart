@@ -15,19 +15,11 @@ class MyBookImagePicker {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
-      if (imageType == ImageType.POSTER) {
-        File posterPicFile = await Utility.createFile(
-            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
+      File coverPicFile =
+          await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
+      await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
-        updateBookPosterImageAction([bookUID, posterPicFile.path, context]);
-      } else {
-        File coverPicFile = await Utility.createFile(
-            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
-
-        updateBookCoverImageAction([bookUID, coverPicFile.path, context]);
-      }
+      updateBookCoverImageAction([bookUID, coverPicFile.path, context]);
     }
   }
 
@@ -35,19 +27,11 @@ class MyBookImagePicker {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
     if (imageFile != null) {
-      if (imageType == ImageType.POSTER) {
-        File posterPicFile = await Utility.createFile(
-            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_POSTER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
+      File coverPicFile =
+          await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
+      await Utility.saveImageToLocalCache(imageFile, coverPicFile);
 
-        updateBookPosterImageAction([bookUID, posterPicFile.path, context]);
-      } else {
-        File coverPicFile = await Utility.createFile(
-            Constants.FOLDER_NAME_BOOKS, "${bookUID}_${Constants.FILE_NAME_SUFFIX_COVER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
-
-        updateBookCoverImageAction([bookUID, coverPicFile.path, context]);
-      }
+      updateBookCoverImageAction([bookUID, coverPicFile.path, context]);
     }
   }
 
@@ -57,17 +41,9 @@ class MyBookImagePicker {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.camera);
 
     if (imageFile != null) {
-      if (imageType == ImageType.POSTER) {
-        File posterPicFile =
-            await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
-        return posterPicFile.path;
-      } else {
-        File coverPicFile =
-            await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
-        return coverPicFile.path;
-      }
+      File coverPicFile = await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
+      await Utility.saveImageToLocalCache(imageFile, coverPicFile);
+      return coverPicFile.path;
     }
 
     return null;
@@ -79,17 +55,9 @@ class MyBookImagePicker {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
-      if (imageType == ImageType.POSTER) {
-        File posterPicFile =
-            await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_POSTER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, posterPicFile);
-        return posterPicFile.path;
-      } else {
-        File coverPicFile =
-            await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
-        await Utility.saveImageToLocalCache(imageFile, coverPicFile);
-        return coverPicFile.path;
-      }
+      File coverPicFile = await Utility.createFile(Constants.FOLDER_NAME_BOOKS, "${Constants.FILE_NAME_TEMP_COVER_PICTURE}");
+      await Utility.saveImageToLocalCache(imageFile, coverPicFile);
+      return coverPicFile.path;
     }
 
     return null;

@@ -98,7 +98,7 @@ packages:
       name: documents_picker
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.0.2"
+    version: "0.0.3"
   epub:
     dependency: "direct main"
     description:
@@ -139,6 +139,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_document_picker:
+    dependency: "direct main"
+    description:
+      name: flutter_document_picker
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   flutter_facebook_login:
     dependency: "direct main"
     description:
@@ -198,7 +205,7 @@ packages:
     source: hosted
     version: "3.0.4"
   html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: html
       url: "https://pub.dartlang.org"
@@ -350,7 +357,7 @@ packages:
       name: petitparser
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.0"
+    version: "2.0.1"
   plugin:
     dependency: transitive
     description:
@@ -523,7 +530,7 @@ packages:
       name: xml
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.2.0"
+    version: "3.2.1"
   yaml:
     dependency: transitive
     description:
@@ -532,5 +539,5 @@ packages:
     source: hosted
     version: "2.1.15"
 sdks:
-  dart: ">=2.0.0-dev.69.0 <3.0.0"
+  dart: ">=2.0.0 <3.0.0"
   flutter: ">=0.4.0 <2.0.0"

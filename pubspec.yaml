@@ -35,7 +35,9 @@ dependencies:
   path_provider: "0.4.1"
   image_picker: "0.4.6"
 
-  documents_picker: "0.0.2"
+  flutter_document_picker: "1.0.1"
+  documents_picker: "0.0.3"
+  html: ^0.13.3+3
   intl: ^0.15.7
 
 dev_dependencies:

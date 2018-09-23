@@ -1,13 +1,14 @@
 import 'package:cronicalia_flutter/book_read_screen/selected_book_screen.dart';
 import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:flutter/material.dart';
 
 class RecommendeBooksByGenreWidget extends StatelessWidget {
   RecommendeBooksByGenreWidget({@required this.recommendedBooks, @required this.currentGenre});
 
-  final List<Book> recommendedBooks;
+  final List<BookPdf> recommendedBooks;
   final BookGenre currentGenre;
 
   static const double _BOX_HEIGHT = 200.0;
@@ -21,7 +22,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 8.0, left: 8.0),
           child: Text(
-            Book.convertGenreToString(currentGenre).toUpperCase(),
+            UtilityBook.convertGenreToString(currentGenre).toUpperCase(),
             style: TextStyle(
               fontWeight: FontWeight.w900,
               color: AppThemeColors.accentColor,
@@ -42,7 +43,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBookPreview(BuildContext context, Book book) {
+  Widget _buildBookPreview(BuildContext context, BookPdf book) {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: GestureDetector(
@@ -61,7 +62,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBookFaceWithText(BuildContext context, Book book) {
+  Widget _buildBookFaceWithText(BuildContext context, BookPdf book) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -117,7 +118,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBookStats(Book book) {
+  Widget _buildBookStats(BookPdf book) {
     return Padding(
         padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
         child: BookStatsWidget(

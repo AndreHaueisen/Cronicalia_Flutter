@@ -7,10 +7,13 @@ abstract class BookFileWidgetCallback {
   void onRemoveFileClick({int position});
 }
 
-class BookFileWidget extends StatelessWidget {
-  BookFileWidget(
+class BookPdfFileWidget extends StatelessWidget {
+  BookPdfFileWidget(
       {Key key,
-      this.isSingleFileBook,
+      @required this.isReorderable,
+      @required this.allowUserInput,
+      @required this.isSingleFileBook,
+      this.isDeletable = true,
       this.filePath,
       this.date,
       this.position,
@@ -18,12 +21,15 @@ class BookFileWidget extends StatelessWidget {
       this.bookFileWidgetCallback,
       this.widgetHeight})
       : assert(filePath != null, "File path can not be null"),
-        _textController = (fileTitle != null) ? TextEditingController(text: fileTitle) : null,
         super(key: key) {
     _formattedFilePath = _formatFilePath(filePath);
   }
 
+  final bool isReorderable;
+  final bool allowUserInput;
   final bool isSingleFileBook;
+  final bool isDeletable;
+
   final String filePath;
   final int date;
   final BookFileWidgetCallback bookFileWidgetCallback;
@@ -58,29 +64,33 @@ class BookFileWidget extends StatelessWidget {
                 decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4.0)),
                 padding: EdgeInsets.all(8.0),
                 child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(formattedFilePath,
-                      textAlign: TextAlign.left, style: TextStyle(color: TextColorBrightBackground.primary)),
-                ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(formattedFilePath,
+                        textAlign: TextAlign.left, style: TextStyle(color: TextColorBrightBackground.primary))),
               ),
             ),
           ),
-          Flexible(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: IconButton(
-                icon: Icon(
-                  Icons.delete,
-                  color: TextColorBrightBackground.tertiary,
+          isDeletable
+              ? Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.delete,
+                        color: TextColorBrightBackground.tertiary,
+                      ),
+                      onPressed: () {
+                        bookFileWidgetCallback.onRemoveFileClick(position: position);
+                      },
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 0.0,
+                  width: 0.0,
                 ),
-                onPressed: () {
-                  bookFileWidgetCallback.onRemoveFileClick(position: position);
-                },
-              ),
-            ),
-          ),
-          isSingleFileBook
+          isReorderable
               ? Flexible(
                   flex: 1,
                   child: IconButton(
@@ -150,31 +160,41 @@ class BookFileWidget extends StatelessWidget {
                 ),
               ),
             ),
-            Flexible(
-              flex: 1,
-              child: Padding(
-                padding: EdgeInsets.only(left: 8.0),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.delete,
-                    color: TextColorBrightBackground.tertiary,
+            isDeletable
+                ? Flexible(
+                    flex: 1,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.delete,
+                          color: TextColorBrightBackground.tertiary,
+                        ),
+                        onPressed: () {
+                          bookFileWidgetCallback.onRemoveFileClick(position: position);
+                        },
+                      ),
+                    ),
+                  )
+                : Container(
+                    height: 0.0,
+                    width: 0.0,
                   ),
-                  onPressed: () {
-                    bookFileWidgetCallback.onRemoveFileClick(position: position);
-                  },
-                ),
-              ),
-            ),
-            Flexible(
-              flex: 1,
-              child: IconButton(
-                icon: Icon(
-                  Icons.reorder,
-                  color: TextColorBrightBackground.primary,
-                ),
-                onPressed: () {},
-              ),
-            ),
+            isReorderable
+                ? Flexible(
+                    flex: 1,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.reorder,
+                        color: TextColorBrightBackground.primary,
+                      ),
+                      onPressed: () {},
+                    ),
+                  )
+                : Container(
+                    height: 0.0,
+                    width: 0.0,
+                  ),
           ],
         ),
       ),
@@ -183,9 +203,9 @@ class BookFileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isSingleFileBook) return _noInputFileRepresentation();
+    if (allowUserInput) return _textInputFileRepresentation();
 
-    return _textInputFileRepresentation();
+    return _noInputFileRepresentation();
   }
 
   void cleanUp() {

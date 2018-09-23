@@ -1,12 +1,12 @@
 import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class MyBookWidget extends StatelessWidget {
-  final Book _book;
+  final BookPdf _book;
   final String _bookKey;
   final int _index;
   final int _totalBookNumber;

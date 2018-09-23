@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cronicalia_flutter/backend/data_repository.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -74,21 +75,8 @@ class FileRepository {
     }
   }
 
-  Future<String> updateBookPosterImage(
-      String encodedEmail, Book book, String newLocalPath, DataRepository dataRepository) async {
-    try {
-      UploadTaskSnapshot taskSnapshot = await _uploadBookPosterImage(encodedEmail, book, newLocalPath);
-      String newRemotePath = (taskSnapshot != null) ? taskSnapshot.downloadUrl.toString() : throw ("Poster upload failed");
-      await dataRepository.updateBookPosterPictureReferences(encodedEmail, book, newLocalPath, newRemotePath);
-      return newRemotePath;
-    } catch (error) {
-      print(error.toString());
-      return null;
-    }
-  }
-
   Future<String> updateBookCoverImage(
-      String encodedEmail, Book book, String newLocalPath, DataRepository dataRepository) async {
+      String encodedEmail, BookPdf book, String newLocalPath, DataRepository dataRepository) async {
     try {
       UploadTaskSnapshot taskSnapshot = (await _uploadBookCoverImage(encodedEmail, book, newLocalPath));
       String newRemotePath = (taskSnapshot != null) ? taskSnapshot.downloadUrl.toString() : throw ("Cover upload failed");
@@ -101,8 +89,8 @@ class FileRepository {
   }
 
   Future<void> updateBookFiles(
-      {@required Book originalBook,
-      @required Book modifiedBook,
+      {@required BookPdf originalBook,
+      @required BookPdf modifiedBook,
       DataRepository dataRepository,
       ProgressStream progressStream}) async {
     if (modifiedBook.isSingleFileBook) {
@@ -122,8 +110,8 @@ class FileRepository {
   }
 
   Future<void> _updateSingleFileBook(
-      {@required Book originalBook,
-      @required Book editedBook,
+      {@required BookPdf originalBook,
+      @required BookPdf editedBook,
       DataRepository dataRepository,
       ProgressStream progressStream}) async {
     try {
@@ -146,8 +134,8 @@ class FileRepository {
   }
 
   Future<void> _updateMultiFileBook(
-      {@required Book originalBook,
-      @required Book modifiedBook,
+      {@required BookPdf originalBook,
+      @required BookPdf modifiedBook,
       DataRepository dataRepository,
       ProgressStream progressStream}) async {
     StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
@@ -211,7 +199,7 @@ class FileRepository {
     }
   }
 
-  void _deleteUnusedFiles({@required Book originalBook, @required Book modifiedBook}) {
+  void _deleteUnusedFiles({@required BookPdf originalBook, @required BookPdf modifiedBook}) {
     if (modifiedBook.isSingleFileBook) {
       String oldFileName = Utility.resolveFileNameFromUrl(originalBook.remoteFullBookUri);
       String newFileName = Utility.resolveFileNameFromUrl(modifiedBook.remoteFullBookUri);
@@ -268,15 +256,9 @@ class FileRepository {
     }
   }
 
-  Future<void> createNewSingleFileBook(String encodedEmail, Book book, DataRepository dataRepository,
+  Future<void> createNewSingleFileBook(String encodedEmail, BookPdf book, DataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
-      UploadTaskSnapshot posterTaskSnapshot = await _uploadBookPosterImage(encodedEmail, book, book.localPosterUri);
-      book.remotePosterUri = posterTaskSnapshot.downloadUrl == null
-          ? throw ("Poster upload failed")
-          : posterTaskSnapshot.downloadUrl.toString();
-
-      progressStream?.notifySuccess();
 
       UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
       book.remoteCoverUri =
@@ -297,16 +279,10 @@ class FileRepository {
   }
 
   Future<void> createNewMultiFileBook(
-      String encodedEmail, Book book, List<String> pdfLocalPaths, DataRepository dataRepository,
+      String encodedEmail, BookPdf book, List<String> pdfLocalPaths, DataRepository dataRepository,
       {ProgressStream progressStream}) async {
     StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
     try {
-      UploadTaskSnapshot posterTaskSnapshot = await _uploadBookPosterImage(encodedEmail, book, book.localPosterUri);
-      book.remotePosterUri = posterTaskSnapshot.downloadUrl == null
-          ? throw ("Poster upload failed")
-          : posterTaskSnapshot.downloadUrl.toString();
-
-      progressStream?.notifySuccess();
 
       UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
       book.remoteCoverUri =
@@ -346,27 +322,8 @@ class FileRepository {
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadBookPosterImage(String encodedEmail, Book book, String filePath) {
-    final File file = File(filePath);
-    final metadata = new StorageMetadata(
-        contentType: CONTENT_TYPE_IMAGE,
-        customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_POSTER});
 
-    if (file.existsSync()) {
-      final StorageUploadTask uploadTask = _storageReference
-          .child(_resolveStorageLanguageLocation(book.language))
-          .child(encodedEmail)
-          .child(book.generateStorageFolder())
-          .child(Constants.FILE_NAME_SUFFIX_POSTER_PICTURE)
-          .putFile(file, metadata);
-
-      return uploadTask.future;
-    } else {
-      return null;
-    }
-  }
-
-  Future<UploadTaskSnapshot> _uploadBookCoverImage(String encodedEmail, Book book, String filePath) {
+  Future<UploadTaskSnapshot> _uploadBookCoverImage(String encodedEmail, BookPdf book, String filePath) {
     final File file = File(filePath);
     final metadata = new StorageMetadata(
         contentType: CONTENT_TYPE_IMAGE,
@@ -386,7 +343,7 @@ class FileRepository {
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadPDFFile(String encodedEmail, Book book, String filePath) {
+  Future<UploadTaskSnapshot> _uploadPDFFile(String encodedEmail, BookPdf book, String filePath) {
     final File file = File(filePath);
     final metadata = new StorageMetadata(contentType: CONTENT_TYPE_PDF);
 
@@ -429,5 +386,5 @@ class FileRepository {
     }
   }
 
-  void _resolveFilesDiff({@required Book originalBook, @required Book modifiedBook}) {}
+  void _resolveFilesDiff({@required BookPdf originalBook, @required BookPdf modifiedBook}) {}
 }

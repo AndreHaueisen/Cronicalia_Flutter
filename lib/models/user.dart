@@ -1,7 +1,8 @@
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_epub.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 
 class User {
   String name;
@@ -13,7 +14,8 @@ class User {
   String localBackgroundPictureUri;
   String remoteBackgroundPictureUri;
   int fans;
-  Map<String, Book> books;
+  Map<String, BookPdf> booksPdf;
+  Map<String, BookEpub> booksEpub;
 
   User({this.name,
     this.encodedEmail,
@@ -24,7 +26,8 @@ class User {
     this.localBackgroundPictureUri,
     this.remoteBackgroundPictureUri,
     this.fans,
-    this.books});
+    this.booksPdf,
+    this.booksEpub});
 
   User.fromSnapshot(DocumentSnapshot snapshot) {
     if (snapshot != null && snapshot.exists) {
@@ -37,11 +40,18 @@ class User {
       this.localBackgroundPictureUri = snapshot.data['localBackgroundPictureUri'];
       this.remoteBackgroundPictureUri = snapshot.data['remoteBackgroundPictureUri'];
       this.fans = snapshot.data['fans'];
-      this.books = new Map<String, Book>();
-      LinkedHashMap booksLinkedMap = (snapshot.data['books'] as LinkedHashMap);
-      if (booksLinkedMap != null) {
-        booksLinkedMap.forEach((key, value) {
-          books[key] = Book.fromLinkedMap(value);
+      this.booksPdf = new Map<String, BookPdf>();
+      LinkedHashMap booksPdfLinkedMap = (snapshot.data['booksPdf'] as LinkedHashMap);
+      if (booksPdfLinkedMap != null) {
+        booksPdfLinkedMap.forEach((key, value) {
+          booksPdf[key] = BookPdf.fromLinkedMap(value);
+        });
+      }
+      this.booksEpub = new Map<String, BookEpub>();
+      LinkedHashMap booksEpubLinkedMap = (snapshot.data['booksEpub'] as LinkedHashMap);
+      if (booksEpubLinkedMap != null) {
+        booksEpubLinkedMap.forEach((key, value) {
+          booksEpub[key] = BookEpub.fromLinkedMap(value);
         });
       }
     }
@@ -57,7 +67,8 @@ class User {
     this.remoteProfilePictureUri = "";
     this.remoteBackgroundPictureUri = "";
     this.fans = 0;
-    this.books = Map<String, Book>();
+    this.booksPdf = Map<String, BookPdf>();
+    this.booksEpub = Map<String, BookEpub>();
   }
 
   Map<String, dynamic> toMap(){
@@ -71,13 +82,17 @@ class User {
       "localBackgroundPictureUri" : this.localBackgroundPictureUri,
       "remoteBackgroundPictureUri" : this.remoteBackgroundPictureUri,
       "fans" : this.fans,
-      "books" : this.books
+      "booksPdf" : this.booksPdf,
+      "booksEpub" : this.booksEpub
     };
   }
 
   int calculateTotalBookViews(){
     int bookTotalViews = 0;
-    this.books.forEach((_, book){
+    this.booksPdf.forEach((_, book){
+      bookTotalViews += book.readingsNumber;
+    });
+    this.booksEpub.forEach((_, book){
       bookTotalViews += book.readingsNumber;
     });
 
@@ -86,7 +101,10 @@ class User {
 
   double calculateTotalIncome(){
     double totalIncome = 0.0;
-    this.books.forEach((_, book){
+    this.booksPdf.forEach((_, book){
+      totalIncome += book.income;
+    });
+    this.booksEpub.forEach((_, book){
       totalIncome += book.income;
     });
 
@@ -112,7 +130,8 @@ class User {
         localBackgroundPictureUri == that.localBackgroundPictureUri &&
         remoteBackgroundPictureUri == that.remoteBackgroundPictureUri &&
         fans == that.fans &&
-        books == that.books;
+        booksPdf == that.booksPdf &&
+        booksEpub == that.booksEpub;
   }
 
   @override
@@ -126,7 +145,8 @@ class User {
         localBackgroundPictureUri.hashCode +
         remoteBackgroundPictureUri.hashCode +
         fans.hashCode +
-        books.hashCode;
+        booksPdf.hashCode +
+        booksEpub.hashCode;
   }
 
   User copy({String name,
@@ -138,7 +158,8 @@ class User {
     String localBackgroundPictureUri,
     String remoteBackgroundPictureUri,
     int fans,
-    Map<String, Book> books}) {
+    Map<String, BookPdf> booksPdf,
+    Map<String, BookEpub> booksEpub}) {
     return new User(
         name: (name == null) ? this.name : name,
         encodedEmail: (encodedEmail == null) ? this.encodedEmail : encodedEmail,
@@ -155,7 +176,8 @@ class User {
             ? this.remoteBackgroundPictureUri
             : remoteBackgroundPictureUri,
         fans: (fans == null) ? this.fans : fans,
-        books: (books == null) ? this.books : books
+        booksPdf: (booksPdf == null) ? this.booksPdf : booksPdf,
+        booksEpub: (booksEpub == null) ? this.booksEpub : booksEpub
     );
   }
 }

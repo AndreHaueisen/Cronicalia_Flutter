@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cronicalia_flutter/models/book_epub.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:validate/validate.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
@@ -129,6 +131,22 @@ class Utility {
         print("File not deleted: $newFilePath");
     } else {
       print("File did not exist: $newFilePath");
+    }
+  }
+
+  static int getNewBookPosition(Map<String, BookEpub> epubBooks, Map<String, BookPdf> pdfBooks) {
+    if (epubBooks.isNotEmpty && pdfBooks.isNotEmpty) {
+      BookEpub mostRecentEpubBook = epubBooks.values.last;
+      BookPdf mostRecentPdfBook = pdfBooks.values.last;
+      if (mostRecentEpubBook.bookPosition > mostRecentPdfBook.bookPosition) {
+        return mostRecentEpubBook.bookPosition + 1;
+      } else {
+        return mostRecentPdfBook.bookPosition + 1;
+      }
+    } else if(epubBooks.isNotEmpty){
+      return epubBooks.length;
+    } else {
+      return pdfBooks.length;
     }
   }
 }

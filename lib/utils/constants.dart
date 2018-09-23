@@ -1,8 +1,6 @@
-
 import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 
-class Constants{
-
+class Constants {
   static const BOTTOM_NAV_TAG = 'app_bottom_nav';
 
   static const ROUTE_LOGIN_SCREEN = '/loginScreen';
@@ -33,18 +31,14 @@ class Constants{
 
   static const METADATA_TITLE_IMAGE_TYPE = "imageType";
   static const METADATA_PROPERTY_IMAGE_TYPE_COVER = "cover";
-  static const METADATA_PROPERTY_IMAGE_TYPE_POSTER = "poster";
   static const METADATA_PROPERTY_IMAGE_TYPE_PROFILE = "profile";
   static const METADATA_PROPERTY_IMAGE_TYPE_BACKGROUND = "background";
   static const METADATA_CHAPTER_NUMBER = "chapter_number";
 
-  static const FILE_NAME_BOOK_POSTER = "poster.jpg";
   static const FILE_NAME_BOOK_COVER = "cover.jpg";
   static const FILE_NAME_PROFILE_PICTURE = "profile_picture.jpg";
   static const FILE_NAME_BACKGROUND_PICTURE = "background_picture.jpg";
-  static const FILE_NAME_SUFFIX_POSTER_PICTURE = "poster.jpg";
   static const FILE_NAME_SUFFIX_COVER_PICTURE = "cover.jpg";
-  static const FILE_NAME_TEMP_POSTER_PICTURE = "temp_poster.jpg";
   static const FILE_NAME_TEMP_COVER_PICTURE = "temp_cover.jpg";
   static const FOLDER_NAME_PROFILE = "profile";
   static const FOLDER_NAME_BOOKS = "books";

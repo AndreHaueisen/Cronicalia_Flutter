@@ -4,11 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/backend/data_repository.dart';
 import 'package:cronicalia_flutter/backend/file_repository.dart';
 import 'package:cronicalia_flutter/login_screen/login_handler.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_epub.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
+import 'package:epub/epub.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flushbar/flushbar.dart';
@@ -188,7 +191,7 @@ class UserStore extends Store {
 
     triggerOnAction(updateUserNameAction, (String newName) {
       this._user.name = newName;
-      this._user.books.forEach((_, book) {
+      this._user.booksPdf.forEach((_, book) {
         book.authorName = newName;
       });
       _dataRepository.updateUserName(this._user);
@@ -196,7 +199,7 @@ class UserStore extends Store {
 
     triggerOnAction(updateUserTwitterProfileAction, (String newTwitterProfile) {
       this._user.twitterProfile = newTwitterProfile;
-      this._user.books.forEach((_, book) {
+      this._user.booksPdf.forEach((_, book) {
         book.authorTwitterProfile = newTwitterProfile;
       });
       _dataRepository.updateUserTwitterProfile(this._user);
@@ -207,41 +210,14 @@ class UserStore extends Store {
       _dataRepository.updateUserAboutMe(this._user);
     });
 
-    triggerOnConditionalAction(updateBookPosterImageAction, (List<dynamic> payload) {
-      String bookUID = payload[0] as String;
-      String localUri = payload[1] as String;
-      BuildContext context = payload[2] as BuildContext;
-
-      //First update locally
-      _user.books[bookUID].localPosterUri = localUri;
-
-      _fileRepository.updateBookPosterImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
-          if (user != null) {
-            _user = user;
-            print("user loaded in store");
-            trigger();
-
-            FlushbarHelper.createSuccess(message: "Poster uploaded").show(context);
-          }
-        }, onError: () {
-          FlushbarHelper.createError(message: "Poster upload failed").show(context);
-        });
-      }).timeout(Duration(seconds: 12), onTimeout: () {
-        FlushbarHelper.createError(message: "Connection failed. New poster was not sent").show(context);
-      });
-
-      return false;
-    });
-
     triggerOnConditionalAction(updateBookCoverImageAction, (List<dynamic> payload) {
       String bookUID = payload[0] as String;
       String localUri = payload[1] as String;
       BuildContext context = payload[2] as BuildContext;
 
-      _user.books[bookUID].localCoverUri = localUri;
+      _user.booksPdf[bookUID].localCoverUri = localUri;
 
-      _fileRepository.updateBookCoverImage(_user.encodedEmail, _user.books[bookUID], localUri, _dataRepository).then((_) {
+      _fileRepository.updateBookCoverImage(_user.encodedEmail, _user.booksPdf[bookUID], localUri, _dataRepository).then((_) {
         _dataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
@@ -265,7 +241,7 @@ class UserStore extends Store {
       String newTitle = payload[1] as String;
       BuildContext context = payload[2] as BuildContext;
 
-      Book book = this._user.books[bookKey];
+      BookPdf book = this._user.booksPdf[bookKey];
       book.title = newTitle;
 
       _dataRepository.updateBookTitle(_user.encodedEmail, book).then((_) {
@@ -285,7 +261,7 @@ class UserStore extends Store {
       String newSynopsis = payload[1] as String;
       BuildContext context = payload[2] as BuildContext;
 
-      Book book = this._user.books[bookKey];
+      BookPdf book = this._user.booksPdf[bookKey];
       book.synopsis = newSynopsis;
 
       _dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis).then((_) {
@@ -305,7 +281,7 @@ class UserStore extends Store {
       bool isBookCurrentlyComplete = payload[1];
       BuildContext context = payload[2] as BuildContext;
 
-      Book book = this._user.books[bookKey];
+      BookPdf book = this._user.booksPdf[bookKey];
       book.isCurrentlyComplete = isBookCurrentlyComplete;
 
       _dataRepository.updateBookCompletionStatus(_user.encodedEmail, book).then((_) {
@@ -324,13 +300,13 @@ class UserStore extends Store {
       ChapterPeriodicity newPeriodicity = payload[1];
       BuildContext context = payload[2] as BuildContext;
 
-      Book book = this._user.books[bookKey];
+      BookPdf book = this._user.booksPdf[bookKey];
       book.periodicity = newPeriodicity;
 
       _dataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book).then((_) {
         FlushbarHelper.createSuccess(
                 message:
-                    "Your readers will expect a new chapter ${Book.convertPeriodicityToString(newPeriodicity).toLowerCase()}")
+                    "Your readers will expect a new chapter ${UtilityBook.convertPeriodicityToString(newPeriodicity).toLowerCase()}")
             .show(context);
 
         trigger();
@@ -343,8 +319,8 @@ class UserStore extends Store {
       return false;
     });
 
-    triggerOnConditionalAction(updateBookFilesAction, (Book modifiedBook) {
-      Book originalBook = user.books[modifiedBook.uID];
+    triggerOnConditionalAction(updateBookFilesAction, (BookPdf modifiedBook) {
+      BookPdf originalBook = user.booksPdf[modifiedBook.uID];
       _fileRepository
           .updateBookFiles(
               originalBook: originalBook,
@@ -366,8 +342,8 @@ class UserStore extends Store {
       return false;
     });
 
-    triggerOnConditionalAction(createCompleteBookAction, (Book book) {
-      const int numberOfFilesToBeUploaded = 3;
+    triggerOnConditionalAction(createCompleteBookAction, (BookPdf book) {
+      const int numberOfFilesToBeUploaded = 2;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
       _fileRepository
@@ -388,9 +364,9 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(createIncompleteBookAction, (List<dynamic> payload) {
-      Book book = payload[0];
+      BookPdf book = payload[0];
       List<String> pdfLocalPaths = payload[1];
-      const int pictureFilesNumber = 2;
+      const int pictureFilesNumber = 1;
       final int numberOfFilesToBeUploaded = pictureFilesNumber + pdfLocalPaths.length;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
@@ -409,6 +385,14 @@ class UserStore extends Store {
       });
 
       return false;
+    });
+
+    triggerOnConditionalAction(createEpubBookAction, (List<dynamic> payload){
+      EpubBook book = payload[0];
+      String epubFilePath = payload[1];
+
+      //_fileRepository.createNewEpubBook();
+
     });
   }
 
@@ -507,11 +491,6 @@ final Action<String> updateUserAboutMeAction = new Action<String>();
 /// payload[0] contains book bookKey
 /// payload[1] contains book localUri
 /// payload[2] contains BuildContext
-final Action<List<dynamic>> updateBookPosterImageAction = new Action<List<dynamic>>();
-
-/// payload[0] contains book bookKey
-/// payload[1] contains book localUri
-/// payload[2] contains BuildContext
 final Action<List<dynamic>> updateBookCoverImageAction = new Action<List<dynamic>>();
 
 /// payload[0] contains book bookKey
@@ -534,11 +513,15 @@ final Action<List<dynamic>> updateBookCompletionStatusAction = new Action<List<d
 /// payload[2] contains BuildContext
 final Action<List<dynamic>> updateBookChapterPeriodicityAction = new Action<List<dynamic>>();
 
-///contains the book with file alterations
-Action<Book> updateBookFilesAction = Action<Book>();
+///contains the bookPdf with file alterations
+Action<BookPdf> updateBookFilesAction = Action<BookPdf>();
 
-final Action<Book> createCompleteBookAction = new Action<Book>();
+final Action<BookPdf> createCompleteBookAction = new Action<BookPdf>();
 
 /// payload[0] contains book
 /// payload[1] contains local pdf file paths
 final Action<List<dynamic>> createIncompleteBookAction = new Action<List<dynamic>>();
+
+/// payload[0] contains bookEpub
+/// payload[1] contains path to raw Epub file
+final Action<List<dynamic>> createEpubBookAction = Action<List<dynamic>>();

@@ -1,22 +1,24 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cronicalia_flutter/custom_widgets/book_file_widget.dart';
+import 'package:cronicalia_flutter/custom_widgets/book_pdf_file_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/models/book_pdf.dart';
 import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
+import 'package:cronicalia_flutter/utils/utility.dart';
+import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:documents_picker/documents_picker.dart';
 
 import 'package:flutter_flux/flutter_flux.dart';
 
-class CreateMyBookScreen extends StatefulWidget {
-  CreateMyBookScreen();
+class CreatePdfMyBookScreen extends StatefulWidget {
+  CreatePdfMyBookScreen();
 
   @override
   State createState() {
@@ -24,10 +26,10 @@ class CreateMyBookScreen extends StatefulWidget {
   }
 }
 
-class _CreateMyBookScreenState extends State<CreateMyBookScreen>
-    with StoreWatcherMixin<CreateMyBookScreen>, SingleTickerProviderStateMixin<CreateMyBookScreen>
+class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
+    with StoreWatcherMixin<CreatePdfMyBookScreen>, SingleTickerProviderStateMixin<CreatePdfMyBookScreen>
     implements BookFileWidgetCallback {
-  final Book _book = Book();
+  final BookPdf _book = BookPdf();
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
   final TextEditingController _titleController = new TextEditingController();
   final TextEditingController _synopsisController = new TextEditingController();
@@ -44,7 +46,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   @override
   void dispose() {
     _scrollController.dispose();
-    _filesWidgets?.forEach((BookFileWidget fileWidget) {
+    _filesWidgets?.forEach((BookPdfFileWidget fileWidget) {
       fileWidget.cleanUp();
     });
     super.dispose();
@@ -63,7 +65,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            _buildImages(),
+            _buildImage(),
             _buildInputForm(),
             _buildFullBookRadioButton(),
             _buildIncompleteBookRadioButton(),
@@ -116,14 +118,14 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
             _book.authorEmailId = userStore.user.encodedEmail;
             _book.authorTwitterProfile = userStore.user.twitterProfile;
             _book.publicationDate = DateTime.now().millisecondsSinceEpoch;
-            _book.bookPosition = userStore.user.books.length;
+            _book.bookPosition = Utility.getNewBookPosition(userStore.user.booksEpub, userStore.user.booksPdf);
 
             if (_book.isSingleFileBook) {
               _book.localFullBookUri = _filesWidgets[0].filePath;
               createCompleteBookAction(_book);
             } else {
               final List<String> localFilePaths = List<String>();
-              _filesWidgets.forEach((BookFileWidget fileWidget) {
+              _filesWidgets.forEach((BookPdfFileWidget fileWidget) {
                 _book.chaptersLaunchDates.add(_book.publicationDate);
                 _book.chapterTitles.add(fileWidget.fileTitle);
                 localFilePaths.add(fileWidget.filePath);
@@ -175,8 +177,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   bool _validateInformation() {
-    return (_validatePoster() &&
-        _validateCover() &&
+    return (_validateCover() &&
         _validateInputForm() &&
         _validatePeriodicity() &&
         _validateGenre() &&
@@ -185,18 +186,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
         _validateChapterTitles());
   }
 
-  bool _validatePoster() {
-    if (_book.localPosterUri != null) {
-      return true;
-    } else {
-      FlushbarHelper.createError(
-        title: "Poster missing",
-        message: "Choose a book poster to attract readers",
-        duration: (Duration(seconds: 3)),
-      ).show(context);
-      return false;
-    }
-  }
+
 
   bool _validateCover() {
     if (_book.localCoverUri != null) {
@@ -287,7 +277,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
     if (_book.isSingleFileBook) return true;
 
     Set<String> fileNamesSet = Set<String>();
-    _filesWidgets.forEach((BookFileWidget fileWidget) {
+    _filesWidgets.forEach((BookPdfFileWidget fileWidget) {
       fileNamesSet.add(fileWidget.formattedFilePath);
     });
 
@@ -314,77 +304,54 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
     return true;
   }
 
-  Widget _buildImages() {
-    return Stack(
-      children: <Widget>[
-        GestureDetector(
-          onTap: () {
-            imageCache.clear();
-            _showImageOriginDialog(ImageType.POSTER);
-          },
-          child: (_book.localPosterUri != null)
-              ? Image.file(
-                  File(_book.localPosterUri),
-                  width: MediaQuery.of(context).size.width,
-                  height: 250.0,
-                )
-              : Image.asset(
-                  "images/poster_placeholder.png",
-                  width: MediaQuery.of(context).size.width,
-                  height: 250.0,
+  Widget _buildImage() {
+    return Padding(
+          padding: const EdgeInsets.only(top: 16.0, left: 16.0),
+          child: GestureDetector(
+              onTap: () {
+                imageCache.clear();
+                _showImageOriginDialog(ImageType.COVER);
+              },
+              child: Container(
+                width: Constants.BOOK_COVER_DEFAULT_WIDTH,
+                height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)
+                  ],
+                  borderRadius: BorderRadius.circular(6.0),
+                  shape: BoxShape.rectangle,
                 ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 104.0, left: 16.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-                onTap: () {
-                  imageCache.clear();
-                  _showImageOriginDialog(ImageType.COVER);
-                },
-                child: Container(
-                  width: Constants.BOOK_COVER_DEFAULT_WIDTH,
-                  height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)
-                    ],
-                    borderRadius: BorderRadius.circular(6.0),
-                    shape: BoxShape.rectangle,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6.0),
-                    child: (_book.localCoverUri != null)
-                        ? Image.file(
-                            File(_book.localCoverUri),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6.0),
+                  child: (_book.localCoverUri != null)
+                      ? Image.file(
+                          File(_book.localCoverUri),
+                          fit: BoxFit.fill,
+                        )
+                      : Stack(children: [
+                          Image.asset(
+                            "images/cover_placeholder.png",
                             fit: BoxFit.fill,
-                          )
-                        : Stack(children: [
-                            Image.asset(
-                              "images/cover_placeholder.png",
-                              fit: BoxFit.fill,
-                              width: Constants.BOOK_COVER_DEFAULT_WIDTH,
-                              height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
-                            ),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 4.0),
-                                child: Text(
-                                  "Your Cover",
-                                  style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.bold, color: Colors.grey[400]),
-                                  textAlign: TextAlign.center,
-                                ),
+                            width: Constants.BOOK_COVER_DEFAULT_WIDTH,
+                            height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
+                          ),
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 4.0),
+                              child: Text(
+                                "Your Cover",
+                                style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.bold, color: Colors.grey[400]),
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                          ]),
-                  ),
-                )),
-          ),
-        ),
-      ],
-    );
+                          ),
+                        ]),
+                ),
+              )),
+        );
+      
   }
 
   Future<Null> _showImageOriginDialog(ImageType imageType) async {
@@ -412,30 +379,18 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
       case ImageOrigin.CAMERA:
         MyBookImagePicker.pickImageFromCameraForNewBook(imageType).then((filePath) {
           if (filePath != null) {
-            if (imageType == ImageType.POSTER) {
-              setState(() {
-                _book.localPosterUri = filePath;
-              });
-            } else {
-              setState(() {
+            setState(() {
                 _book.localCoverUri = filePath;
               });
-            }
           }
         });
         break;
       case ImageOrigin.GALLERY:
         MyBookImagePicker.pickImageFromGalleryForNewBook(imageType).then((filePath) {
           if (filePath != null) {
-            if (imageType == ImageType.POSTER) {
-              setState(() {
-                _book.localPosterUri = filePath;
-              });
-            } else {
-              setState(() {
+            setState(() {
                 _book.localCoverUri = filePath;
               });
-            }
           }
         });
         break;
@@ -523,13 +478,13 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   Widget _buildFullBookRadioButton() {
     return new RadioListTile<bool>(
       title: const Text('Launch full book'),
+      subtitle: const Text("No chapters will be added latter"),
       value: true,
       groupValue: _book.isSingleFileBook,
       onChanged: (bool value) {
         setState(() {
           _filesWidgets.clear();
           _book.isSingleFileBook = value;
-          _book.isCurrentlyComplete = value;
         });
       },
     );
@@ -538,13 +493,13 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   Widget _buildIncompleteBookRadioButton() {
     return new RadioListTile<bool>(
       title: const Text('Launch by chapter'),
+      subtitle: const Text('Chapter will be launched periodically'),
       value: false,
       groupValue: _book.isSingleFileBook,
       onChanged: (bool value) {
         setState(() {
           _filesWidgets.clear();
           _book.isSingleFileBook = value;
-          _book.isCurrentlyComplete = value;
           if (value == true) {
             _book.periodicity = ChapterPeriodicity.NONE;
           }
@@ -588,7 +543,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   DropdownMenuItem<ChapterPeriodicity> _buildPeriodicityDropdownItem(ChapterPeriodicity chapterPeriodicity) {
-    String periodicityTitle = Book.convertPeriodicityToString(chapterPeriodicity);
+    String periodicityTitle = UtilityBook.convertPeriodicityToString(chapterPeriodicity);
 
     return DropdownMenuItem<ChapterPeriodicity>(
       child: SizedBox(
@@ -621,7 +576,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   DropdownMenuItem<BookGenre> _buildGenreDropdownItem(BookGenre genre) {
-    String genreTitle = Book.convertGenreToString(genre);
+    String genreTitle = UtilityBook.convertGenreToString(genre);
 
     return DropdownMenuItem<BookGenre>(
       child: SizedBox(
@@ -651,7 +606,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   DropdownMenuItem<BookLanguage> _buildLanguageDropdownItem(BookLanguage language) {
-    String languageTitle = Book.convertLanguageToString(language);
+    String languageTitle = UtilityBook.convertLanguageToString(language);
 
     return DropdownMenuItem<BookLanguage>(
       child: SizedBox(
@@ -668,15 +623,15 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
     String completionStatusSubstring =
         _book.isSingleFileBook ? "You are launching a complete book. " : "You are launching an incomplete book. ";
     String genreStatusSubstring =
-        _book.genre == BookGenre.UNDEFINED ? "" : "It is a(n) ${Book.convertGenreToString(_book.genre).toLowerCase()}. ";
+        _book.genre == BookGenre.UNDEFINED ? "" : "It is a(n) ${UtilityBook.convertGenreToString(_book.genre).toLowerCase()}. ";
     String languageStatusSubstring = _book.language == BookLanguage.UNDEFINED
         ? ""
-        : "It is written in ${Book.convertLanguageToString(_book.language).toLowerCase()}. ";
+        : "It is written in ${UtilityBook.convertLanguageToString(_book.language).toLowerCase()}. ";
     String chapterNumberSubstring = _book.isSingleFileBook ? "" : "It has ${_filesWidgets.length} chapter(s). ";
     String periodicityStatusSubstring =
         (_book.isSingleFileBook || (!_book.isSingleFileBook && _book.periodicity == ChapterPeriodicity.NONE))
             ? ""
-            : "You intend to launch a new chapter ${Book.convertPeriodicityToString(_book.periodicity).toLowerCase()}. ";
+            : "You intend to launch a new chapter ${UtilityBook.convertPeriodicityToString(_book.periodicity).toLowerCase()}. ";
 
     _resumePhrase = completionStatusSubstring +
         genreStatusSubstring +
@@ -690,7 +645,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
     );
   }
 
-  final List<BookFileWidget> _filesWidgets = List<BookFileWidget>();
+  final List<BookPdfFileWidget> _filesWidgets = List<BookPdfFileWidget>();
 
   Widget _buildFilesListCard() {
     return Padding(
@@ -740,8 +695,10 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
     if (_book.isSingleFileBook) {
       if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
       _filesWidgets.add(
-        BookFileWidget(
-          key: Key(filePaths[0]),
+        BookPdfFileWidget(
+          key: Key(filePaths[0]),         
+          isReorderable: false,
+          allowUserInput: false,
           isSingleFileBook: _book.isSingleFileBook,
           filePath: filePaths[0],
           position: 0,
@@ -753,8 +710,10 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
       filePaths.forEach((String filePath) {
         int position = _filesWidgets.length;
         _filesWidgets.add(
-          BookFileWidget(
+          BookPdfFileWidget(
             key: Key(filePath),
+            isReorderable: true,
+            allowUserInput: true,
             isSingleFileBook: _book.isSingleFileBook,
             filePath: filePath,
             position: position,
@@ -775,7 +734,7 @@ class _CreateMyBookScreenState extends State<CreateMyBookScreen>
   }
 
   void _updateFileWidgetsPositions(){
-    _filesWidgets.asMap().forEach((int position, BookFileWidget fileWidget){
+    _filesWidgets.asMap().forEach((int position, BookPdfFileWidget fileWidget){
       fileWidget.position = position;
     });
   }
