@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cronicalia_flutter/models/book_epub.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:validate/validate.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
@@ -149,4 +148,5 @@ class Utility {
       return pdfBooks.length;
     }
   }
+
 }

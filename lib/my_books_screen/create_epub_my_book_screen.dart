@@ -5,12 +5,11 @@ import 'dart:typed_data';
 import 'package:cronicalia_flutter/custom_widgets/book_epub_file_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book_epub.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/epub_parser.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:epub/epub.dart' as epubLib;
 import 'package:flushbar/flushbar.dart';
 
@@ -29,7 +28,6 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   UserStore _userStore;
   BookEpub _book;
   String _rawEpubBookPath;
-  Uint8List _coverImageBytes;
 
   @override
   void initState() {
@@ -55,7 +53,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
         child: Text("CREATE BOOK"),
         onPressed: () {
           if (_validateInformation()) {
-            createEpubBookAction([_book, _rawEpubBookPath]);
+            createEpubBookAction(_book);
 
             _showProgressFlushbar();
             print("Uploading Epub book data");
@@ -65,24 +63,111 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     ];
   }
 
+  //do not dispose. Flushbar already randles it
+  AnimationController _uploadProgressController;
+
+  void _showProgressFlushbar() {
+    UserStore userStore = listenToStore(userStoreToken);
+
+    Flushbar progressFlushbar = FlushbarHelper.createLoading(
+      message: "Wait while we create your new masterpiece",
+      indicatorBackgroundColor: Colors.blue[300],
+      indicatorController: _uploadProgressController,
+      duration: null,
+    )
+      ..onStatusChanged = (FlushbarStatus status) {
+        switch (status) {
+          case FlushbarStatus.DISMISSED:
+            {
+              Navigator.of(context).pop();
+              break;
+            }
+          default:
+            {}
+        }
+      }
+      ..show(context);
+
+    if (userStore.getProgressStream() != null) {
+      userStore.getProgressStream().controller.stream.listen((progress) {
+        _uploadProgressController.animateTo(progress, duration: Duration(milliseconds: 300));
+      }, onDone: () {
+        progressFlushbar.dismiss();
+      }, onError: (error) {
+        FlushbarHelper.createError(title: "Upload failed", message: "Check connection and try again");
+      }, cancelOnError: true);
+    }
+  }
+
+  bool _isEpubBeingAnalized = false;
+
   Widget _buildSelectEpubButton() {
     return Center(
       child: RoundedButton(
         child: Text(
           "PICK EPUB FILE",
         ),
-        onPressed: () {
-          _getEpubFile().then((EpubParser epubParser) {
-            setState(() {
-              if (epubParser != null) {
-                _convertEpubBookToBookEpub(epubParser);
-                _getCoverImage(epubParser);
-              }
-            });
-          });
-        },
+        onPressed: _isEpubBeingAnalized
+            ? null
+            : () {
+                setState(() {
+                  _isEpubBeingAnalized = true;
+                });
+
+                _getEpubFile().then((EpubParser epubParser) {
+                  setState(() {
+                    if (epubParser != null) {
+                      _convertEpubBookToBookEpub(epubParser);
+                      _isEpubBeingAnalized = false;
+                    }
+                  });
+                });
+              },
       ),
     );
+  }
+
+  Future<EpubParser> _getEpubFile() async {
+    Flushbar loadingBookFlushbar = FlushbarHelper.createInformation(message: "Analysing epub file...", duration: null);
+    try {
+      loadingBookFlushbar.show(context);
+
+      FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
+          allowedFileExtensions: ["epub"],
+          // allowedMimeType only works on Android. Check for IOS latter
+          allowedMimeType: Constants.CONTENT_TYPE_EPUB);
+
+      _rawEpubBookPath = await FlutterDocumentPicker.openDocument(params: params);
+      File epubFile = File(_rawEpubBookPath);
+
+      epubLib.EpubBook epubBook = await epubLib.EpubReader.readBook(await epubFile.readAsBytes());
+
+      return EpubParser(epubBook);
+    } catch (error) {
+      print(error);
+      FlushbarHelper.createError(message: "Upload an ePub file").show(context);
+      return null;
+    } finally {
+      loadingBookFlushbar.dismiss().then((_) {
+        FlushbarHelper.createSuccess(message: "Book loaded").show(context);
+      });
+    }
+  }
+
+  void _convertEpubBookToBookEpub(EpubParser epubParser) {
+    _book = BookEpub();
+    _book.coverData = epubParser.extractImage();
+    _book.title = epubParser.extractTitle();
+    _book.synopsis = epubParser.extractSynopsis();
+    _book.language = epubParser.extractLanguage();
+    _book.localFullBookUri = _rawEpubBookPath;
+    _book.chapterTitles = epubParser.extractChapterTitles();
+    _book.chaptersLaunchDates = epubParser.generateNewBookChapterPublicationDates();
+    _book.authorName = _userStore.user.name;
+    _book.authorEmailId = _userStore.user.encodedEmail;
+    _book.authorTwitterProfile = _userStore.user.twitterProfile;
+    _book.publicationDate = DateTime.now().millisecondsSinceEpoch;
+    _book.bookPosition = Utility.getNewBookPosition(_userStore.user.booksEpub, _userStore.user.booksPdf);
   }
 
   Widget _buildParsedBookWidget() {
@@ -119,7 +204,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6.0),
         child: Image.memory(
-          _coverImageBytes,
+          _book.coverData,
           height: 160.0,
           width: 120.0,
         ),
@@ -232,8 +317,25 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   bool _validateInformation() {
-    //TODO implement
-    return true;
+    return (_validateCover() &&
+        _validateInputForm() &&
+        _validatePeriodicity() &&
+        _validateGenre() &&
+        _validateLanguage() &&
+        _validateChapterTitles());
+  }
+
+  bool _validateCover() {
+    if (_book.coverData == null) {
+      FlushbarHelper.createError(
+        title: "Cover Error",
+        message: "We did not find a cover for the book. That is mandatory",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
+    } else {
+      return true;
+    }
   }
 
   bool _validateInputForm() {
@@ -253,83 +355,57 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     }
   }
 
-  Future<EpubParser> _getEpubFile() async {
-    Flushbar loadingBookFlushbar = FlushbarHelper.createInformation(message: "Detecting book files...", duration: null);
-    try {
-      loadingBookFlushbar.show(context);
+  bool _validatePeriodicity() {
+    if (_book.isSingleFileBook) return true;
 
-      FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
-        allowedFileExtensions: ["epub"],
-      );
-
-      final String _rawEpubBookPath = await FlutterDocumentPicker.openDocument(params: params);
-      File epubFile = File(_rawEpubBookPath);
-
-      epubLib.EpubBook epubBook = await epubLib.EpubReader.readBook(await epubFile.readAsBytes());
-
-      return EpubParser(epubBook);
-    } catch (error) {
-      print(error);
-      FlushbarHelper.createError(message: "Upload an ePub file").show(context);
-      return null;
-    } finally {
-      loadingBookFlushbar.dismiss().then((_) {
-        FlushbarHelper.createSuccess(message: "Book loaded").show(context);
-      });
+    if ((_book.periodicity != null && _book.periodicity != ChapterPeriodicity.NONE)) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "Chapter launch schedule missing",
+        message: "What is the interval between your chapter launches?",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
     }
   }
 
-  void _convertEpubBookToBookEpub(EpubParser epubParser) {
-    _book = BookEpub();
-    _book.title = epubParser.extractTitle();
-    _book.synopsis = epubParser.extractSynopsis();
-    _book.language = epubParser.extractLanguage();
-    _book.chapterTitles = epubParser.extractChapterTitles();
-    _book.chaptersLaunchDates = epubParser.generateNewBookChapterPublicationDates();
-    _book.authorName = _userStore.user.name;
-    _book.authorEmailId = _userStore.user.encodedEmail;
-    _book.authorTwitterProfile = _userStore.user.twitterProfile;
-    _book.publicationDate = DateTime.now().millisecondsSinceEpoch;
-    _book.bookPosition = Utility.getNewBookPosition(_userStore.user.booksEpub, _userStore.user.booksPdf);
+  bool _validateGenre() {
+    if (_book.genre != null && _book.genre != BookGenre.UNDEFINED) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "Genre missing",
+        message: "What is your book's genre?",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
+    }
   }
 
-  void _getCoverImage(EpubParser epubParser) {
-    _coverImageBytes = epubParser.extractImage();
+  bool _validateLanguage() {
+    if (_book.language != null && _book.language != BookLanguage.UNDEFINED) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "Language missing",
+        message: "In what language your book is written?",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
+    }
   }
 
-  //do not dispose. Flushbar already randles it
-  AnimationController _uploadProgressController;
-
-  void _showProgressFlushbar() {
-    UserStore userStore = listenToStore(userStoreToken);
-
-    Flushbar progressFlushbar = FlushbarHelper.createLoading(
-      message: "Wait while we create your new masterpiece",
-      indicatorBackgroundColor: Colors.blue[300],
-      indicatorController: _uploadProgressController,
-      duration: null,
-    )
-      ..onStatusChanged = (FlushbarStatus status) {
-        switch (status) {
-          case FlushbarStatus.DISMISSED:
-            {
-              Navigator.of(context).pop();
-              break;
-            }
-          default:
-            {}
-        }
-      }
-      ..show(context);
-
-    if (userStore.getProgressStream() != null) {
-      userStore.getProgressStream().controller.stream.listen((progress) {
-        _uploadProgressController.animateTo(progress, duration: Duration(milliseconds: 300));
-      }, onDone: () {
-        progressFlushbar.dismiss();
-      }, onError: (error) {
-        FlushbarHelper.createError(title: "Upload failed", message: "Check connection and try again");
-      }, cancelOnError: true);
+  bool _validateChapterTitles() {
+    if (_book.chapterTitles.length > 0) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "File error",
+        message: "We did not detect any content for you user to read",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
     }
   }
 
@@ -368,7 +444,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   DropdownMenuItem<ChapterPeriodicity> _buildPeriodicityDropdownItem(ChapterPeriodicity chapterPeriodicity) {
-    String periodicityTitle = UtilityBook.convertPeriodicityToString(chapterPeriodicity);
+    String periodicityTitle = Book.convertPeriodicityToString(chapterPeriodicity);
 
     return DropdownMenuItem<ChapterPeriodicity>(
       child: SizedBox(
@@ -401,7 +477,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   DropdownMenuItem<BookGenre> _buildGenreDropdownItem(BookGenre genre) {
-    String genreTitle = UtilityBook.convertGenreToString(genre);
+    String genreTitle = Book.convertGenreToString(genre);
 
     return DropdownMenuItem<BookGenre>(
       child: SizedBox(
@@ -431,7 +507,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   DropdownMenuItem<BookLanguage> _buildLanguageDropdownItem(BookLanguage language) {
-    String languageTitle = UtilityBook.convertLanguageToString(language);
+    String languageTitle = Book.convertLanguageToString(language);
 
     return DropdownMenuItem<BookLanguage>(
       child: SizedBox(

@@ -1,8 +1,7 @@
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cronicalia_flutter/models/book_epub.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 
 class User {
   String name;

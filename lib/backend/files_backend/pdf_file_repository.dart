@@ -1,82 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cronicalia_flutter/backend/data_repository.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/backend/data_backend/pdf_data_repository.dart';
+import 'package:cronicalia_flutter/backend/files_backend/file_repository.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:meta/meta.dart';
 
-const CONTENT_TYPE_IMAGE = "image/jpg";
-const CONTENT_TYPE_PDF = "application/pdf";
-const CONTENT_TYPE_TXT = "text/plain";
+class PdfFileRepository extends FileRepository {
+  PdfFileRepository(StorageReference storageReference) : super(storageReference: storageReference);
 
-class FileRepository {
-  final StorageReference _storageReference;
-
-  FileRepository(this._storageReference);
-
-  Future<String> updateUserProfileImage(String encodedEmail, String newLocalPath, DataRepository dataRepository) async {
-    try {
-      final File file = File(newLocalPath);
-      final metadata = new StorageMetadata(
-          contentType: CONTENT_TYPE_IMAGE,
-          customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_PROFILE});
-
-      if (file.existsSync()) {
-        final StorageUploadTask uploadTask = _storageReference
-            .child(Constants.STORAGE_USERS)
-            .child(encodedEmail)
-            .child(file.path.split('/').last)
-            .putFile(file, metadata);
-
-        String newRemotePath = (await uploadTask.future).downloadUrl.toString();
-        await dataRepository.updateUserProfilePictureReferences(encodedEmail, newLocalPath, newRemotePath);
-
-        return newRemotePath;
-      } else {
-        throw ("Update user profile pic failed. Image file does not exists");
-      }
-    } catch (error) {
-      print(error.toString());
-      return null;
-    }
-  }
-
-  Future<String> updateUserBackgroundImage(String encodedEmail, String newLocalPath, DataRepository dataRepository) async {
-    try {
-      final File file = File(newLocalPath);
-      final metadata = new StorageMetadata(
-          contentType: CONTENT_TYPE_IMAGE,
-          customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_BACKGROUND});
-
-      if (file.existsSync()) {
-        final StorageUploadTask uploadTask = _storageReference
-            .child(Constants.STORAGE_USERS)
-            .child(encodedEmail)
-            .child(file.path.split('/').last)
-            .putFile(file, metadata);
-
-        String newRemotePath = (await uploadTask.future).downloadUrl.toString();
-        await dataRepository.updateUserBackgroundPictureReferences(encodedEmail, newLocalPath, newRemotePath);
-
-        return newRemotePath;
-      } else {
-        throw ("Update user background failed. Image file does not exists");
-      }
-    } catch (error) {
-      print(error.toString());
-      return null;
-    }
-  }
 
   Future<String> updateBookCoverImage(
-      String encodedEmail, BookPdf book, String newLocalPath, DataRepository dataRepository) async {
+      String encodedEmail, BookPdf book, String newLocalPath, PdfDataRepository dataRepository) async {
     try {
       UploadTaskSnapshot taskSnapshot = (await _uploadBookCoverImage(encodedEmail, book, newLocalPath));
       String newRemotePath = (taskSnapshot != null) ? taskSnapshot.downloadUrl.toString() : throw ("Cover upload failed");
@@ -91,7 +30,7 @@ class FileRepository {
   Future<void> updateBookFiles(
       {@required BookPdf originalBook,
       @required BookPdf modifiedBook,
-      DataRepository dataRepository,
+      PdfDataRepository dataRepository,
       ProgressStream progressStream}) async {
     if (modifiedBook.isSingleFileBook) {
       progressStream.filesTotalNumber = 1;
@@ -112,7 +51,7 @@ class FileRepository {
   Future<void> _updateSingleFileBook(
       {@required BookPdf originalBook,
       @required BookPdf editedBook,
-      DataRepository dataRepository,
+      PdfDataRepository dataRepository,
       ProgressStream progressStream}) async {
     try {
       if (editedBook.localFullBookUri != null) {
@@ -136,7 +75,7 @@ class FileRepository {
   Future<void> _updateMultiFileBook(
       {@required BookPdf originalBook,
       @required BookPdf modifiedBook,
-      DataRepository dataRepository,
+      PdfDataRepository dataRepository,
       ProgressStream progressStream}) async {
     StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
     try {
@@ -206,8 +145,8 @@ class FileRepository {
 
       //if the file names are equal, file has been overitten. There is no need to delete
       if (oldFileName != newFileName) {
-        _storageReference
-            .child(_resolveStorageLanguageLocation(originalBook.language))
+        storageReference
+            .child(resolveStorageLanguageLocation(originalBook.language))
             .child(originalBook.authorEmailId)
             .child(originalBook.generateStorageFolder())
             .child(oldFileName)
@@ -241,8 +180,8 @@ class FileRepository {
           if (!modifiedBook.chapterUris.map((modifiedChapterUri) {
             return oldFileName == Utility.resolveFileNameFromUrl(modifiedChapterUri);
           }).contains(true)) {
-            _storageReference
-                .child(_resolveStorageLanguageLocation(originalBook.language))
+            storageReference
+                .child(resolveStorageLanguageLocation(originalBook.language))
                 .child(originalBook.authorEmailId)
                 .child(originalBook.generateStorageFolder())
                 .child(oldFileName)
@@ -256,10 +195,9 @@ class FileRepository {
     }
   }
 
-  Future<void> createNewSingleFileBook(String encodedEmail, BookPdf book, DataRepository dataRepository,
+  Future<void> createNewSingleFilePdfBook(String encodedEmail, BookPdf book, PdfDataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
-
       UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
       book.remoteCoverUri =
           coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
@@ -278,12 +216,11 @@ class FileRepository {
     }
   }
 
-  Future<void> createNewMultiFileBook(
-      String encodedEmail, BookPdf book, List<String> pdfLocalPaths, DataRepository dataRepository,
+  Future<void> createNewMultiFilePdfBook(
+      String encodedEmail, BookPdf book, List<String> pdfLocalPaths, PdfDataRepository dataRepository,
       {ProgressStream progressStream}) async {
     StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
     try {
-
       UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
       book.remoteCoverUri =
           coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
@@ -322,16 +259,15 @@ class FileRepository {
     }
   }
 
-
   Future<UploadTaskSnapshot> _uploadBookCoverImage(String encodedEmail, BookPdf book, String filePath) {
     final File file = File(filePath);
     final metadata = new StorageMetadata(
-        contentType: CONTENT_TYPE_IMAGE,
+        contentType: Constants.CONTENT_TYPE_IMAGE,
         customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_COVER});
 
     if (file.existsSync()) {
-      final StorageUploadTask uploadTask = _storageReference
-          .child(_resolveStorageLanguageLocation(book.language))
+      final StorageUploadTask uploadTask = storageReference
+          .child(resolveStorageLanguageLocation(book.language))
           .child(encodedEmail)
           .child(book.generateStorageFolder())
           .child(Constants.FILE_NAME_SUFFIX_COVER_PICTURE)
@@ -345,11 +281,11 @@ class FileRepository {
 
   Future<UploadTaskSnapshot> _uploadPDFFile(String encodedEmail, BookPdf book, String filePath) {
     final File file = File(filePath);
-    final metadata = new StorageMetadata(contentType: CONTENT_TYPE_PDF);
+    final metadata = new StorageMetadata(contentType: Constants.CONTENT_TYPE_PDF);
 
     if (file.existsSync()) {
-      final StorageUploadTask uploadTask = _storageReference
-          .child(_resolveStorageLanguageLocation(book.language))
+      final StorageUploadTask uploadTask = storageReference
+          .child(resolveStorageLanguageLocation(book.language))
           .child(encodedEmail)
           .child(book.generateStorageFolder())
           .child(file.path.split("/").last)
@@ -361,30 +297,5 @@ class FileRepository {
     }
   }
 
-  //get file from FirebaseStorage
-  Future<String> downloadBookFile() async {
-    //StorageReference.getReferenceFromUrl();
-
-    //Placeholder
-    String fileText = await rootBundle.loadString('assets/test_file.txt');
-
-    return fileText;
-  }
-
-  String _resolveStorageLanguageLocation(BookLanguage bookLanguage) {
-    switch (bookLanguage) {
-      case BookLanguage.ENGLISH:
-        return Constants.STORAGE_ENGLISH_BOOKS;
-      case BookLanguage.PORTUGUESE:
-        return Constants.STORAGE_PORTUGUESE_BOOKS;
-      case BookLanguage.DEUTSCH:
-        return Constants.STORAGE_DEUTSCH_BOOKS;
-      case BookLanguage.UNDEFINED:
-        return Constants.STORAGE_ENGLISH_BOOKS;
-      default:
-        return Constants.STORAGE_ENGLISH_BOOKS;
-    }
-  }
-
-  void _resolveFilesDiff({@required BookPdf originalBook, @required BookPdf modifiedBook}) {}
+  
 }

@@ -6,11 +6,10 @@ import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:documents_picker/documents_picker.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
@@ -121,7 +120,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       body: Center(
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: new EdgeInsets.only(top: 125.0, bottom: 16.0),
+          padding: new EdgeInsets.only(top: 84.0, bottom: 16.0),
           child: new Column(
             children: <Widget>[
               new Stack(
@@ -453,7 +452,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
   Widget _buildCoverPicture() {
     return FractionalTranslation(
-      translation: Offset(0.15, -0.15),
+      translation: Offset(0.15, -0.42),
       child: Container(
         constraints: BoxConstraints.tight(Size(Constants.BOOK_COVER_DEFAULT_WIDTH, Constants.BOOK_COVER_DEFAULT_HEIGHT)),
         child: ClipRRect(
@@ -523,7 +522,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   DropdownMenuItem<ChapterPeriodicity> _buildPeriodicityDropdownItem(ChapterPeriodicity chapterPeriodicity) {
-    String periodicityTitle = UtilityBook.convertPeriodicityToString(chapterPeriodicity);
+    String periodicityTitle = Book.convertPeriodicityToString(chapterPeriodicity);
 
     return DropdownMenuItem<ChapterPeriodicity>(
       child: SizedBox(

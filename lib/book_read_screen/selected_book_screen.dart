@@ -2,13 +2,13 @@ import 'package:cronicalia_flutter/book_read_screen/book_read_screen.dart';
 import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:flutter/material.dart';
 
 class SelectedBookScreen extends StatefulWidget {
   SelectedBookScreen(this._book);
 
-  final BookPdf _book;
+  final Book _book;
 
   @override
   _SelectedBookScreenState createState() => _SelectedBookScreenState();

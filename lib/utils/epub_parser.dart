@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:cronicalia_flutter/utils/utility_book.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/dom_parsing.dart';
 import 'package:html/parser.dart' as parser;

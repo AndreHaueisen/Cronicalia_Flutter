@@ -2,8 +2,7 @@ import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/custom_widgets/recommended_books_by_genre_widget.dart';
 import 'package:cronicalia_flutter/flux/book_store.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
@@ -28,6 +27,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
     });
 
     _bookStore = listenToStore(bookStoreToken);
+    //TODO change ENGLISH to the chosen user languages
     loadBookRecomendationsAction(BookLanguage.ENGLISH);
   }
 
@@ -40,12 +40,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
       body: new Column(
         children: [
           Expanded(
-            child: _bookStore.totalNumberOfBook > 0
+            child: _bookStore.totalNumberOfBooks > 0
                 ? ListView.builder(
                     itemCount: _GENRE_COUNT,
                     scrollDirection: Axis.vertical,
                     itemBuilder: (BuildContext buildContext, int index) {
-                      List<BookPdf> currentList = _getRecommendedBookListByIndex(index);
+                      List<Book> currentList = _getRecommendedBookListByIndex(index);
 
                       return currentList.isNotEmpty
                           ? RecommendeBooksByGenreWidget(
@@ -71,7 +71,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
     );
   }
 
-  List<BookPdf> _getRecommendedBookListByIndex(int index) {
+  List<Book> _getRecommendedBookListByIndex(int index) {
     switch (index) {
       case 0:
         return _bookStore.actionBooks;
@@ -94,7 +94,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
       case 9:
         return _bookStore.satireBooks;
       default:
-        return List<BookPdf>();
+        return List<Book>();
     }
   }
 

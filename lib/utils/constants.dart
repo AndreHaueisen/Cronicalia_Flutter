@@ -95,7 +95,7 @@ class Constants {
   static const ONE_MB_IN_BYTES = 1000000;
 
   static const MAX_TITLE_LENGTH = 50;
-  static const MAX_SYNOPSIS_LENGTH = 3000;
+  static const MAX_SYNOPSIS_LENGTH = 1000;
   static const MIN_SYNOPSIS_LENGTH = 100;
   static const BOOK_COVER_DEFAULT_HEIGHT = 180.0;
   static const BOOK_COVER_DEFAULT_WIDTH = 135.0;
@@ -104,6 +104,11 @@ class Constants {
   static const GOOGLE_ACCESS_TOKEN = "accessToken";
   static const TWITTER_CONSUMER_KEY = "consumerKey";
   static const TWITTER_CONSUMER_SECRET = "consumerSecret";
+
+  static const CONTENT_TYPE_IMAGE = "image/jpg";
+  static const CONTENT_TYPE_PDF = "application/pdf";
+  static const CONTENT_TYPE_TXT = "text/plain";
+  static const CONTENT_TYPE_EPUB = "application/epub+zip";
 
   static const PROVIDER_OPTIONS = <ProviderOptions, String>{
     ProviderOptions.GOOGLE: "google.com",

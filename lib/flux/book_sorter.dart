@@ -1,70 +1,69 @@
-import 'package:cronicalia_flutter/models/book_pdf.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:meta/meta.dart';
 
 class BookSorter {
   BookSorter({@required this.recommendedBooks});
 
-  List<BookPdf> recommendedBooks;
+  List<Book> recommendedBooks;
 
 
-  List<BookPdf> getActionBooks() {
+  List<Book> getActionBooks() {
     
-    return recommendedBooks.where((BookPdf book) {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.ACTION);
     }).toList();
   }
 
-  List<BookPdf> getAdventureBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getAdventureBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.ADVENTURE);
     }).toList();
   }
 
-  List<BookPdf> getComedyBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getComedyBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.COMEDY);
     }).toList();
   }
 
-  List<BookPdf> getDramaBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getDramaBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.DRAMA);
     }).toList();
   }
 
-  List<BookPdf> getFantasyBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getFantasyBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.FANTASY);
     }).toList();
   }
 
-  List<BookPdf> getFictionBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getFictionBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.FICTION);
     }).toList();
   }
 
-  List<BookPdf> getHorrorBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getHorrorBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.HORROR);
     }).toList();
   }
 
-  List<BookPdf> getMythologyBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getMythologyBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.MYTHOLOGY);
     }).toList();
   }
 
-  List<BookPdf> getRomanceBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getRomanceBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.ROMANCE);
     }).toList();
   }
 
-  List<BookPdf> getSatireBooks() {
-    return recommendedBooks.where((BookPdf book) {
+  List<Book> getSatireBooks() {
+    return recommendedBooks.where((Book book) {
       return (book.genre == BookGenre.SATIRE);
     }).toList();
   }

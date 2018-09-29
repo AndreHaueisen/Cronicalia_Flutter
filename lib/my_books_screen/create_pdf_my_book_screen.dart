@@ -4,13 +4,12 @@ import 'dart:io';
 import 'package:cronicalia_flutter/custom_widgets/book_pdf_file_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:documents_picker/documents_picker.dart';
@@ -186,8 +185,6 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
         _validateChapterTitles());
   }
 
-
-
   bool _validateCover() {
     if (_book.localCoverUri != null) {
       return true;
@@ -213,19 +210,6 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
       FlushbarHelper.createError(
         title: "Title or synopsis invalid",
         message: "Check your book title and synopsis",
-        duration: (Duration(seconds: 3)),
-      ).show(context);
-      return false;
-    }
-  }
-
-  bool _validateFiles() {
-    if (_filesWidgets.length > 0) {
-      return true;
-    } else {
-      FlushbarHelper.createError(
-        title: "File missing",
-        message: "Choose at least one PDF for your book",
         duration: (Duration(seconds: 3)),
       ).show(context);
       return false;
@@ -273,6 +257,21 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
     }
   }
 
+  bool _validateFiles() {
+    if (_filesWidgets.length > 0) {
+      return true;
+    } else {
+      FlushbarHelper.createError(
+        title: "File missing",
+        message: "Choose at least one PDF for your book",
+        duration: (Duration(seconds: 3)),
+      ).show(context);
+      return false;
+    }
+  }
+
+  
+
   bool _validateChapterTitles() {
     if (_book.isSingleFileBook) return true;
 
@@ -306,52 +305,49 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
 
   Widget _buildImage() {
     return Padding(
-          padding: const EdgeInsets.only(top: 16.0, left: 16.0),
-          child: GestureDetector(
-              onTap: () {
-                imageCache.clear();
-                _showImageOriginDialog(ImageType.COVER);
-              },
-              child: Container(
-                width: Constants.BOOK_COVER_DEFAULT_WIDTH,
-                height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)
-                  ],
-                  borderRadius: BorderRadius.circular(6.0),
-                  shape: BoxShape.rectangle,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6.0),
-                  child: (_book.localCoverUri != null)
-                      ? Image.file(
-                          File(_book.localCoverUri),
-                          fit: BoxFit.fill,
-                        )
-                      : Stack(children: [
-                          Image.asset(
-                            "images/cover_placeholder.png",
-                            fit: BoxFit.fill,
-                            width: Constants.BOOK_COVER_DEFAULT_WIDTH,
-                            height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
+      padding: const EdgeInsets.only(top: 16.0, left: 16.0),
+      child: GestureDetector(
+          onTap: () {
+            imageCache.clear();
+            _showImageOriginDialog(ImageType.COVER);
+          },
+          child: Container(
+            width: Constants.BOOK_COVER_DEFAULT_WIDTH,
+            height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
+            decoration: BoxDecoration(
+              boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(2.0, 2.0), blurRadius: 6.0, spreadRadius: 1.0)],
+              borderRadius: BorderRadius.circular(6.0),
+              shape: BoxShape.rectangle,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6.0),
+              child: (_book.localCoverUri != null)
+                  ? Image.file(
+                      File(_book.localCoverUri),
+                      fit: BoxFit.fill,
+                    )
+                  : Stack(children: [
+                      Image.asset(
+                        "images/cover_placeholder.png",
+                        fit: BoxFit.fill,
+                        width: Constants.BOOK_COVER_DEFAULT_WIDTH,
+                        height: Constants.BOOK_COVER_DEFAULT_HEIGHT,
+                      ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text(
+                            "Your Cover",
+                            style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.bold, color: Colors.grey[400]),
+                            textAlign: TextAlign.center,
                           ),
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 4.0),
-                              child: Text(
-                                "Your Cover",
-                                style: TextStyle(fontSize: 17.0, fontWeight: FontWeight.bold, color: Colors.grey[400]),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ]),
-                ),
-              )),
-        );
-      
+                        ),
+                      ),
+                    ]),
+            ),
+          )),
+    );
   }
 
   Future<Null> _showImageOriginDialog(ImageType imageType) async {
@@ -380,8 +376,8 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
         MyBookImagePicker.pickImageFromCameraForNewBook(imageType).then((filePath) {
           if (filePath != null) {
             setState(() {
-                _book.localCoverUri = filePath;
-              });
+              _book.localCoverUri = filePath;
+            });
           }
         });
         break;
@@ -389,8 +385,8 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
         MyBookImagePicker.pickImageFromGalleryForNewBook(imageType).then((filePath) {
           if (filePath != null) {
             setState(() {
-                _book.localCoverUri = filePath;
-              });
+              _book.localCoverUri = filePath;
+            });
           }
         });
         break;
@@ -425,10 +421,6 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
                 decoration: InputDecoration(
                     fillColor: Colors.black26,
                     filled: true,
-                    icon: Icon(
-                      Icons.title,
-                      color: Colors.grey[500],
-                    ),
                     border: UnderlineInputBorder(),
                     labelText: "Book Title",
                     labelStyle: TextStyle(color: Colors.grey)),
@@ -457,10 +449,6 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
                 decoration: InputDecoration(
                     fillColor: Colors.black26,
                     filled: true,
-                    icon: Icon(
-                      Icons.short_text,
-                      color: Colors.grey[500],
-                    ),
                     border: UnderlineInputBorder(),
                     labelText: "Book Synopsis",
                     labelStyle: TextStyle(color: Colors.grey)),
@@ -543,7 +531,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   }
 
   DropdownMenuItem<ChapterPeriodicity> _buildPeriodicityDropdownItem(ChapterPeriodicity chapterPeriodicity) {
-    String periodicityTitle = UtilityBook.convertPeriodicityToString(chapterPeriodicity);
+    String periodicityTitle = Book.convertPeriodicityToString(chapterPeriodicity);
 
     return DropdownMenuItem<ChapterPeriodicity>(
       child: SizedBox(
@@ -576,7 +564,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   }
 
   DropdownMenuItem<BookGenre> _buildGenreDropdownItem(BookGenre genre) {
-    String genreTitle = UtilityBook.convertGenreToString(genre);
+    String genreTitle = Book.convertGenreToString(genre);
 
     return DropdownMenuItem<BookGenre>(
       child: SizedBox(
@@ -606,7 +594,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   }
 
   DropdownMenuItem<BookLanguage> _buildLanguageDropdownItem(BookLanguage language) {
-    String languageTitle = UtilityBook.convertLanguageToString(language);
+    String languageTitle = Book.convertLanguageToString(language);
 
     return DropdownMenuItem<BookLanguage>(
       child: SizedBox(
@@ -622,16 +610,17 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   Widget _buildResumePhrase() {
     String completionStatusSubstring =
         _book.isSingleFileBook ? "You are launching a complete book. " : "You are launching an incomplete book. ";
-    String genreStatusSubstring =
-        _book.genre == BookGenre.UNDEFINED ? "" : "It is a(n) ${UtilityBook.convertGenreToString(_book.genre).toLowerCase()}. ";
+    String genreStatusSubstring = _book.genre == BookGenre.UNDEFINED
+        ? ""
+        : "It is a(n) ${Book.convertGenreToString(_book.genre).toLowerCase()}. ";
     String languageStatusSubstring = _book.language == BookLanguage.UNDEFINED
         ? ""
-        : "It is written in ${UtilityBook.convertLanguageToString(_book.language).toLowerCase()}. ";
+        : "It is written in ${Book.convertLanguageToString(_book.language).toLowerCase()}. ";
     String chapterNumberSubstring = _book.isSingleFileBook ? "" : "It has ${_filesWidgets.length} chapter(s). ";
-    String periodicityStatusSubstring =
-        (_book.isSingleFileBook || (!_book.isSingleFileBook && _book.periodicity == ChapterPeriodicity.NONE))
-            ? ""
-            : "You intend to launch a new chapter ${UtilityBook.convertPeriodicityToString(_book.periodicity).toLowerCase()}. ";
+    String periodicityStatusSubstring = (_book.isSingleFileBook ||
+            (!_book.isSingleFileBook && _book.periodicity == ChapterPeriodicity.NONE))
+        ? ""
+        : "You intend to launch a new chapter ${Book.convertPeriodicityToString(_book.periodicity).toLowerCase()}. ";
 
     _resumePhrase = completionStatusSubstring +
         genreStatusSubstring +
@@ -696,7 +685,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
       if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
       _filesWidgets.add(
         BookPdfFileWidget(
-          key: Key(filePaths[0]),         
+          key: Key(filePaths[0]),
           isReorderable: false,
           allowUserInput: false,
           isSingleFileBook: _book.isSingleFileBook,
@@ -733,8 +722,8 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
     });
   }
 
-  void _updateFileWidgetsPositions(){
-    _filesWidgets.asMap().forEach((int position, BookPdfFileWidget fileWidget){
+  void _updateFileWidgetsPositions() {
+    _filesWidgets.asMap().forEach((int position, BookPdfFileWidget fileWidget) {
       fileWidget.position = position;
     });
   }

@@ -5,6 +5,7 @@ import 'package:cronicalia_flutter/custom_widgets/persistent_bottom_bar.dart';
 import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/create_epub_my_book_screen.dart';
 import 'package:cronicalia_flutter/my_books_screen/create_pdf_my_book_screen.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
@@ -22,12 +23,17 @@ class MyBooksScreen extends StatefulWidget {
 
 class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyBooksScreen> {
   UserStore _userStore;
+  Map<String, Book> _allBooksList;
 
   @override
   void initState() {
     super.initState();
 
     _userStore = listenToStore(userStoreToken);
+    
+    _allBooksList = Map<String, Book>();
+    _allBooksList.addAll(_userStore.user.booksPdf);
+    _allBooksList.addAll(_userStore.user.booksEpub);
   }
 
   @override
@@ -35,7 +41,7 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
     return Scaffold(
       body: Column(children: [
         Expanded(
-            child: (_userStore.isLoggedIn && (_userStore.user.booksPdf.isNotEmpty || _userStore.user.booksEpub.isNotEmpty)) ? _buildBooksScreen() : _buildNoBookScreen()),
+            child: (_userStore.isLoggedIn && _allBooksList.isNotEmpty) ? _buildBooksScreen() : _buildNoBookScreen()),
         PersistentBottomBar(
           selectedItemIdex: 3,
         ),
@@ -97,10 +103,10 @@ class MyBooksScreenState extends State<MyBooksScreen> with StoreWatcherMixin<MyB
         child: ListView.builder(
           itemExtent: MediaQuery.of(context).size.width,
           scrollDirection: Axis.horizontal,
-          itemCount: _userStore.user.booksPdf.length,
+          itemCount: _allBooksList.length,
           itemBuilder: (context, index) {
-            return MyBookWidget(_userStore.user.booksPdf.values.elementAt(index), _userStore.user.booksPdf.keys.elementAt(index),
-                index, _userStore.user.booksPdf.length);
+            return MyBookWidget(_allBooksList.values.elementAt(index), _allBooksList.keys.elementAt(index),
+                index, _allBooksList.length);
           },
         ),
       ),

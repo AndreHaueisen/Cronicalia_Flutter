@@ -1,14 +1,13 @@
 import 'package:cronicalia_flutter/book_read_screen/selected_book_screen.dart';
 import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:flutter/material.dart';
 
 class RecommendeBooksByGenreWidget extends StatelessWidget {
   RecommendeBooksByGenreWidget({@required this.recommendedBooks, @required this.currentGenre});
 
-  final List<BookPdf> recommendedBooks;
+  final List<Book> recommendedBooks;
   final BookGenre currentGenre;
 
   static const double _BOX_HEIGHT = 200.0;
@@ -22,7 +21,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 8.0, left: 8.0),
           child: Text(
-            UtilityBook.convertGenreToString(currentGenre).toUpperCase(),
+            Book.convertGenreToString(currentGenre).toUpperCase(),
             style: TextStyle(
               fontWeight: FontWeight.w900,
               color: AppThemeColors.accentColor,
@@ -43,7 +42,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBookPreview(BuildContext context, BookPdf book) {
+  Widget _buildBookPreview(BuildContext context, Book book) {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: GestureDetector(
@@ -62,63 +61,68 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBookFaceWithText(BuildContext context, BookPdf book) {
+  Widget _buildBookFaceWithText(BuildContext context, Book book) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        SizedBox(
-          width: 140.0,
+        ConstrainedBox(
+          constraints: BoxConstraints.tightFor(width: 130.0),
           child: Align(
             alignment: Alignment.centerLeft,
             child: ClipRRect(
               borderRadius: BorderRadius.only(topRight: Radius.circular(4.0), bottomRight: Radius.circular(4.0)),
-              child: Image.network(
+              child: 
+              Image.network(
                 book.remoteCoverUri,
                 fit: BoxFit.fill,
                 height: _BOX_HEIGHT,
+                width: 130.0,
               ),
             ),
           ),
         ),
         Expanded(
           flex: MediaQuery.of(context).orientation == Orientation.portrait ? 2 : 3,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
-                child: Text(
-                  book.title,
-                  style: TextStyle(color: TextColorDarkBackground.primary, fontWeight: FontWeight.w500, fontSize: 18.0),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 12.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
+                  child: Text(
+                    book.title,
+                    style: TextStyle(color: TextColorDarkBackground.primary, fontWeight: FontWeight.w500, fontSize: 18.0),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-                child: Text(
-                  "By ${book.authorName}",
-                  style: TextStyle(color: TextColorDarkBackground.secondary),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                  child: Text(
+                    "By ${book.authorName}",
+                    style: TextStyle(color: TextColorDarkBackground.secondary),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: Text(
-                  book.synopsis,
-                  style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 12.0),
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.justify,
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Text(
+                    book.synopsis,
+                    style: TextStyle(color: TextColorDarkBackground.secondary, fontSize: 12.0),
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.justify,
+                  ),
                 ),
-              ),
-              _buildBookStats(book),
-            ],
+                _buildBookStats(book),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildBookStats(BookPdf book) {
+  Widget _buildBookStats(Book book) {
     return Padding(
         padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
         child: BookStatsWidget(

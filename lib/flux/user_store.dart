@@ -1,17 +1,18 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cronicalia_flutter/backend/data_repository.dart';
-import 'package:cronicalia_flutter/backend/file_repository.dart';
+import 'package:cronicalia_flutter/backend/data_backend/user_data_repository.dart';
+import 'package:cronicalia_flutter/backend/data_backend/pdf_data_repository.dart';
+import 'package:cronicalia_flutter/backend/data_backend/epub_data_repository.dart';
+import 'package:cronicalia_flutter/backend/files_backend/epub_file_repository.dart';
+import 'package:cronicalia_flutter/backend/files_backend/pdf_file_repository.dart';
+import 'package:cronicalia_flutter/backend/files_backend/user_file_repository.dart';
 import 'package:cronicalia_flutter/login_screen/login_handler.dart';
-import 'package:cronicalia_flutter/models/book_epub.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/models/progress_stream.dart';
 import 'package:cronicalia_flutter/models/user.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
-import 'package:epub/epub.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flushbar/flushbar.dart';
@@ -22,8 +23,15 @@ class UserStore extends Store {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final Firestore _firestore = Firestore.instance;
   final StorageReference _storageReference = FirebaseStorage.instance.ref();
-  FileRepository _fileRepository;
-  DataRepository _dataRepository;
+
+  UserFileRepository _userFileRepository;
+  PdfFileRepository _pdfFileRepository;
+  EpubFileRepository _epubFileRepository;
+
+  UserDataRepository _userDataRepository;
+  PdfDataRepository _pdfDataRepository;
+  EpubDataRepository _epubDataRepository;
+
   LoginHandler _loginHandler;
 
   ProgressStream _progressStream = new ProgressStream();
@@ -32,8 +40,14 @@ class UserStore extends Store {
   User _user = User.empty();
 
   UserStore() {
-    _fileRepository = FileRepository(_storageReference);
-    _dataRepository = DataRepository(_firestore);
+    _userFileRepository = UserFileRepository(_storageReference);
+    _pdfFileRepository = PdfFileRepository(_storageReference);
+    _epubFileRepository = EpubFileRepository(_storageReference);
+
+    _userDataRepository = UserDataRepository(_firestore);
+    _pdfDataRepository = PdfDataRepository(_firestore);
+    _epubDataRepository = EpubDataRepository(_firestore);
+
     _loginHandler = LoginHandler(_firebaseAuth, _firestore);
 
     triggerOnConditionalAction(loginWithEmailAction, (List<dynamic> payload) {
@@ -150,7 +164,7 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(getUserFromServerAction, (User user) {
-      _dataRepository.getNewUser(user: user).then((User userFromDatabase) {
+      _userDataRepository.getNewUser(user: user).then((User userFromDatabase) {
         if (userFromDatabase != null) {
           this._user = userFromDatabase;
           print("user loaded in store");
@@ -164,8 +178,8 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(updateUserProfileImageAction, (String localUri) {
-      _fileRepository.updateUserProfileImage(_user.encodedEmail, localUri, _dataRepository).then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
+      _userFileRepository.updateUserProfileImage(_user.encodedEmail, localUri, _userDataRepository).then((_) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -177,8 +191,8 @@ class UserStore extends Store {
     });
 
     triggerOnConditionalAction(updateUserBackgroundImageAction, (String localUri) {
-      _fileRepository.updateUserBackgroundImage(_user.encodedEmail, localUri, _dataRepository).then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
+      _userFileRepository.updateUserBackgroundImage(_user.encodedEmail, localUri, _userDataRepository).then((_) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -194,7 +208,7 @@ class UserStore extends Store {
       this._user.booksPdf.forEach((_, book) {
         book.authorName = newName;
       });
-      _dataRepository.updateUserName(this._user);
+      _userDataRepository.updateUserName(this._user);
     });
 
     triggerOnAction(updateUserTwitterProfileAction, (String newTwitterProfile) {
@@ -202,12 +216,12 @@ class UserStore extends Store {
       this._user.booksPdf.forEach((_, book) {
         book.authorTwitterProfile = newTwitterProfile;
       });
-      _dataRepository.updateUserTwitterProfile(this._user);
+      _userDataRepository.updateUserTwitterProfile(this._user);
     });
 
     triggerOnAction(updateUserAboutMeAction, (String newAboutMe) {
       this._user.aboutMe = newAboutMe;
-      _dataRepository.updateUserAboutMe(this._user);
+      _userDataRepository.updateUserAboutMe(this._user);
     });
 
     triggerOnConditionalAction(updateBookCoverImageAction, (List<dynamic> payload) {
@@ -217,8 +231,8 @@ class UserStore extends Store {
 
       _user.booksPdf[bookUID].localCoverUri = localUri;
 
-      _fileRepository.updateBookCoverImage(_user.encodedEmail, _user.booksPdf[bookUID], localUri, _dataRepository).then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
+      _pdfFileRepository.updateBookCoverImage(_user.encodedEmail, _user.booksPdf[bookUID], localUri, _pdfDataRepository).then((_) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             print("user loaded in store");
@@ -244,7 +258,7 @@ class UserStore extends Store {
       BookPdf book = this._user.booksPdf[bookKey];
       book.title = newTitle;
 
-      _dataRepository.updateBookTitle(_user.encodedEmail, book).then((_) {
+      _pdfDataRepository.updateBookTitle(_user.encodedEmail, book).then((_) {
         FlushbarHelper.createSuccess(message: "Title updated").show(context);
         trigger();
       }, onError: () {
@@ -264,7 +278,7 @@ class UserStore extends Store {
       BookPdf book = this._user.booksPdf[bookKey];
       book.synopsis = newSynopsis;
 
-      _dataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis).then((_) {
+      _pdfDataRepository.updateBookSynopsis(_user.encodedEmail, book, newSynopsis).then((_) {
         FlushbarHelper.createSuccess(message: "Synopsis updated").show(context);
         trigger();
       }, onError: () {
@@ -284,7 +298,7 @@ class UserStore extends Store {
       BookPdf book = this._user.booksPdf[bookKey];
       book.isCurrentlyComplete = isBookCurrentlyComplete;
 
-      _dataRepository.updateBookCompletionStatus(_user.encodedEmail, book).then((_) {
+      _pdfDataRepository.updateBookCompletionStatus(_user.encodedEmail, book).then((_) {
         trigger();
       }, onError: () {
         FlushbarHelper.createError(message: "Book status could not be updated").show(context);
@@ -303,10 +317,10 @@ class UserStore extends Store {
       BookPdf book = this._user.booksPdf[bookKey];
       book.periodicity = newPeriodicity;
 
-      _dataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book).then((_) {
+      _pdfDataRepository.updateBookChapterPeriodicity(_user.encodedEmail, book).then((_) {
         FlushbarHelper.createSuccess(
                 message:
-                    "Your readers will expect a new chapter ${UtilityBook.convertPeriodicityToString(newPeriodicity).toLowerCase()}")
+                    "Your readers will expect a new chapter ${Book.convertPeriodicityToString(newPeriodicity).toLowerCase()}")
             .show(context);
 
         trigger();
@@ -321,14 +335,14 @@ class UserStore extends Store {
 
     triggerOnConditionalAction(updateBookFilesAction, (BookPdf modifiedBook) {
       BookPdf originalBook = user.booksPdf[modifiedBook.uID];
-      _fileRepository
+      _pdfFileRepository
           .updateBookFiles(
               originalBook: originalBook,
               modifiedBook: modifiedBook,
-              dataRepository: _dataRepository,
+              dataRepository: _pdfDataRepository,
               progressStream: _progressStream)
           .then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             trigger();
@@ -346,10 +360,10 @@ class UserStore extends Store {
       const int numberOfFilesToBeUploaded = 2;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
-      _fileRepository
-          .createNewSingleFileBook(_user.encodedEmail, book, _dataRepository, progressStream: _progressStream)
+      _pdfFileRepository
+          .createNewSingleFilePdfBook(_user.encodedEmail, book, _pdfDataRepository, progressStream: _progressStream)
           .then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             trigger();
@@ -370,10 +384,10 @@ class UserStore extends Store {
       final int numberOfFilesToBeUploaded = pictureFilesNumber + pdfLocalPaths.length;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
-      _fileRepository
-          .createNewMultiFileBook(_user.encodedEmail, book, pdfLocalPaths, _dataRepository, progressStream: _progressStream)
+      _pdfFileRepository
+          .createNewMultiFilePdfBook(_user.encodedEmail, book, pdfLocalPaths, _pdfDataRepository, progressStream: _progressStream)
           .then((_) {
-        _dataRepository.getUser(_user.encodedEmail).then((user) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
             trigger();
@@ -387,12 +401,23 @@ class UserStore extends Store {
       return false;
     });
 
-    triggerOnConditionalAction(createEpubBookAction, (List<dynamic> payload){
-      EpubBook book = payload[0];
-      String epubFilePath = payload[1];
+    triggerOnConditionalAction(createEpubBookAction, (BookEpub bookEpub){
+      //cover picture and epub file
+      _progressStream.filesTotalNumber = 2;
+      
+      _epubFileRepository.createNewEpubBook(user.encodedEmail, bookEpub, _epubDataRepository, progressStream: _progressStream).then((_){
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
+            _user = user;
+            trigger();
+            print("user loaded in store");
+          }
+        });
+      }).catchError((_) {
+        print("Epub book creation failed");
+      });
 
-      //_fileRepository.createNewEpubBook();
-
+      return false;
     });
   }
 
@@ -514,7 +539,7 @@ final Action<List<dynamic>> updateBookCompletionStatusAction = new Action<List<d
 final Action<List<dynamic>> updateBookChapterPeriodicityAction = new Action<List<dynamic>>();
 
 ///contains the bookPdf with file alterations
-Action<BookPdf> updateBookFilesAction = Action<BookPdf>();
+final Action<BookPdf> updateBookFilesAction = Action<BookPdf>();
 
 final Action<BookPdf> createCompleteBookAction = new Action<BookPdf>();
 
@@ -522,6 +547,4 @@ final Action<BookPdf> createCompleteBookAction = new Action<BookPdf>();
 /// payload[1] contains local pdf file paths
 final Action<List<dynamic>> createIncompleteBookAction = new Action<List<dynamic>>();
 
-/// payload[0] contains bookEpub
-/// payload[1] contains path to raw Epub file
-final Action<List<dynamic>> createEpubBookAction = Action<List<dynamic>>();
+final Action<BookEpub> createEpubBookAction = Action<BookEpub>();

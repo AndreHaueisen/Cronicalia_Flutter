@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cronicalia_flutter/backend/data_repository.dart';
-import 'package:cronicalia_flutter/backend/file_repository.dart';
+import 'package:cronicalia_flutter/backend/data_backend/data_repository.dart';
+import 'package:cronicalia_flutter/backend/data_backend/pdf_data_repository.dart';
+import 'package:cronicalia_flutter/backend/files_backend/file_repository.dart';
 import 'package:cronicalia_flutter/flux/book_sorter.dart';
-import 'package:cronicalia_flutter/models/book_pdf.dart';
-import 'package:cronicalia_flutter/utils/utility_book.dart';
+import 'package:cronicalia_flutter/models/book.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:flutter_flux/flutter_flux.dart';
@@ -12,29 +12,29 @@ class BookStore extends Store {
   final Firestore _firestore = Firestore.instance;
   final StorageReference _storageReference = FirebaseStorage.instance.ref();
 
-  DataRepository _dataRepository;
+  DataRepository dataRepository;
   FileRepository _fileRepository;
 
   int _totalNumberOfBooks = 0;
   String _currentFileText = "Initial Text";
 
-  final List<BookPdf> _actionBooks = List<BookPdf>();
-  final List<BookPdf> _adventureBooks = List<BookPdf>();
-  final List<BookPdf> _comedyBooks = List<BookPdf>();
-  final List<BookPdf> _dramaBooks = List<BookPdf>();
-  final List<BookPdf> _fantasyBooks = List<BookPdf>();
-  final List<BookPdf> _fictionBooks = List<BookPdf>();
-  final List<BookPdf> _horrorBooks = List<BookPdf>();
-  final List<BookPdf> _mythologyBooks = List<BookPdf>();
-  final List<BookPdf> _romanceBooks = List<BookPdf>();
-  final List<BookPdf> _satireBooks = List<BookPdf>();
+  final Set<Book> _actionBooks = Set<Book>();
+  final Set<Book> _adventureBooks = Set<Book>();
+  final Set<Book> _comedyBooks = Set<Book>();
+  final Set<Book> _dramaBooks = Set<Book>();
+  final Set<Book> _fantasyBooks = Set<Book>();
+  final Set<Book> _fictionBooks = Set<Book>();
+  final Set<Book> _horrorBooks = Set<Book>();
+  final Set<Book> _mythologyBooks = Set<Book>();
+  final Set<Book> _romanceBooks = Set<Book>();
+  final Set<Book> _satireBooks = Set<Book>();
 
   BookStore() {
-    _dataRepository = DataRepository(_firestore);
-    _fileRepository = FileRepository(_storageReference);
+    dataRepository = PdfDataRepository(_firestore);
+    _fileRepository = FileRepository(storageReference: _storageReference);
 
     triggerOnAction(loadBookRecomendationsAction, (BookLanguage preferredLanguage) async {
-      final List<BookPdf> recommendedBooks = await _dataRepository.getBookRecommendations(preferredLanguage);
+      final List<Book> recommendedBooks = await dataRepository.getBookRecommendations(preferredLanguage);
 
       BookSorter bookSorter = BookSorter(recommendedBooks: recommendedBooks);
       var actionBooks = bookSorter.getActionBooks();
@@ -87,19 +87,19 @@ class BookStore extends Store {
         _satireBooks.length;
   }
 
-  int get totalNumberOfBook => _totalNumberOfBooks;
+  int get totalNumberOfBooks => _totalNumberOfBooks;
   String get currentFileText => _currentFileText;
 
-  List<BookPdf> get actionBooks => _actionBooks;
-  List<BookPdf> get adventureBooks => _adventureBooks;
-  List<BookPdf> get comedyBooks => _comedyBooks;
-  List<BookPdf> get dramaBooks => _dramaBooks;
-  List<BookPdf> get fantasyBooks => _fantasyBooks;
-  List<BookPdf> get fictionBooks => _fictionBooks;
-  List<BookPdf> get horrorBooks => _horrorBooks;
-  List<BookPdf> get mythologyBooks => _mythologyBooks;
-  List<BookPdf> get romanceBooks => _romanceBooks;
-  List<BookPdf> get satireBooks => _satireBooks;
+  List<Book> get actionBooks => _actionBooks.toList();
+  List<Book> get adventureBooks => _adventureBooks.toList();
+  List<Book> get comedyBooks => _comedyBooks.toList();
+  List<Book> get dramaBooks => _dramaBooks.toList();
+  List<Book> get fantasyBooks => _fantasyBooks.toList();
+  List<Book> get fictionBooks => _fictionBooks.toList();
+  List<Book> get horrorBooks => _horrorBooks.toList();
+  List<Book> get mythologyBooks => _mythologyBooks.toList();
+  List<Book> get romanceBooks => _romanceBooks.toList();
+  List<Book> get satireBooks => _satireBooks.toList();
 }
 
 final StoreToken bookStoreToken = StoreToken(BookStore());
