@@ -26,4 +26,36 @@ class EpubDataRepository extends DataRepository {
 
     return await writeBatch.commit();
   }
+
+  Future<void> updateBookData(BookEpub editedBook) async {
+    WriteBatch writeBatch = firestore.batch();
+
+    DocumentReference userReference = firestore.collection(Constants.COLLECTION_USERS).document(editedBook.authorEmailId);
+
+    DocumentReference bookReference =
+        firestore.collection(resolveCollectionLanguageLocation(editedBook.language)).document(editedBook.uID);
+
+    Map<String, dynamic> valueToUpdateOnUser = {
+      "booksEpub.${editedBook.uID}.remoteCoverUri": editedBook.remoteCoverUri,
+      "booksEpub.${editedBook.uID}.localFullBookUri": editedBook.localFullBookUri,
+      "booksEpub.${editedBook.uID}.remoteFullBookUri": editedBook.remoteFullBookUri,
+      "booksEpub.${editedBook.uID}.synopsis": editedBook.synopsis,
+      "booksEpub.${editedBook.uID}.chapterTitles": editedBook.chapterTitles,
+      "booksEpub.${editedBook.uID}.chaptersLaunchDates": editedBook.chaptersLaunchDates
+    };
+
+    Map<String, dynamic> valueToUpdateOnBook = {
+      "remoteCoverUri": editedBook.remoteCoverUri,
+      "localFullBookUri": editedBook.localFullBookUri,
+      "remoteFullBookUri": editedBook.remoteFullBookUri,
+      "synopsis": editedBook.synopsis,
+      "chapterTitles": editedBook.chapterTitles,
+      "chaptersLaunchDates": editedBook.chaptersLaunchDates
+    };
+
+    writeBatch.updateData(userReference, valueToUpdateOnUser);
+    writeBatch.updateData(bookReference, valueToUpdateOnBook);
+
+    return writeBatch.commit();
+  }
 }

@@ -231,7 +231,9 @@ class UserStore extends Store {
 
       _user.booksPdf[bookUID].localCoverUri = localUri;
 
-      _pdfFileRepository.updateBookCoverImage(_user.encodedEmail, _user.booksPdf[bookUID], localUri, _pdfDataRepository).then((_) {
+      _pdfFileRepository
+          .updateBookCoverImage(_user.encodedEmail, _user.booksPdf[bookUID], localUri, _pdfDataRepository)
+          .then((_) {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
@@ -356,6 +358,27 @@ class UserStore extends Store {
       return false;
     });
 
+    triggerOnConditionalAction(updateEpubBookAction, (BookEpub modifiedBook) {
+      BookEpub originalBook = user.booksEpub[modifiedBook.uID];
+      _epubFileRepository
+          .updateBookFile(
+              originalBook: originalBook,
+              editedBook: modifiedBook,
+              dataRepository: _epubDataRepository,
+              progressStream: _progressStream)
+          .then((_) {
+        _userDataRepository.getUser(_user.encodedEmail).then((user) {
+          if (user != null) {
+            _user = user;
+            trigger();
+            print("user loaded in store");
+          }
+        });
+      });
+
+      return false;
+    });
+
     triggerOnConditionalAction(createCompleteBookAction, (BookPdf book) {
       const int numberOfFilesToBeUploaded = 2;
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
@@ -385,7 +408,8 @@ class UserStore extends Store {
       _progressStream.filesTotalNumber = numberOfFilesToBeUploaded;
 
       _pdfFileRepository
-          .createNewMultiFilePdfBook(_user.encodedEmail, book, pdfLocalPaths, _pdfDataRepository, progressStream: _progressStream)
+          .createNewMultiFilePdfBook(_user.encodedEmail, book, pdfLocalPaths, _pdfDataRepository,
+              progressStream: _progressStream)
           .then((_) {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
@@ -401,11 +425,13 @@ class UserStore extends Store {
       return false;
     });
 
-    triggerOnConditionalAction(createEpubBookAction, (BookEpub bookEpub){
+    triggerOnConditionalAction(createEpubBookAction, (BookEpub bookEpub) {
       //cover picture and epub file
       _progressStream.filesTotalNumber = 2;
-      
-      _epubFileRepository.createNewEpubBook(user.encodedEmail, bookEpub, _epubDataRepository, progressStream: _progressStream).then((_){
+
+      _epubFileRepository
+          .createNewEpubBook(user.encodedEmail, bookEpub, _epubDataRepository, progressStream: _progressStream)
+          .then((_) {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
@@ -538,7 +564,7 @@ final Action<List<dynamic>> updateBookCompletionStatusAction = new Action<List<d
 /// payload[2] contains BuildContext
 final Action<List<dynamic>> updateBookChapterPeriodicityAction = new Action<List<dynamic>>();
 
-///contains the bookPdf with file alterations
+/// contains the bookPdf with file alterations
 final Action<BookPdf> updateBookFilesAction = Action<BookPdf>();
 
 final Action<BookPdf> createCompleteBookAction = new Action<BookPdf>();
@@ -548,3 +574,6 @@ final Action<BookPdf> createCompleteBookAction = new Action<BookPdf>();
 final Action<List<dynamic>> createIncompleteBookAction = new Action<List<dynamic>>();
 
 final Action<BookEpub> createEpubBookAction = Action<BookEpub>();
+
+/// contrais the bookEpub with file alterations
+final Action<BookEpub> updateEpubBookAction = Action<BookEpub>();

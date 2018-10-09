@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/custom_widgets/book_pdf_file_widget.dart';
+import 'package:intl/intl.dart';
 
 enum BookUploadStatus { SUCCESS, FAILED }
 
@@ -21,8 +22,7 @@ enum ChapterPeriodicity {
 }
 
 // Book superclass
-class Book{
-
+class Book {
   String title;
   String uID;
   String authorName;
@@ -69,7 +69,7 @@ class Book{
       this.periodicity = ChapterPeriodicity.NONE,
       this.synopsis});
 
-Book.fromSnapshot(DocumentSnapshot snapshot) {
+  Book.fromSnapshot(DocumentSnapshot snapshot) {
     if (snapshot != null && snapshot.exists) {
       this.rating = snapshot.data['rating'];
       this.authorTwitterProfile = snapshot.data['authorTwitterProfile'];
@@ -89,10 +89,10 @@ Book.fromSnapshot(DocumentSnapshot snapshot) {
       this.readingsNumber = snapshot.data['readingsNumber'];
       this.bookPosition = snapshot.data['bookPosition'];
       this.remoteFullBookUri = snapshot.data['remoteFullBookUri'];
-      
+
       this.synopsis = snapshot.data['synopsis'];
       this.chaptersLaunchDates.addAll(snapshot.data['chaptersLaunchDates']);
-      
+
       this.chapterTitles.addAll(snapshot.data['chapterTitles']);
 
       this.periodicity = ChapterPeriodicity.values.firstWhere((periodicity) {
@@ -141,12 +141,34 @@ Book.fromSnapshot(DocumentSnapshot snapshot) {
     }, orElse: () => null);
   }
 
+  int getDaysRemainingForNewChapterPublication() {
+    if (isSingleFileBook) return null;
+
+    if (chaptersLaunchDates.isNotEmpty) {
+      DateTime currentDate = DateTime.now();
+      DateTime lastChapterPublicationDate = DateTime.fromMillisecondsSinceEpoch(chaptersLaunchDates.last);
+      
+      int daysSinceLastPublication = currentDate.difference(lastChapterPublicationDate).inDays;
+      int scheduledPeriodicity = convertPeriodicityToInt(periodicity);
+
+      if(scheduledPeriodicity == -1){
+        print("Chapter peridicity is not set");
+        return null;
+      }
+
+      return  scheduledPeriodicity - daysSinceLastPublication;
+
+    } else {
+      print("No chapter detected");
+      return null;
+    }
+  }
 
   String generateStorageFolder() {
     return "${authorEmailId}_${title.replaceAll(' ', '_')}_${Book.convertLanguageToString(this.language).toUpperCase()}";
   }
 
-   static String convertPeriodicityToString(ChapterPeriodicity periodicity) {
+  static String convertPeriodicityToString(ChapterPeriodicity periodicity) {
     switch (periodicity) {
       case ChapterPeriodicity.NONE:
         return "None";
@@ -164,6 +186,27 @@ Book.fromSnapshot(DocumentSnapshot snapshot) {
         return "Every 42 days";
       default:
         return "Every day";
+    }
+  }
+
+  static int convertPeriodicityToInt(ChapterPeriodicity periodicity){
+    switch (periodicity) {
+      case ChapterPeriodicity.NONE:
+        return -1;
+      case ChapterPeriodicity.EVERY_DAY:
+        return 1;
+      case ChapterPeriodicity.EVERY_3_DAYS:
+        return 3;
+      case ChapterPeriodicity.EVERY_7_DAYS:
+        return 7;
+      case ChapterPeriodicity.EVERY_14_DAYS:
+        return 14;
+      case ChapterPeriodicity.EVERY_30_DAYS:
+        return 30;
+      case ChapterPeriodicity.EVERY_42_DAYS:
+        return 42;
+      default:
+        return -1;
     }
   }
 
@@ -221,7 +264,7 @@ Book.fromSnapshot(DocumentSnapshot snapshot) {
     if (other == null) return false;
 
     var that = other as Book;
-    if(this.runtimeType != that.runtimeType) return false;
+    if (this.runtimeType != that.runtimeType) return false;
 
     return uID == that.uID;
   }
@@ -325,7 +368,6 @@ class BookPdf extends Book {
     return {
       "localCoverUri": this.localCoverUri,
       "chapterUris": this.chapterUris,
-
       "rating": super.rating,
       "authorTwitterProfile": super.authorTwitterProfile,
       "isCurrentlyComplete": super.isCurrentlyComplete,
@@ -344,7 +386,6 @@ class BookPdf extends Book {
       "remoteFullBookUri": super.remoteFullBookUri,
       "synopsis": super.synopsis,
       "chaptersLaunchDates": super.chaptersLaunchDates,
-      
       "chapterTitles": super.chapterTitles,
       "periodicity": periodicity.toString().split(".")[1],
       "genre": genre.toString().split(".")[1],
@@ -375,12 +416,10 @@ class BookPdf extends Book {
 
     return true;
   }
-
 }
 
 // BookEpub
 class BookEpub extends Book {
-
   Uint8List coverData;
 
   BookEpub(
@@ -404,7 +443,8 @@ class BookEpub extends Book {
       bool isSingleFileBook = true,
       bool isCurrentlyComplete = false,
       ChapterPeriodicity periodicity = ChapterPeriodicity.NONE,
-      String synopsis}): super(
+      String synopsis})
+      : super(
             title: title,
             uID: uID,
             authorName: authorName,
@@ -426,13 +466,13 @@ class BookEpub extends Book {
             periodicity: periodicity,
             synopsis: synopsis);
 
-  BookEpub.fromSnapshot(DocumentSnapshot snapshot) :super.fromSnapshot(snapshot) {
+  BookEpub.fromSnapshot(DocumentSnapshot snapshot) : super.fromSnapshot(snapshot) {
     if (snapshot != null && snapshot.exists) {
       this.coverData = snapshot.data['coverData'];
     }
   }
 
-  BookEpub.fromLinkedMap(LinkedHashMap linkedMap) : super.fromLinkedMap(linkedMap){
+  BookEpub.fromLinkedMap(LinkedHashMap linkedMap) : super.fromLinkedMap(linkedMap) {
     this.coverData = linkedMap['coverData'];
   }
 
@@ -494,5 +534,4 @@ class BookEpub extends Book {
       "language": language.toString().split(".")[1]
     };
   }
-
 }

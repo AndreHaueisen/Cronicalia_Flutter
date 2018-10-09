@@ -43,13 +43,32 @@ class EpubParser {
     return chapterTitles;
   }
 
-  List<int> generateNewBookChapterPublicationDates() {
+  List<int> generateNewBookChapterLaunchDates() {
     List<int> publicationDates = List<int>();
     for (var i = 0; i < epubBook.Chapters.length; i++) {
       publicationDates.add(DateTime.now().millisecondsSinceEpoch);
     }
 
     return publicationDates;
+  }
+
+  // adds Launch dates of the new chapters
+  List<dynamic> setLaunchDateOfLatestsChapters({BookEpub oldBook, BookEpub newBook}){
+      
+      List<dynamic> newListWithUpdatedDates = List<dynamic>(); 
+
+      newBook.chapterTitles.forEach((dynamic chapterTitle){
+              // file is old if true
+          if(oldBook.chapterTitles.contains(chapterTitle)){
+            int index = oldBook.chapterTitles.indexOf(chapterTitle);
+            newListWithUpdatedDates.add(oldBook.chaptersLaunchDates[index]);
+          } else {
+            newListWithUpdatedDates.add(DateTime.now().millisecondsSinceEpoch);
+          }
+
+      });
+
+      return newListWithUpdatedDates;
   }
 
   BookLanguage extractLanguage() {

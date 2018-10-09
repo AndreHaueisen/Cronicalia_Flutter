@@ -52,7 +52,7 @@ class BookPdfFileWidget extends StatelessWidget {
 
   Widget _noInputFileRepresentation() {
     return SizedBox(
-      height: widgetHeight,
+      height: 92.0,
       child: Row(
         children: <Widget>[
           Flexible(
@@ -64,9 +64,13 @@ class BookPdfFileWidget extends StatelessWidget {
                 decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4.0)),
                 padding: EdgeInsets.all(8.0),
                 child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(formattedFilePath,
-                        textAlign: TextAlign.left, style: TextStyle(color: TextColorBrightBackground.primary))),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    formattedFilePath,
+                    textAlign: TextAlign.left,
+                    style: TextStyle(color: TextColorDarkBackground.primary),
+                  ),
+                ),
               ),
             ),
           ),
@@ -78,7 +82,7 @@ class BookPdfFileWidget extends StatelessWidget {
                     child: IconButton(
                       icon: Icon(
                         Icons.delete,
-                        color: TextColorBrightBackground.tertiary,
+                        color: TextColorDarkBackground.secondary,
                       ),
                       onPressed: () {
                         bookFileWidgetCallback.onRemoveFileClick(position: position);
@@ -110,93 +114,91 @@ class BookPdfFileWidget extends StatelessWidget {
   Widget _textInputFileRepresentation() {
     return SizedBox(
       height: widgetHeight,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Row(
-          children: <Widget>[
-            Flexible(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8.0, left: 8.0),
-                        child: Text(
-                          formattedFilePath,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 13.0),
-                        ),
+      child: Row(
+        children: <Widget>[
+          Flexible(
+            flex: 5,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0, left: 8.0),
+                      child: Text(
+                        formattedFilePath,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 13.0),
                       ),
                     ),
-                    TextField(
-                      maxLengthEnforced: true,
-                      controller: _textController,
-                      maxLength: Constants.MAX_TITLE_LENGTH,
-                      keyboardType: TextInputType.text,
-                      textInputAction: TextInputAction.done,
-                      onChanged: (String title) {
-                        fileTitle = title.trim();
-                      },
-                      style: TextStyle(color: TextColorBrightBackground.primary),
-                      maxLines: 1,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: InputDecoration(
-                          fillColor: Colors.black12,
-                          filled: true,
-                          border: UnderlineInputBorder(borderRadius: BorderRadius.circular(4.0)),
-                          labelText: "Chapter Title",
-                          labelStyle: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 13.0),
-                          counterStyle: TextStyle(
-                            color: TextColorBrightBackground.tertiary,
-                            fontSize: 10.0,
-                          )),
-                    ),
-                  ],
-                ),
+                  ),
+                  TextField(
+                    maxLengthEnforced: true,
+                    controller: _textController,
+                    maxLength: Constants.MAX_TITLE_LENGTH,
+                    cursorColor: AppThemeColors.accentColor,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.done,
+                    onChanged: (String title) {
+                      fileTitle = title.trim();
+                    },
+                    style: TextStyle(color: TextColorDarkBackground.primary),
+                    maxLines: 1,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                        fillColor: Colors.black12,
+                        filled: true,
+                        border: UnderlineInputBorder(borderRadius: BorderRadius.circular(4.0)),
+                        labelText: "Chapter Title",
+                        labelStyle: TextStyle(color: TextColorBrightBackground.tertiary, fontSize: 13.0),
+                        counterStyle: TextStyle(
+                          color: TextColorBrightBackground.tertiary,
+                          fontSize: 8.0,
+                        )),
+                  ),
+                ],
               ),
             ),
-            isDeletable
-                ? Flexible(
-                    flex: 1,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.delete,
-                          color: TextColorBrightBackground.tertiary,
-                        ),
-                        onPressed: () {
-                          bookFileWidgetCallback.onRemoveFileClick(position: position);
-                        },
-                      ),
-                    ),
-                  )
-                : Container(
-                    height: 0.0,
-                    width: 0.0,
-                  ),
-            isReorderable
-                ? Flexible(
-                    flex: 1,
+          ),
+          isDeletable
+              ? Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 8.0),
                     child: IconButton(
                       icon: Icon(
-                        Icons.reorder,
-                        color: TextColorBrightBackground.primary,
+                        Icons.delete,
+                        color: TextColorDarkBackground.secondary,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        bookFileWidgetCallback.onRemoveFileClick(position: position);
+                      },
                     ),
-                  )
-                : Container(
-                    height: 0.0,
-                    width: 0.0,
                   ),
-          ],
-        ),
+                )
+              : Container(
+                  height: 0.0,
+                  width: 0.0,
+                ),
+          isReorderable
+              ? Flexible(
+                  flex: 1,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.reorder,
+                      color: TextColorDarkBackground.secondary,
+                    ),
+                    onPressed: () {},
+                  ),
+                )
+              : Container(
+                  height: 0.0,
+                  width: 0.0,
+                ),
+        ],
       ),
     );
   }

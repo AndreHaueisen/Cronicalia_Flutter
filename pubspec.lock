@@ -92,13 +92,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.2+dart2"
-  documents_picker:
-    dependency: "direct main"
-    description:
-      name: documents_picker
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.3"
   epub:
     dependency: "direct main"
     description:
@@ -133,7 +126,7 @@ packages:
       name: flushbar
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.9.1"
+    version: "0.9.2"
   flutter:
     dependency: "direct main"
     description: flutter

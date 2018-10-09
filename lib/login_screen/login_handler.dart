@@ -144,6 +144,7 @@ class LoginHandler {
   }
 
   Future<TwitterSession> _getCredentialsUsingTwitter() async {
+    
 
     final TwitterLoginResult result = await twitterLogin.authorize();
 

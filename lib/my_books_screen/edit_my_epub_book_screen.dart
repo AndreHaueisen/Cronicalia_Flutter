@@ -9,29 +9,38 @@ import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/epub_parser.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
-import 'package:epub/epub.dart' as epubLib;
 import 'package:flushbar/flushbar.dart';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_document_picker/flutter_document_picker.dart';
 import 'package:flutter_flux/flutter_flux.dart';
+import 'package:epub/epub.dart' as epubLib;
 import 'package:cronicalia_flutter/flux/user_store.dart';
 
-class CreateEpubMyBookScreen extends StatefulWidget {
+class EditMyEpubBookScreen extends StatefulWidget {
+  final String bookUID;
+
+  EditMyEpubBookScreen(this.bookUID);
+
   @override
-  _CreateEpubMyBookScreenState createState() => _CreateEpubMyBookScreenState();
+  _EditMyEpubBookScreenState createState() => _EditMyEpubBookScreenState();
 }
 
-class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
-    with StoreWatcherMixin<CreateEpubMyBookScreen>, SingleTickerProviderStateMixin<CreateEpubMyBookScreen> {
+class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
+    with SingleTickerProviderStateMixin, StoreWatcherMixin<EditMyEpubBookScreen> {
   UserStore _userStore;
   BookEpub _book;
+  BookEpub _immutableBook;
   String _rawEpubBookPath;
+
 
   @override
   void initState() {
     _uploadProgressController = AnimationController(vsync: this, value: 0.0);
     _userStore = listenToStore(userStoreToken);
+
+    _immutableBook = _userStore.user.booksEpub[widget.bookUID];
+
     super.initState();
   }
 
@@ -39,25 +48,26 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create Epub"),
+        title: Text("Update Epub book"),
       ),
       persistentFooterButtons: _buildPersistentButton(),
-      body: _book == null ? _buildSelectEpubButton() : _buildParsedBookWidget(),
+      body: _book == null ? _buildSelectEpubWidget() : _buildParsedBookWidget(),
     );
   }
 
   List<Widget> _buildPersistentButton() {
     return <Widget>[
       FlatButton(
-        child: Text("CREATE BOOK"),
-        onPressed: () {
+        child: Text("UPDATE BOOK"),
+        onPressed: _book != null ?() {
+          
           if (_validateInformation()) {
-            createEpubBookAction(_book);
+            updateEpubBookAction(_book);
 
             _showProgressFlushbar();
             print("Uploading Epub book data");
           }
-        },
+        } : null,
       ),
     ];
   }
@@ -69,7 +79,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     UserStore userStore = listenToStore(userStoreToken);
 
     Flushbar progressFlushbar = FlushbarHelper.createLoading(
-      message: "Wait while we create your new masterpiece",
+      message: "Wait while we update your book",
       indicatorBackgroundColor: Colors.blue[300],
       indicatorController: _uploadProgressController,
       duration: null,
@@ -100,28 +110,52 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
 
   bool _isEpubBeingAnalized = false;
 
-  Widget _buildSelectEpubButton() {
-    return Center(
-      child: RoundedButton(
-        child: Text(
-          "PICK EPUB FILE",
-        ),
-        onPressed: _isEpubBeingAnalized
-            ? null
-            : () {
-                setState(() {
-                  _isEpubBeingAnalized = true;
-                });
+  Widget _buildSelectEpubWidget() {
 
-                _getEpubFile().then((EpubParser epubParser) {
-                  setState(() {
-                    if (epubParser != null) {
-                      _convertEpubBookToBookEpub(epubParser);
-                      _isEpubBeingAnalized = false;
-                    }
-                  });
-                });
-              },
+    Widget buildReleaseChapterStatusNotification(){
+      int _daysUntilNextChapterRelease = _immutableBook.getDaysRemainingForNewChapterPublication();
+
+      if(_daysUntilNextChapterRelease == null) return Container(height: 0.0, width: 0.0,);
+
+      if(_daysUntilNextChapterRelease < 0){
+        return Text("Chapter release is ${_daysUntilNextChapterRelease.abs()} day(s) late");
+      } else if (_daysUntilNextChapterRelease <= 3){
+        return Text("Chapter release in $_daysUntilNextChapterRelease day(s)");
+      } else {
+        return Text(" $_daysUntilNextChapterRelease days util next chapter release");
+      }
+    }
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RoundedButton(
+            child: Text(
+              "SELECT UPDATED EPUB FILE",
+            ),
+            onPressed: _isEpubBeingAnalized
+                ? null
+                : () {
+                    setState(() {
+                      _isEpubBeingAnalized = true;
+                    });
+
+                    _getEpubFile().then((EpubParser epubParser) {
+                      setState(() {
+                        if (epubParser != null) {
+                          _convertEpubBookToBookEpub(epubParser);
+                          _isEpubBeingAnalized = false;
+                        }
+                      });
+                    });
+                  },
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: buildReleaseChapterStatusNotification(),
+          ),
+        ],
       ),
     );
   }
@@ -154,19 +188,12 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   void _convertEpubBookToBookEpub(EpubParser epubParser) {
-    _book = BookEpub();
+    _book = _immutableBook.copy();
     _book.coverData = epubParser.extractImage();
-    _book.title = epubParser.extractTitle();
-    _book.synopsis = epubParser.extractSynopsis();
-    _book.language = epubParser.extractLanguage();
     _book.localFullBookUri = _rawEpubBookPath;
+    _book.synopsis = epubParser.extractSynopsis();
     _book.chapterTitles = epubParser.extractChapterTitles();
-    _book.chaptersLaunchDates = epubParser.generateNewBookChapterLaunchDates();
-    _book.authorName = _userStore.user.name;
-    _book.authorEmailId = _userStore.user.encodedEmail;
-    _book.authorTwitterProfile = _userStore.user.twitterProfile;
-    _book.publicationDate = DateTime.now().millisecondsSinceEpoch;
-    _book.bookPosition = Utility.getNewBookPosition(_userStore.user.booksEpub, _userStore.user.booksPdf);
+    _book.chaptersLaunchDates = epubParser.setLaunchDateOfLatestsChapters(oldBook: _immutableBook, newBook: _book);
   }
 
   Widget _buildParsedBookWidget() {
@@ -186,11 +213,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
             padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
             child: _buildSynopsisInput(),
           ),
-          _buildFullBookRadioButton(),
-          _buildIncompleteBookRadioButton(),
           _buildPeriodicityDropdownButton(),
-          _buildGenreDropdownButton(),
-          _buildLanguageDropdownButton(),
           _buildChapterWidgets(),
         ],
       ),
@@ -216,8 +239,8 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     );
   }
 
-  final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
-  final TextEditingController _synopsisController = new TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _synopsisController = TextEditingController();
   bool _isAutoValidating = false;
 
   Widget _buildSynopsisInput() {
@@ -258,37 +281,6 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     );
   }
 
-  Widget _buildFullBookRadioButton() {
-    return new RadioListTile<bool>(
-      title: const Text('Launch full book'),
-      subtitle: const Text("No chapters will be added latter"),
-      value: true,
-      groupValue: _book.isSingleFileBook,
-      onChanged: (bool value) {
-        setState(() {
-          _book.isSingleFileBook = value;
-        });
-      },
-    );
-  }
-
-  Widget _buildIncompleteBookRadioButton() {
-    return new RadioListTile<bool>(
-      title: const Text('Launch by chapter'),
-      subtitle: const Text('Chapter will be launched periodically'),
-      value: false,
-      groupValue: _book.isSingleFileBook,
-      onChanged: (bool value) {
-        setState(() {
-          _book.isSingleFileBook = value;
-          if (value == true) {
-            _book.periodicity = ChapterPeriodicity.NONE;
-          }
-        });
-      },
-    );
-  }
-
   Widget _buildChapterWidgets() {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
@@ -306,7 +298,8 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
               itemExtent: FILE_WIDGET_HEIGHT,
               itemCount: _book.chapterTitles.length,
               itemBuilder: (BuildContext listBuildContext, int index) {
-                return BookEpubFileWidget(chapterTitle: _book.chapterTitles[index], chapterNumber: index);
+                bool isOld = _immutableBook.chapterTitles.contains(_book.chapterTitles[index]);
+                return BookEpubFileWidget(chapterTitle: _book.chapterTitles[index], chapterNumber: index, isOld: isOld);
               },
             ),
           )
@@ -316,12 +309,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   bool _validateInformation() {
-    return (_validateCover() &&
-        _validateInputForm() &&
-        _validatePeriodicity() &&
-        _validateGenre() &&
-        _validateLanguage() &&
-        _validateChapterTitles());
+    return (_validateCover() && _validateInputForm() && _validatePeriodicity() && _validateChapterTitles());
   }
 
   bool _validateCover() {
@@ -363,32 +351,6 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
       FlushbarHelper.createError(
         title: "Chapter launch schedule missing",
         message: "What is the interval between your chapter launches?",
-        duration: (Duration(seconds: 3)),
-      ).show(context);
-      return false;
-    }
-  }
-
-  bool _validateGenre() {
-    if (_book.genre != null && _book.genre != BookGenre.UNDEFINED) {
-      return true;
-    } else {
-      FlushbarHelper.createError(
-        title: "Genre missing",
-        message: "What is your book's genre?",
-        duration: (Duration(seconds: 3)),
-      ).show(context);
-      return false;
-    }
-  }
-
-  bool _validateLanguage() {
-    if (_book.language != null && _book.language != BookLanguage.UNDEFINED) {
-      return true;
-    } else {
-      FlushbarHelper.createError(
-        title: "Language missing",
-        message: "In what language your book is written?",
         duration: (Duration(seconds: 3)),
       ).show(context);
       return false;
@@ -454,68 +416,6 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     );
   }
 
-  Widget _buildGenreDropdownButton() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: DropdownButton(
-        value: _book.genre == BookGenre.UNDEFINED ? null : _book.genre,
-        items: BookGenre.values
-            .map((BookGenre genre) {
-              if (genre != BookGenre.UNDEFINED) return _buildGenreDropdownItem(genre);
-            })
-            .toList()
-            .sublist(1),
-        hint: Text("Choose the genre"),
-        onChanged: (value) {
-          setState(() {
-            _book.genre = value;
-          });
-        },
-      ),
-    );
-  }
-
-  DropdownMenuItem<BookGenre> _buildGenreDropdownItem(BookGenre genre) {
-    String genreTitle = Book.convertGenreToString(genre);
-
-    return DropdownMenuItem<BookGenre>(
-      child: SizedBox(
-        child: Text(genreTitle),
-        width: MediaQuery.of(context).size.width - 64.0,
-      ),
-      value: genre,
-    );
-  }
-
-  Widget _buildLanguageDropdownButton() {
-    return DropdownButton(
-      value: _book.language == BookLanguage.UNDEFINED ? null : _book.language,
-      items: BookLanguage.values
-          .map((BookLanguage language) {
-            if (language != BookLanguage.UNDEFINED) return _buildLanguageDropdownItem(language);
-          })
-          .toList()
-          .sublist(1),
-      hint: Text("Choose language"),
-      onChanged: (value) {
-        setState(() {
-          _book.language = value;
-        });
-      },
-    );
-  }
-
-  DropdownMenuItem<BookLanguage> _buildLanguageDropdownItem(BookLanguage language) {
-    String languageTitle = Book.convertLanguageToString(language);
-
-    return DropdownMenuItem<BookLanguage>(
-      child: SizedBox(
-        child: Text(languageTitle),
-        width: MediaQuery.of(context).size.width - 64.0,
-      ),
-      value: language,
-    );
-  }
 }
 
 const double FILE_WIDGET_HEIGHT = 64.0;

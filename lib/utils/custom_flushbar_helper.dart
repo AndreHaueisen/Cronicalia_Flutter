@@ -123,6 +123,7 @@ class FlushbarHelper {
         Icons.cloud_upload,
         color: Colors.blue[400],
       )
+      ..isDismissible = false
       ..duration = duration
       ..showProgressIndicator = true
       ..progressIndicatorController = indicatorController

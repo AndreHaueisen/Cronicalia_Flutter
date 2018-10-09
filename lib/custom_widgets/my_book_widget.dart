@@ -1,8 +1,9 @@
 import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/my_books_screen/edit_my_epub_book_screen.dart';
 
-import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
+import 'package:cronicalia_flutter/my_books_screen/edit_my_pdf_book_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -13,6 +14,33 @@ class MyBookWidget extends StatelessWidget {
   final int _totalBookNumber;
 
   MyBookWidget(this._book, this._bookKey, this._index, this._totalBookNumber);
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: 35.0),
+      child: Stack(
+        children: <Widget>[
+          _backLineWidget(),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, top: 42.0, right: 8.0),
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildLateralButtonsAndCover(context),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
+                  child: _bookInfoCard(context),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _backLineWidget() {
     return Positioned(
@@ -72,7 +100,7 @@ class MyBookWidget extends StatelessWidget {
             ),
             _bookStatsWidget(),
             Align(
-              alignment: FractionalOffset.bottomRight,
+              alignment: FractionalOffset.bottomLeft,
               child: Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 4.0),
                 child: Text(
@@ -82,7 +110,7 @@ class MyBookWidget extends StatelessWidget {
               ),
             ),
             Align(
-              alignment: Alignment.bottomRight,
+              alignment: Alignment.bottomLeft,
               child: Padding(
                 padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 4.0),
                 child: Text(
@@ -94,7 +122,7 @@ class MyBookWidget extends StatelessWidget {
             _book.isSingleFileBook
                 ? Container(height: 0.0, width: 0.0)
                 : Align(
-                    alignment: Alignment.bottomRight,
+                    alignment: Alignment.bottomLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
                       child: Text(
@@ -120,44 +148,18 @@ class MyBookWidget extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(bottom: 35.0),
-      child: Stack(
-        children: <Widget>[
-          _backLineWidget(),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, top: 42.0, right: 8.0),
-            child: Column(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: _buildLateralButtonsAndCover(context),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
-                  child: _bookInfoCard(context),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLateralButtonsAndCover(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _buildFloatingButton(
+        _buildNotificationButton(
+          notification: _getChaperScheduleNotification(),
           icon: Icons.edit,
           onClick: () {
             Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => new EditMyBookScreen(_bookKey), maintainState: false));
+                .push(MaterialPageRoute(builder: (context) => _book is BookPdf ? EditMyPdfBookScreen(_bookKey) : EditMyEpubBookScreen(_bookKey), maintainState: false));
             print("show edit mode");
           },
         ),
@@ -176,8 +178,10 @@ class MyBookWidget extends StatelessWidget {
             ),
           ),
         ),
-        _buildFloatingButton(
+        _buildNotificationButton(
           icon: Icons.chat_bubble_outline,
+          //TODO detect new review
+          //notification: "New reviews",
           onClick: () {
             print("show opinions");
           },
@@ -186,23 +190,59 @@ class MyBookWidget extends StatelessWidget {
     );
   }
 
-  _buildFloatingButton({@required IconData icon, @required Function onClick}) {
-    return OutlineButton(
+  String _getChaperScheduleNotification() {
+    if (_book.isCurrentlyComplete) return null;
+
+    final int dueDateInDays = _book.getDaysRemainingForNewChapterPublication();
+
+    if (dueDateInDays == null || dueDateInDays >= 4) return null;
+
+    if (dueDateInDays <= 0) {
+      return "Late chapter";
+    } else {
+      return "Due in $dueDateInDays days";
+    }
+  }
+
+  _buildNotificationButton({@required IconData icon, String notification, @required Function onClick}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        notification != null
+            ? Container(
+              constraints: BoxConstraints.loose(Size(84.0, 36.0)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.0), color: AppThemeColors.accentColor),
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text(
+                    notification,
+                    style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 12.0),
+                    maxLines: 2,
+                  ),
+                ),
+              )
+            : Container(
+                height: 0.0,
+                width: 0.0,
+              ),
+        OutlineButton(
       onPressed: onClick,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Icon(
           icon,
-          color: TextColorDarkBackground.tertiary,
+              color: notification != null ? AppThemeColors.accentColor : TextColorDarkBackground.secondary,
         ),
       ),
       highlightColor: AppThemeColors.primaryColorLight,
       color: AppThemeColors.primaryColorLight,
       shape: CircleBorder(),
       borderSide: BorderSide(
-        color: TextColorDarkBackground.tertiary,
-        width: 1.0,
+            color: notification != null ? AppThemeColors.accentColor : TextColorDarkBackground.secondary,
+            width: notification != null ? 5.0 : 1.2,
       ),
+        )
+      ],
     );
   }
 }

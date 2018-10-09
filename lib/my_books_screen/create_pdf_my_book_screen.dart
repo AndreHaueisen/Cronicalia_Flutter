@@ -5,14 +5,14 @@ import 'package:cronicalia_flutter/custom_widgets/book_pdf_file_widget.dart';
 import 'package:cronicalia_flutter/flux/user_store.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
-import 'package:cronicalia_flutter/my_books_screen/edit_my_book_screen.dart';
+import 'package:cronicalia_flutter/my_books_screen/edit_my_pdf_book_screen.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
-import 'package:documents_picker/documents_picker.dart';
+import 'package:flutter_document_picker/flutter_document_picker.dart';
 
 import 'package:flutter_flux/flutter_flux.dart';
 
@@ -85,11 +85,14 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   }
 
   Future<List<String>> _getPdfPaths() async {
-    List<dynamic> documentPaths = await DocumentsPicker.pickDocuments;
+    FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
+        allowedFileExtensions: ["pdf"],
+        // allowedMimeType only works on Android. Check for IOS latter
+        allowedMimeType: Constants.CONTENT_TYPE_PDF);
 
-    return documentPaths.map((dynamic path) {
-      return path.toString();
-    }).toList();
+    List<String> documentPaths = [await FlutterDocumentPicker.openDocument(params: params)];
+    
+    return documentPaths;
   }
 
   List<Widget> _buildPersistentButtons(BuildContext context) {
@@ -639,25 +642,24 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   Widget _buildFilesListCard() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Card(
-        elevation: 16.0,
-        color: Colors.white,
-        child: SizedBox(
-          height: _filesWidgets.length <= 1
-              ? (_filesWidgets.length + 0.4) * FILE_WIDGET_HEIGHT
-              : (_filesWidgets.length) * FILE_WIDGET_HEIGHT,
-          child: _book.isSingleFileBook
-              ? Column(mainAxisSize: MainAxisSize.min, children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
-                    child: Text(
-                      "Book Files",
-                      style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
-                    ),
+      child: SizedBox(
+        height: _filesWidgets.length <= 1
+            ? (_filesWidgets.length + 0.4) * FILE_WIDGET_HEIGHT
+            : (_filesWidgets.length) * FILE_WIDGET_HEIGHT,
+        child: _book.isSingleFileBook
+            ? Column(mainAxisSize: MainAxisSize.min, children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
+                  child: Text(
+                    "Book Files",
+                    style: TextStyle(color: TextColorDarkBackground.primary, fontSize: 24.0),
                   ),
-                  _filesWidgets[0],
-                ])
-              : ReorderableListView(
+                ),
+                _filesWidgets[0],
+              ])
+            : Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: ReorderableListView(
                   children: _filesWidgets,
                   onReorder: (int oldIndex, int newIndex) {
                     Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
@@ -668,14 +670,14 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
                     _filesWidgets.insert(newIndex, toBeMovedFileWidget);
                   },
                   header: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0),
                     child: Text(
                       "Book Files",
-                      style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
+                      style: TextStyle(color: TextColorDarkBackground.primary, fontSize: 24.0),
                     ),
                   ),
                 ),
-        ),
+            ),
       ),
     );
   }

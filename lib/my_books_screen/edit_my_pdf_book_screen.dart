@@ -10,27 +10,27 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/my_books_screen/my_book_image_picker.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
-import 'package:documents_picker/documents_picker.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_document_picker/flutter_document_picker.dart';
 import 'package:flutter_flux/flutter_flux.dart';
 
 enum ImageType { COVER }
 enum ImageOrigin { CAMERA, GALLERY }
 
-class EditMyBookScreen extends StatefulWidget {
+class EditMyPdfBookScreen extends StatefulWidget {
   final String bookUID;
 
-  EditMyBookScreen(this.bookUID);
+  EditMyPdfBookScreen(this.bookUID);
 
   @override
   State createState() {
-    return new EditMyBookScreenState();
+    return new EditMyBookPdfScreenState();
   }
 }
 
-class EditMyBookScreenState extends State<EditMyBookScreen>
-    with TickerProviderStateMixin, StoreWatcherMixin<EditMyBookScreen>
+class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
+    with TickerProviderStateMixin, StoreWatcherMixin<EditMyPdfBookScreen>
     implements BookFileWidgetCallback {
   UserStore _userStore;
   bool _isEditModeOn = false;
@@ -120,7 +120,7 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
       body: Center(
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: new EdgeInsets.only(top: 84.0, bottom: 16.0),
+          padding: new EdgeInsets.only(top: 84.0),
           child: new Column(
             children: <Widget>[
               new Stack(
@@ -130,7 +130,8 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
                 ],
               ),
               _buildPeriodicityDropdownButton(),
-              _buildFilesListCard(),
+              _buildFilesListWidget(),
+              _buildNextReleaseChapterWidget(),
             ],
           ),
         ),
@@ -305,11 +306,14 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
   }
 
   Future<List<String>> _getPdfPaths() async {
-    List<dynamic> documentPaths = await DocumentsPicker.pickDocuments;
+    FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
+        allowedFileExtensions: ["pdf"],
+        // allowedMimeType only works on Android. Check for IOS latter
+        allowedMimeType: Constants.CONTENT_TYPE_PDF);
 
-    return documentPaths.map((dynamic path) {
-      return path.toString();
-    }).toList();
+    List<String> documentPaths = [await FlutterDocumentPicker.openDocument(params: params)];
+
+    return documentPaths;
   }
 
   Widget _buildBookInfoCard() {
@@ -535,53 +539,48 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
 
   final List<BookPdfFileWidget> _filesWidgets = List<BookPdfFileWidget>();
 
-  Widget _buildFilesListCard() {
+  Widget _buildFilesListWidget() {
     return _immutableBook.isCurrentlyComplete || _filesWidgets.length < 1
         ? Container(
             height: 0.0,
             width: 0.0,
           )
-        : Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              elevation: 16.0,
-              color: Colors.white,
-              child: SizedBox(
-                height:
-                    _filesWidgets.length <= 1 ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT : (3 * FILE_WIDGET_HEIGHT),
-                child: _immutableBook.isSingleFileBook
-                    ? Column(mainAxisSize: MainAxisSize.min, children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
-                          child: Text(
-                            "Book Files",
-                            style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
-                          ),
-                        ),
-                        _filesWidgets[0],
-                      ])
-                    : ReorderableListView(
-                        children: _filesWidgets,
-                        onReorder: (int oldIndex, int newIndex) {
-                          setState(() {
-                            Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
+        : SizedBox(
+            height: _filesWidgets.length <= 1 ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT : (3 * FILE_WIDGET_HEIGHT),
+            child: _immutableBook.isSingleFileBook
+                ? Column(mainAxisSize: MainAxisSize.min, children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
+                      child: Text(
+                        "Book File",
+                        style: TextStyle(color: TextColorDarkBackground.primary, fontSize: 24.0),
+                      ),
+                    ),
+                    _filesWidgets[0],
+                  ])
+                : Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: ReorderableListView(                   
+                      children: _filesWidgets,
+                      onReorder: (int oldIndex, int newIndex) {
+                        setState(() {
+                          Widget toBeMovedFileWidget = _filesWidgets.removeAt(oldIndex);
 
-                            if (oldIndex < newIndex) {
-                              newIndex -= 1;
-                            }
-                            _filesWidgets.insert(newIndex, toBeMovedFileWidget);
-                          });
-                        },
-                        header: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            "Book Files",
-                            style: TextStyle(color: TextColorBrightBackground.primary, fontSize: 24.0),
-                          ),
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          _filesWidgets.insert(newIndex, toBeMovedFileWidget);
+                        });
+                      },
+                      header: Padding(
+                        padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                        child: Text(
+                          "Book Files",
+                          style: TextStyle(color: TextColorDarkBackground.primary, fontSize: 24.0),
                         ),
                       ),
-              ),
-            ),
+                    ),
+                ),
           );
   }
 
@@ -615,6 +614,21 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
             widgetHeight: FILE_WIDGET_HEIGHT),
       );
     });
+  }
+
+  Color getChapterReleaseStatusColor() {
+    int timeRemaining = _immutableBook.getDaysRemainingForNewChapterPublication();
+
+    // No color is shown
+    if (timeRemaining == null) return null;
+
+    if (timeRemaining <= 0) {
+      return Colors.yellow[900];
+    } else if (timeRemaining <= 3) {
+      return Colors.yellowAccent;
+    } else {
+      return Colors.green;
+    }
   }
 
   //Use when _book.isSingleFileBook == true
@@ -668,6 +682,70 @@ class EditMyBookScreenState extends State<EditMyBookScreen>
         MyBookImagePicker.pickImageFromGallery(imageType, _userStore.user, widget.bookUID, context);
         break;
     }
+  }
+
+  Widget _buildNextReleaseChapterWidget() {
+        // this is a sign that a new chapter has been picked
+    if(_immutableBook.chaptersLaunchDates.length < _filesWidgets.length){
+      return Container(
+        height: 0.0,
+        width: 0.0,
+      );
+    }
+
+    int daysUntilNextChapterRelease = _immutableBook.getDaysRemainingForNewChapterPublication();
+
+    if (daysUntilNextChapterRelease == null)
+      return Container(
+        height: 0.0,
+        width: 0.0,
+      );
+
+    Color backgroundColor;
+    String statusText;
+
+    if (daysUntilNextChapterRelease < 0) {
+      backgroundColor = Colors.yellow[900];
+      statusText = "CHAPTER RELEASE IS ${daysUntilNextChapterRelease.abs()} DAY(S) LATE";
+    } else if(daysUntilNextChapterRelease == 0){
+      backgroundColor = Colors.yellow[600];
+      statusText = "CHAPTER RELEASE IS TODAY. ADD FILE";
+    }
+    else if (daysUntilNextChapterRelease <= 3) {
+      backgroundColor = Colors.yellow[600];
+      statusText = "RELEASE DATE IS ALMOST HERE. $daysUntilNextChapterRelease DAYS(S) LEFT";
+    } else {
+      backgroundColor = Colors.green;
+      statusText = "NEXT RELEASE IN $daysUntilNextChapterRelease DAYS(S)";
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 16.0, bottom: 8.0),
+      child: RaisedButton(
+        onPressed: (){
+          _getPdfPaths().then((paths) {
+              if (paths != null && paths.isNotEmpty) {
+                setState(
+                  () {
+                    _addFileWidgets(filePaths: paths);
+                  },
+                );
+                _scrollController.animateTo(MediaQuery.of(context).size.height,
+                    duration: Duration(seconds: 2), curve: Curves.decelerate);
+              }
+            });
+        },
+        color: backgroundColor,
+        child: ConstrainedBox(
+          constraints: BoxConstraints.tightFor(width: MediaQuery.of(context).size.width),
+          child: Text(
+            statusText,
+            style: TextStyle(color: TextColorBrightBackground.primary),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBookStatsWidget(BuildContext context) {
