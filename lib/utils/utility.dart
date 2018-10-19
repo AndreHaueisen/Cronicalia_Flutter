@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:path_provider/path_provider.dart';
@@ -61,6 +62,16 @@ class Utility {
 
     print("File write done");
     return await ioSink.done;
+  }
+
+  static Future<void> saveBookFileToLocalCache(File file, Uint8List data) async {
+      IOSink ioSink = file.openWrite();
+
+      ioSink.add(data);
+      ioSink.close();
+
+      return await ioSink.done;
+
   }
 
   static bool isFileRemote(String fileUrl) {

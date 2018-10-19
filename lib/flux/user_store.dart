@@ -38,6 +38,7 @@ class UserStore extends Store {
 
   bool _isLoggedIn = false;
   User _user = User.empty();
+  Map<String, Book> _allBooksList = Map<String, Book>();
 
   UserStore() {
     _userFileRepository = UserFileRepository(_storageReference);
@@ -167,6 +168,7 @@ class UserStore extends Store {
       _userDataRepository.getNewUser(user: user).then((User userFromDatabase) {
         if (userFromDatabase != null) {
           this._user = userFromDatabase;
+          _refreshAllBooksList();
           print("user loaded in store");
           trigger();
         } else {
@@ -182,6 +184,7 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             print("user loaded in store");
             // Do not need to trigger()
           }
@@ -195,6 +198,7 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             print("user loaded in store");
             // Do not need to trigger()
           }
@@ -237,6 +241,7 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             print("user loaded in store");
             trigger();
 
@@ -347,6 +352,7 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             trigger();
             print("user loaded in store");
           }
@@ -370,6 +376,7 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             trigger();
             print("user loaded in store");
           }
@@ -389,8 +396,9 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             trigger();
-            print("user loaded in store");
+            print("user loaded in store after complete pdf creation");
           }
         });
       }).catchError((_) {
@@ -414,8 +422,9 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             trigger();
-            print("user loaded in store");
+            print("user loaded in store after incomplete pdf creation");
           }
         });
       }).catchError((_) {
@@ -435,8 +444,9 @@ class UserStore extends Store {
         _userDataRepository.getUser(_user.encodedEmail).then((user) {
           if (user != null) {
             _user = user;
+            _refreshAllBooksList();
             trigger();
-            print("user loaded in store");
+            print("user loaded in store after epub creation");
           }
         });
       }).catchError((_) {
@@ -449,11 +459,19 @@ class UserStore extends Store {
 
   User get user => _user;
 
+  Map<String, Book> get allBooksList => _allBooksList;
+
   ProgressStream getProgressStream() {
     return _progressStream;
   }
 
   bool get isLoggedIn => _isLoggedIn;
+
+  void _refreshAllBooksList(){
+    _allBooksList?.clear();
+    _allBooksList?.addAll(_user.booksPdf);
+    _allBooksList?.addAll(_user.booksEpub);
+  }
 
   void _onLogin(Flushbar infoFlushbar, User user, BuildContext context, bool isUserNew, Completer<bool> logInCompleter) {
     _isLoggedIn = true;
@@ -491,6 +509,7 @@ class UserStore extends Store {
     await _firebaseAuth.signOut();
     await _loginHandler.signOutFromGoogle();
     _user = User.empty();
+    _refreshAllBooksList();
     _isLoggedIn = false;
 
     return;

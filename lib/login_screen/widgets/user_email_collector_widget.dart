@@ -1,4 +1,3 @@
-import 'package:cronicalia_flutter/login_screen/login_handler.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:flutter/material.dart';
 

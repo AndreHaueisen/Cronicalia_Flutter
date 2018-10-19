@@ -12,7 +12,7 @@ class BookPdfFileWidget extends StatelessWidget {
       {Key key,
       @required this.isReorderable,
       @required this.allowUserInput,
-      @required this.isSingleFileBook,
+      @required this.isSingleLaunch,
       this.isDeletable = true,
       this.filePath,
       this.date,
@@ -27,7 +27,7 @@ class BookPdfFileWidget extends StatelessWidget {
 
   final bool isReorderable;
   final bool allowUserInput;
-  final bool isSingleFileBook;
+  final bool isSingleLaunch;
   final bool isDeletable;
 
   final String filePath;

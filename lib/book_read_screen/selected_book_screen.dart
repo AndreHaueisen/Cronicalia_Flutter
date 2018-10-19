@@ -194,7 +194,7 @@ class _SelectedBookScreenState extends State<SelectedBookScreen> with SingleTick
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (BuildContext context) => BookReadScreen(widget._book),
+              builder: (BuildContext context) => widget._book is BookPdf ? BookPdfReadScreen(widget._book) : BookEpubReadScreen(widget._book),
             ),
           );
         },

@@ -122,7 +122,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
             _book.publicationDate = DateTime.now().millisecondsSinceEpoch;
             _book.bookPosition = Utility.getNewBookPosition(userStore.user.booksEpub, userStore.user.booksPdf);
 
-            if (_book.isSingleFileBook) {
+            if (_book.isSingleLaunch) {
               _book.localFullBookUri = _filesWidgets[0].filePath;
               createCompleteBookAction(_book);
             } else {
@@ -220,7 +220,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   }
 
   bool _validatePeriodicity() {
-    if (_book.isSingleFileBook) return true;
+    if (_book.isSingleLaunch) return true;
 
     if ((_book.periodicity != null && _book.periodicity != ChapterPeriodicity.NONE)) {
       return true;
@@ -276,7 +276,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   
 
   bool _validateChapterTitles() {
-    if (_book.isSingleFileBook) return true;
+    if (_book.isSingleLaunch) return true;
 
     Set<String> fileNamesSet = Set<String>();
     _filesWidgets.forEach((BookPdfFileWidget fileWidget) {
@@ -471,11 +471,11 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
       title: const Text('Launch full book'),
       subtitle: const Text("No chapters will be added latter"),
       value: true,
-      groupValue: _book.isSingleFileBook,
+      groupValue: _book.isSingleLaunch,
       onChanged: (bool value) {
         setState(() {
           _filesWidgets.clear();
-          _book.isSingleFileBook = value;
+          _book.isSingleLaunch = value;
         });
       },
     );
@@ -486,11 +486,11 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
       title: const Text('Launch by chapter'),
       subtitle: const Text('Chapter will be launched periodically'),
       value: false,
-      groupValue: _book.isSingleFileBook,
+      groupValue: _book.isSingleLaunch,
       onChanged: (bool value) {
         setState(() {
           _filesWidgets.clear();
-          _book.isSingleFileBook = value;
+          _book.isSingleLaunch = value;
           if (value == true) {
             _book.periodicity = ChapterPeriodicity.NONE;
           }
@@ -502,14 +502,14 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   Widget _buildPeriodicityDropdownButton() {
     return AnimatedCrossFade(
       duration: Duration(milliseconds: 800),
-      crossFadeState: _book.isSingleFileBook ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      crossFadeState: _book.isSingleLaunch ? CrossFadeState.showFirst : CrossFadeState.showSecond,
       firstChild: Container(
         height: 0.0,
         width: 0.0,
       ),
       secondChild: AnimatedOpacity(
         duration: Duration(microseconds: 800),
-        opacity: _book.isSingleFileBook ? 0.0 : 1.0,
+        opacity: _book.isSingleLaunch ? 0.0 : 1.0,
         curve: Curves.easeIn,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
@@ -612,16 +612,16 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
 
   Widget _buildResumePhrase() {
     String completionStatusSubstring =
-        _book.isSingleFileBook ? "You are launching a complete book. " : "You are launching an incomplete book. ";
+        _book.isSingleLaunch ? "You are launching a complete book. " : "You are launching an incomplete book. ";
     String genreStatusSubstring = _book.genre == BookGenre.UNDEFINED
         ? ""
         : "It is a(n) ${Book.convertGenreToString(_book.genre).toLowerCase()}. ";
     String languageStatusSubstring = _book.language == BookLanguage.UNDEFINED
         ? ""
         : "It is written in ${Book.convertLanguageToString(_book.language).toLowerCase()}. ";
-    String chapterNumberSubstring = _book.isSingleFileBook ? "" : "It has ${_filesWidgets.length} chapter(s). ";
-    String periodicityStatusSubstring = (_book.isSingleFileBook ||
-            (!_book.isSingleFileBook && _book.periodicity == ChapterPeriodicity.NONE))
+    String chapterNumberSubstring = _book.isSingleLaunch ? "" : "It has ${_filesWidgets.length} chapter(s). ";
+    String periodicityStatusSubstring = (_book.isSingleLaunch ||
+            (!_book.isSingleLaunch && _book.periodicity == ChapterPeriodicity.NONE))
         ? ""
         : "You intend to launch a new chapter ${Book.convertPeriodicityToString(_book.periodicity).toLowerCase()}. ";
 
@@ -646,7 +646,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
         height: _filesWidgets.length <= 1
             ? (_filesWidgets.length + 0.4) * FILE_WIDGET_HEIGHT
             : (_filesWidgets.length) * FILE_WIDGET_HEIGHT,
-        child: _book.isSingleFileBook
+        child: _book.isSingleLaunch
             ? Column(mainAxisSize: MainAxisSize.min, children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
@@ -683,14 +683,14 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
   }
 
   void _generateFileWidgets(List<String> filePaths) {
-    if (_book.isSingleFileBook) {
+    if (_book.isSingleLaunch) {
       if (_filesWidgets.isNotEmpty) _filesWidgets.clear();
       _filesWidgets.add(
         BookPdfFileWidget(
           key: Key(filePaths[0]),
           isReorderable: false,
           allowUserInput: false,
-          isSingleFileBook: _book.isSingleFileBook,
+          isSingleLaunch: _book.isSingleLaunch,
           filePath: filePaths[0],
           position: 0,
           bookFileWidgetCallback: this,
@@ -705,7 +705,7 @@ class _CreateMyBookScreenState extends State<CreatePdfMyBookScreen>
             key: Key(filePath),
             isReorderable: true,
             allowUserInput: true,
-            isSingleFileBook: _book.isSingleFileBook,
+            isSingleLaunch: _book.isSingleLaunch,
             filePath: filePath,
             position: position,
             bookFileWidgetCallback: this,

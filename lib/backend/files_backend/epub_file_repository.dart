@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cronicalia_flutter/backend/data_backend/epub_data_repository.dart';
 import 'package:cronicalia_flutter/backend/files_backend/file_repository.dart';
@@ -30,6 +29,8 @@ class EpubFileRepository extends FileRepository {
       progressStream?.notifySuccess();
 
       await dataRepository.createNewBook(encodedEmail, book);
+
+      return;
     } catch (error) {
       print(error);
     }
@@ -93,6 +94,8 @@ class EpubFileRepository extends FileRepository {
         await dataRepository.updateBookData(editedBook);
 
         _deleteUnusedFiles(originalBook: originalBook, modifiedBook: editedBook);
+
+        return;
       }
     } catch (error) {
       print(error);

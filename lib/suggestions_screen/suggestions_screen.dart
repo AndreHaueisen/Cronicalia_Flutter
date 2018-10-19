@@ -28,7 +28,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with StoreWatcher
 
     _bookStore = listenToStore(bookStoreToken);
     //TODO change ENGLISH to the chosen user languages
-    loadBookRecomendationsAction(BookLanguage.ENGLISH);
+    loadBookRecommendationsAction(BookLanguage.ENGLISH);
   }
 
   static const int _GENRE_COUNT = 10;

@@ -263,10 +263,10 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
       title: const Text('Launch full book'),
       subtitle: const Text("No chapters will be added latter"),
       value: true,
-      groupValue: _book.isSingleFileBook,
+      groupValue: _book.isSingleLaunch,
       onChanged: (bool value) {
         setState(() {
-          _book.isSingleFileBook = value;
+          _book.isSingleLaunch = value;
         });
       },
     );
@@ -277,10 +277,10 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
       title: const Text('Launch by chapter'),
       subtitle: const Text('Chapter will be launched periodically'),
       value: false,
-      groupValue: _book.isSingleFileBook,
+      groupValue: _book.isSingleLaunch,
       onChanged: (bool value) {
         setState(() {
-          _book.isSingleFileBook = value;
+          _book.isSingleLaunch = value;
           if (value == true) {
             _book.periodicity = ChapterPeriodicity.NONE;
           }
@@ -355,7 +355,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   bool _validatePeriodicity() {
-    if (_book.isSingleFileBook) return true;
+    if (_book.isSingleLaunch) return true;
 
     if ((_book.periodicity != null && _book.periodicity != ChapterPeriodicity.NONE)) {
       return true;
@@ -411,14 +411,14 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   Widget _buildPeriodicityDropdownButton() {
     return AnimatedCrossFade(
       duration: Duration(milliseconds: 800),
-      crossFadeState: _book.isSingleFileBook ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      crossFadeState: _book.isSingleLaunch ? CrossFadeState.showFirst : CrossFadeState.showSecond,
       firstChild: Container(
         height: 0.0,
         width: 0.0,
       ),
       secondChild: AnimatedOpacity(
         duration: Duration(microseconds: 800),
-        opacity: _book.isSingleFileBook ? 0.0 : 1.0,
+        opacity: _book.isSingleLaunch ? 0.0 : 1.0,
         curve: Curves.easeIn,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 8.0),

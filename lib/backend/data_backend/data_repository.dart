@@ -29,8 +29,8 @@ class DataRepository {
           BookEpub bookEpub = BookEpub.fromSnapshot(documentSnapshot);
           recommendedBooks.add(bookEpub);
         } else { //document is pdf
-          BookPdf book = BookPdf.fromSnapshot(documentSnapshot);
-          recommendedBooks.add(book);
+          BookPdf bookPdf = BookPdf.fromSnapshot(documentSnapshot);
+          recommendedBooks.add(bookPdf);
         }
         
       });

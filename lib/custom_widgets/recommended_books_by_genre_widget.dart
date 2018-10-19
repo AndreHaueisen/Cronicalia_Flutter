@@ -71,8 +71,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: ClipRRect(
               borderRadius: BorderRadius.only(topRight: Radius.circular(4.0), bottomRight: Radius.circular(4.0)),
-              child: 
-              Image.network(
+              child: Image.network(
                 book.remoteCoverUri,
                 fit: BoxFit.fill,
                 height: _BOX_HEIGHT,
@@ -93,7 +92,9 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
                   child: Text(
                     book.title,
-                    style: TextStyle(color: TextColorDarkBackground.primary, fontWeight: FontWeight.w500, fontSize: 18.0),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: TextColorDarkBackground.primary, fontWeight: FontWeight.w500, fontSize: 17.0),
                   ),
                 ),
                 Padding(
@@ -124,7 +125,7 @@ class RecommendeBooksByGenreWidget extends StatelessWidget {
 
   Widget _buildBookStats(Book book) {
     return Padding(
-        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
+        padding: const EdgeInsets.only(top: 8.0, bottom: 4.0, right: 8.0),
         child: BookStatsWidget(
           readingsNumber: book.readingsNumber,
           rating: book.rating,

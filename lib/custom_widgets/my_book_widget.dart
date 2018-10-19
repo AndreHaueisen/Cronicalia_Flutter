@@ -119,7 +119,7 @@ class MyBookWidget extends StatelessWidget {
                 ),
               ),
             ),
-            _book.isSingleFileBook
+            _book.isSingleLaunch
                 ? Container(height: 0.0, width: 0.0)
                 : Align(
                     alignment: Alignment.bottomLeft,

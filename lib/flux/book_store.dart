@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/backend/data_backend/data_repository.dart';
 import 'package:cronicalia_flutter/backend/data_backend/pdf_data_repository.dart';
@@ -16,7 +19,11 @@ class BookStore extends Store {
   FileRepository _fileRepository;
 
   int _totalNumberOfBooks = 0;
-  String _currentFileText = "Initial Text";
+  List<File> _currentBookFiles = List<File>();
+
+  // This can contain the file path (for BookPdf) or the html raw data (for BookEpub)
+  String showingFileData;
+   
 
   final Set<Book> _actionBooks = Set<Book>();
   final Set<Book> _adventureBooks = Set<Book>();
@@ -33,7 +40,7 @@ class BookStore extends Store {
     dataRepository = PdfDataRepository(_firestore);
     _fileRepository = FileRepository(storageReference: _storageReference);
 
-    triggerOnAction(loadBookRecomendationsAction, (BookLanguage preferredLanguage) async {
+    triggerOnAction(loadBookRecommendationsAction, (BookLanguage preferredLanguage) async {
       final List<Book> recommendedBooks = await dataRepository.getBookRecommendations(preferredLanguage);
 
       BookSorter bookSorter = BookSorter(recommendedBooks: recommendedBooks);
@@ -62,15 +69,38 @@ class BookStore extends Store {
       _totalNumberOfBooks = _sumBooks();
     });
 
-    triggerOnConditionalAction(downloadBookFileAction, (String bookUid) {
-      _fileRepository.downloadBookFile().then((String fileText) {
-        if (fileText != null) {
-          _currentFileText = fileText;
-          trigger();
-        }
-      });
+    triggerOnConditionalAction(downloadBookFileAction, (Book book) {
+
+      // Book is BookPdf and is launched by chapters
+      if(book is BookPdf && !book.isSingleLaunch){
+        _fileRepository.downloadMultiFiledBook(book).then((List<File> filesList) {
+          if(filesList.isNotEmpty){
+            _currentBookFiles = filesList;
+
+          }
+        });
+      } else {
+        _fileRepository.downloadSingleFiledBook(book).then((File file) {
+          if (file != null) {
+            _currentBookFiles.clear();
+            _currentBookFiles.add(file);
+          }
+        });
+      }
 
       return false;
+    });
+
+    triggerOnAction(changeChapterAction, (List<dynamic> payload){
+      Book book = payload[0];
+      int chapterIndex = payload[1];
+
+      // Book is BookPdf and is launched by chapters
+      if(book is BookPdf && !book.isSingleLaunch){
+
+      } else {
+
+      }
     });
   }
 
@@ -88,7 +118,7 @@ class BookStore extends Store {
   }
 
   int get totalNumberOfBooks => _totalNumberOfBooks;
-  String get currentFileText => _currentFileText;
+
 
   List<Book> get actionBooks => _actionBooks.toList();
   List<Book> get adventureBooks => _adventureBooks.toList();
@@ -104,5 +134,7 @@ class BookStore extends Store {
 
 final StoreToken bookStoreToken = StoreToken(BookStore());
 
-Action<BookLanguage> loadBookRecomendationsAction = Action<BookLanguage>();
-Action<String> downloadBookFileAction = Action<String>();
+Action<BookLanguage> loadBookRecommendationsAction = Action<BookLanguage>();
+Action<Book> downloadBookFileAction = Action<Book>();
+
+Action<List<dynamic>> changeChapterAction = Action<List<dynamic>>();

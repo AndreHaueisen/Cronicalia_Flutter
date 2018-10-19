@@ -13,7 +13,6 @@ import 'package:meta/meta.dart';
 class PdfFileRepository extends FileRepository {
   PdfFileRepository(StorageReference storageReference) : super(storageReference: storageReference);
 
-
   Future<String> updateBookCoverImage(
       String encodedEmail, BookPdf book, String newLocalPath, PdfDataRepository dataRepository) async {
     try {
@@ -32,7 +31,7 @@ class PdfFileRepository extends FileRepository {
       @required BookPdf modifiedBook,
       PdfDataRepository dataRepository,
       ProgressStream progressStream}) async {
-    if (modifiedBook.isSingleFileBook) {
+    if (modifiedBook.isSingleLaunch) {
       progressStream.filesTotalNumber = 1;
       await _updateSingleFileBook(
           originalBook: originalBook,
@@ -65,6 +64,8 @@ class PdfFileRepository extends FileRepository {
         await dataRepository.updateSingleFileBookFile(editedBook.authorEmailId, editedBook);
 
         _deleteUnusedFiles(originalBook: originalBook, modifiedBook: editedBook);
+
+        return;
       }
     } catch (error) {
       print(error);
@@ -123,6 +124,7 @@ class PdfFileRepository extends FileRepository {
         }, cancelOnError: true);
 
         await streamController.done;
+        return;
       } else {
         progressStream.filesTotalNumber = 1;
         _deleteUnusedFiles(originalBook: originalBook, modifiedBook: modifiedBook);
@@ -139,7 +141,7 @@ class PdfFileRepository extends FileRepository {
   }
 
   void _deleteUnusedFiles({@required BookPdf originalBook, @required BookPdf modifiedBook}) {
-    if (modifiedBook.isSingleFileBook) {
+    if (modifiedBook.isSingleLaunch) {
       String oldFileName = Utility.resolveFileNameFromUrl(originalBook.remoteFullBookUri);
       String newFileName = Utility.resolveFileNameFromUrl(modifiedBook.remoteFullBookUri);
 
@@ -211,6 +213,8 @@ class PdfFileRepository extends FileRepository {
       progressStream?.notifySuccess();
 
       await dataRepository.createNewBook(encodedEmail, book);
+
+      return;
     } catch (error) {
       print(error);
     }
@@ -252,6 +256,8 @@ class PdfFileRepository extends FileRepository {
       }, cancelOnError: true);
 
       await streamController.done;
+
+      return;
     } catch (error) {
       print(error);
       if (!streamController.isClosed) streamController.close();
@@ -296,6 +302,4 @@ class PdfFileRepository extends FileRepository {
       return null;
     }
   }
-
-  
 }

@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cronicalia_flutter/custom_widgets/book_pdf_file_widget.dart';
-import 'package:intl/intl.dart';
 
 enum BookUploadStatus { SUCCESS, FAILED }
 
@@ -42,7 +41,7 @@ class Book {
   List<dynamic> chaptersLaunchDates = List();
   String remoteCoverUri;
 
-  bool isSingleFileBook;
+  bool isSingleLaunch;
   bool isCurrentlyComplete;
   ChapterPeriodicity periodicity;
   String synopsis;
@@ -64,7 +63,7 @@ class Book {
       this.localFullBookUri,
       this.remoteFullBookUri,
       this.remoteCoverUri,
-      this.isSingleFileBook = true,
+      this.isSingleLaunch = true,
       this.isCurrentlyComplete = false,
       this.periodicity = ChapterPeriodicity.NONE,
       this.synopsis});
@@ -82,7 +81,7 @@ class Book {
       this.ratingCounter = snapshot.data['ratingCounter'];
       this.authorName = snapshot.data['authorName'];
       this.remoteCoverUri = snapshot.data['remoteCoverUri'];
-      this.isSingleFileBook = snapshot.data['isSingleFileBook'];
+      this.isSingleLaunch = snapshot.data['isSingleLaunch'];
       this.authorEmailId = snapshot.data['authorEmailId'];
       this.localFullBookUri = snapshot.data['localFullBookUri'];
       this.title = snapshot.data['title'];
@@ -119,7 +118,7 @@ class Book {
     this.ratingCounter = linkedMap['ratingCounter'];
     this.authorName = linkedMap['authorName'];
     this.remoteCoverUri = linkedMap['remoteCoverUri'];
-    this.isSingleFileBook = linkedMap['isSingleFileBook'];
+    this.isSingleLaunch = linkedMap['isSingleLaunch'];
     this.authorEmailId = linkedMap['authorEmailId'];
     this.localFullBookUri = linkedMap['localFullBookUri'];
     this.title = linkedMap['title'];
@@ -142,7 +141,7 @@ class Book {
   }
 
   int getDaysRemainingForNewChapterPublication() {
-    if (isSingleFileBook) return null;
+    if (isSingleLaunch) return null;
 
     if (chaptersLaunchDates.isNotEmpty) {
       DateTime currentDate = DateTime.now();
@@ -293,7 +292,7 @@ class BookPdf extends Book {
       String localFullBookUri,
       String remoteFullBookUri,
       String remoteCoverUri,
-      bool isSingleFileBook = true,
+      bool isSingleLaunch = true,
       bool isCurrentlyComplete = false,
       ChapterPeriodicity periodicity = ChapterPeriodicity.NONE,
       String synopsis})
@@ -314,7 +313,7 @@ class BookPdf extends Book {
             localFullBookUri: localFullBookUri,
             remoteFullBookUri: remoteFullBookUri,
             remoteCoverUri: remoteCoverUri,
-            isSingleFileBook: isSingleFileBook,
+            isSingleLaunch: isSingleLaunch,
             isCurrentlyComplete: isCurrentlyComplete,
             periodicity: periodicity,
             synopsis: synopsis);
@@ -350,7 +349,7 @@ class BookPdf extends Book {
       localFullBookUri: super.localFullBookUri,
       remoteFullBookUri: super.remoteFullBookUri,
       remoteCoverUri: super.remoteCoverUri,
-      isSingleFileBook: super.isSingleFileBook,
+      isSingleLaunch: super.isSingleLaunch,
       isCurrentlyComplete: super.isCurrentlyComplete,
       periodicity: super.periodicity,
       synopsis: super.synopsis,
@@ -377,7 +376,7 @@ class BookPdf extends Book {
       "ratingCounter": super.ratingCounter,
       "authorName": super.authorName,
       "remoteCoverUri": super.remoteCoverUri,
-      "isSingleFileBook": super.isSingleFileBook,
+      "isSingleLaunch": super.isSingleLaunch,
       "authorEmailId": super.authorEmailId,
       "localFullBookUri": super.localFullBookUri,
       "title": super.title,
@@ -396,7 +395,7 @@ class BookPdf extends Book {
   bool areFilesTheSame(List<BookPdfFileWidget> fileWidgets) {
     if (fileWidgets == null || fileWidgets.length < 1) return false;
 
-    if (fileWidgets[0].isSingleFileBook) {
+    if (fileWidgets[0].isSingleLaunch) {
       return (this.remoteFullBookUri == fileWidgets[0].filePath);
     }
 
@@ -415,6 +414,10 @@ class BookPdf extends Book {
     }
 
     return true;
+  }
+
+  String generatePdfFileTitle(){
+    return "$uID.pdf";
   }
 }
 
@@ -440,7 +443,7 @@ class BookEpub extends Book {
       String localFullBookUri,
       String remoteFullBookUri,
       String remoteCoverUri,
-      bool isSingleFileBook = true,
+      bool isSingleLaunch = true,
       bool isCurrentlyComplete = false,
       ChapterPeriodicity periodicity = ChapterPeriodicity.NONE,
       String synopsis})
@@ -461,7 +464,7 @@ class BookEpub extends Book {
             localFullBookUri: localFullBookUri,
             remoteFullBookUri: remoteFullBookUri,
             remoteCoverUri: remoteCoverUri,
-            isSingleFileBook: isSingleFileBook,
+            isSingleLaunch: isSingleLaunch,
             isCurrentlyComplete: isCurrentlyComplete,
             periodicity: periodicity,
             synopsis: synopsis);
@@ -495,7 +498,7 @@ class BookEpub extends Book {
       remoteFullBookUri: this.remoteFullBookUri,
       coverData: this.coverData,
       remoteCoverUri: this.remoteCoverUri,
-      isSingleFileBook: this.isSingleFileBook,
+      isSingleLaunch: this.isSingleLaunch,
       isCurrentlyComplete: this.isCurrentlyComplete,
       periodicity: this.periodicity,
       synopsis: this.synopsis,
@@ -519,7 +522,7 @@ class BookEpub extends Book {
       "authorName": this.authorName,
       "remoteCoverUri": this.remoteCoverUri,
       "authorEmailId": this.authorEmailId,
-      "isSingleFileBook": this.isSingleFileBook,
+      "isSingleLaunch": this.isSingleLaunch,
       "localFullBookUri": this.localFullBookUri,
       "title": this.title,
       "readingsNumber": this.readingsNumber,
@@ -533,5 +536,9 @@ class BookEpub extends Book {
       "genre": genre.toString().split(".")[1],
       "language": language.toString().split(".")[1]
     };
+  }
+
+  String generateEpubFileTitle(){
+    return "$uID.epub";
   }
 }

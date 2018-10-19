@@ -99,7 +99,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
   }
 
   void _initializeFilesWidgets() {
-    if (_immutableBook.isSingleFileBook) {
+    if (_immutableBook.isSingleLaunch) {
       _replaceFileWidget(filePath: _immutableBook.remoteFullBookUri, fileTitle: _immutableBook.title);
     } else {
       _addFileWidgets(
@@ -143,7 +143,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
     Widget resolveFilePickButton() {
       if (_immutableBook.isCurrentlyComplete) {
         return Container(width: 0.0, height: 0.0);
-      } else if (_immutableBook.isSingleFileBook) {
+      } else if (_immutableBook.isSingleLaunch) {
         return FlatButton(
           textColor: TextColorDarkBackground.secondary,
           child: Text("UPDATE FILE"),
@@ -192,7 +192,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
                 final BookPdf fileChangesBook = _userStore.user.booksPdf[widget.bookUID].copy();
 
                 if (_validateInformation()) {
-                  if (fileChangesBook.isSingleFileBook) {
+                  if (fileChangesBook.isSingleLaunch) {
                     updateSingleFileBookFile(fileChangesBook);
                   } else {
                     updateMultiFileBookFiles(fileChangesBook);
@@ -219,7 +219,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
   }
 
   bool _validateNewChapterTitles() {
-    if (_immutableBook.isSingleFileBook) return true;
+    if (_immutableBook.isSingleLaunch) return true;
 
     Set<String> fileNamesSet = Set<String>();
     _filesWidgets.forEach((BookPdfFileWidget fileWidget) {
@@ -478,7 +478,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
   Widget _buildPeriodicityDropdownButton() {
     return AnimatedCrossFade(
       duration: Duration(milliseconds: 800),
-      crossFadeState: (_immutableBook.isSingleFileBook || _immutableBook.isCurrentlyComplete)
+      crossFadeState: (_immutableBook.isSingleLaunch || _immutableBook.isCurrentlyComplete)
           ? CrossFadeState.showFirst
           : CrossFadeState.showSecond,
       firstChild: Container(
@@ -547,7 +547,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
           )
         : SizedBox(
             height: _filesWidgets.length <= 1 ? (_filesWidgets.length + 0.5) * FILE_WIDGET_HEIGHT : (3 * FILE_WIDGET_HEIGHT),
-            child: _immutableBook.isSingleFileBook
+            child: _immutableBook.isSingleLaunch
                 ? Column(mainAxisSize: MainAxisSize.min, children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
@@ -584,7 +584,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
           );
   }
 
-  //Use when _book.isSingleFileBook == false
+  //Use when _book.isSingleLaunch == false
   void _addFileWidgets({List<String> filePaths, List<String> fileTitles}) {
     filePaths?.asMap()?.forEach((int index, String filePath) {
       String fileTitle;
@@ -605,7 +605,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
             key: Key(filePath),
             isReorderable: true,
             allowUserInput: true,
-            isSingleFileBook: _immutableBook.isSingleFileBook,
+            isSingleLaunch: _immutableBook.isSingleLaunch,
             filePath: filePath,
             date: date,
             fileTitle: fileTitle,
@@ -631,7 +631,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
     }
   }
 
-  //Use when _book.isSingleFileBook == true
+  //Use when _book.isSingleLaunch == true
   void _replaceFileWidget({String filePath, String fileTitle}) {
     assert(filePath != null, "filePath must not be null");
 
@@ -642,7 +642,7 @@ class EditMyBookPdfScreenState extends State<EditMyPdfBookScreen>
         key: Key(filePath),
         isReorderable: false,
         allowUserInput: false,
-        isSingleFileBook: _immutableBook.isSingleFileBook,
+        isSingleLaunch: _immutableBook.isSingleLaunch,
         filePath: filePath,
         fileTitle: fileTitle,
         position: 0,

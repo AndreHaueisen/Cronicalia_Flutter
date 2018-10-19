@@ -8,7 +8,6 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
 import 'package:cronicalia_flutter/utils/epub_parser.dart';
-import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -343,7 +342,7 @@ class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
   }
 
   bool _validatePeriodicity() {
-    if (_book.isSingleFileBook) return true;
+    if (_book.isSingleLaunch) return true;
 
     if ((_book.periodicity != null && _book.periodicity != ChapterPeriodicity.NONE)) {
       return true;
@@ -373,14 +372,14 @@ class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
   Widget _buildPeriodicityDropdownButton() {
     return AnimatedCrossFade(
       duration: Duration(milliseconds: 800),
-      crossFadeState: _book.isSingleFileBook ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      crossFadeState: _book.isSingleLaunch ? CrossFadeState.showFirst : CrossFadeState.showSecond,
       firstChild: Container(
         height: 0.0,
         width: 0.0,
       ),
       secondChild: AnimatedOpacity(
         duration: Duration(microseconds: 800),
-        opacity: _book.isSingleFileBook ? 0.0 : 1.0,
+        opacity: _book.isSingleLaunch ? 0.0 : 1.0,
         curve: Curves.easeIn,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
