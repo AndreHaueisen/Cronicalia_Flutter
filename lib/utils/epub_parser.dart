@@ -10,13 +10,25 @@ class EpubParser {
 
   epubLib.EpubBook epubBook;
 
+  Map<String, String> extractNavMap() {
+    assert(epubBook != null, "EpubBook can not be null");
+
+    Map<String, String> navigationMap = {};
+    try {
+      epubBook.Schema.Navigation.NavMap.Points.forEach((navigationPoint) {
+        navigationMap[navigationPoint.Id] = navigationPoint.Content.Source;
+      });
+
+      return navigationMap;
+    } catch (error) {
+      print('Error extraction navigation map');
+      return null;
+    }
+  }
+
   String readChapter(int chapterNumber) {
     assert(epubBook != null, "EpubBook can not be null");
     try {
-      // dom.Document document = parser.parse(epubBook.Chapters[chapterNumber].HtmlContent);
-      // dom.Element bodyElement = document.getElementsByTagName('body').first;
-
-      // return bodyElement.nodes.first.text;
       return epubBook.Chapters[chapterNumber].HtmlContent;
     } catch (error) {
       print('Error extracting chapter text');
@@ -38,7 +50,8 @@ class EpubParser {
   String extractSynopsis() {
     assert(epubBook != null, "EpubBook can not be null");
     try {
-      dom.Document document = parser.parse(epubBook.Schema.Package.Metadata.Description);
+      dom.Document document =
+          parser.parse(epubBook.Schema.Package.Metadata.Description);
       dom.Element bodyElement = document.getElementsByTagName('body').first;
 
       return bodyElement.nodes.first.text;
@@ -71,7 +84,8 @@ class EpubParser {
   }
 
   // adds Launch dates of the new chapters
-  List<dynamic> setLaunchDateOfLatestsChapters({BookEpub oldBook, BookEpub newBook}) {
+  List<dynamic> setLaunchDateOfLatestsChapters(
+      {BookEpub oldBook, BookEpub newBook}) {
     List<dynamic> newListWithUpdatedDates = List<dynamic>();
 
     newBook.chapterTitles.forEach((dynamic chapterTitle) {
@@ -89,7 +103,8 @@ class EpubParser {
 
   BookLanguage extractLanguage() {
     assert(epubBook != null, "EpubBook can not be null");
-    String language = epubBook.Schema.Package.Metadata.Languages.first.substring(0, 2);
+    String language =
+        epubBook.Schema.Package.Metadata.Languages.first.substring(0, 2);
 
     switch (language) {
       case "en":

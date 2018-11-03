@@ -110,6 +110,8 @@ class Constants {
   static const CONTENT_TYPE_TXT = "text/plain";
   static const CONTENT_TYPE_EPUB = "application/epub+zip";
 
+  static const SHARED_PREFERENCES_TEXT_SIZE_KEY = "text_size_key";
+
   static const PROVIDER_OPTIONS = <ProviderOptions, String>{
     ProviderOptions.GOOGLE: "google.com",
     ProviderOptions.FACEBOOK: "facebook.com",
