@@ -44,14 +44,22 @@ class EpubParser {
 
   String extractTitle() {
     assert(epubBook != null, "EpubBook can not be null");
-    return epubBook.Title;
+    try {
+	    if (epubBook.Title.isNotEmpty)
+		    return epubBook.Title;
+	    else {
+		    return null;
+	    }
+    } catch (error){
+    	print("Error extracting title");
+    	return null;
+    }
   }
 
   String extractSynopsis() {
     assert(epubBook != null, "EpubBook can not be null");
     try {
-      dom.Document document =
-          parser.parse(epubBook.Schema.Package.Metadata.Description);
+      dom.Document document = parser.parse(epubBook.Schema.Package.Metadata.Description);
       dom.Element bodyElement = document.getElementsByTagName('body').first;
 
       return bodyElement.nodes.first.text;
@@ -84,8 +92,7 @@ class EpubParser {
   }
 
   // adds Launch dates of the new chapters
-  List<dynamic> setLaunchDateOfLatestsChapters(
-      {BookEpub oldBook, BookEpub newBook}) {
+  List<dynamic> setLaunchDateOfLatestChapters({BookEpub oldBook, BookEpub newBook}) {
     List<dynamic> newListWithUpdatedDates = List<dynamic>();
 
     newBook.chapterTitles.forEach((dynamic chapterTitle) {
@@ -103,18 +110,22 @@ class EpubParser {
 
   BookLanguage extractLanguage() {
     assert(epubBook != null, "EpubBook can not be null");
-    String language =
-        epubBook.Schema.Package.Metadata.Languages.first.substring(0, 2);
+    try {
+      String language = epubBook.Schema.Package.Metadata.Languages.first.substring(0, 2);
 
-    switch (language) {
-      case "en":
-        return BookLanguage.ENGLISH;
-      case "pt":
-        return BookLanguage.PORTUGUESE;
-      case "de":
-        return BookLanguage.DEUTSCH;
-      default:
-        return BookLanguage.UNDEFINED;
+      switch (language) {
+        case "en":
+          return BookLanguage.ENGLISH;
+        case "pt":
+          return BookLanguage.PORTUGUESE;
+        case "de":
+          return BookLanguage.DEUTSCH;
+        default:
+          return BookLanguage.UNDEFINED;
+      }
+    } catch (error) {
+      print("Could not detect language");
+      return BookLanguage.UNDEFINED;
     }
   }
 }

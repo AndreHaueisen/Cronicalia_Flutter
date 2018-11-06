@@ -16,15 +16,15 @@ class EpubFileRepository extends FileRepository {
   Future<void> createNewEpubBook(String encodedEmail, BookEpub book, EpubDataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
-      UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book);
-      book.remoteCoverUri =
-          coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
+      StorageTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book);
+      String downloadUriCover = await coverTaskSnapshot.ref.getDownloadURL();
+      book.remoteCoverUri = downloadUriCover == null ? throw ("Cover upload failed") : downloadUriCover;
 
       progressStream?.notifySuccess();
 
-      UploadTaskSnapshot pdfTaskSnapshot = await _uploadEpubFile(encodedEmail, book);
-      book.remoteFullBookUri =
-          pdfTaskSnapshot.downloadUrl == null ? throw ("Epub upload failed") : pdfTaskSnapshot.downloadUrl.toString();
+      StorageTaskSnapshot pdfTaskSnapshot = await _uploadEpubFile(encodedEmail, book);
+      String downloadUriPdf = await pdfTaskSnapshot.ref.getDownloadURL();
+      book.remoteFullBookUri = downloadUriPdf == null ? throw ("Epub upload failed") : downloadUriPdf;
 
       progressStream?.notifySuccess();
 
@@ -36,7 +36,7 @@ class EpubFileRepository extends FileRepository {
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadBookCoverImage(String encodedEmail, BookEpub book) {
+  Future<StorageTaskSnapshot> _uploadBookCoverImage(String encodedEmail, BookEpub book) {
     final metadata = new StorageMetadata(
         contentType: Constants.CONTENT_TYPE_IMAGE,
         customMetadata: {Constants.METADATA_TITLE_IMAGE_TYPE: Constants.METADATA_PROPERTY_IMAGE_TYPE_COVER});
@@ -49,13 +49,13 @@ class EpubFileRepository extends FileRepository {
           .child(Constants.FILE_NAME_SUFFIX_COVER_PICTURE)
           .putData(book.coverData, metadata);
 
-      return uploadTask.future;
+      return uploadTask.onComplete;
     } else {
       return null;
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadEpubFile(String encodedEmail, BookEpub book) {
+  Future<StorageTaskSnapshot> _uploadEpubFile(String encodedEmail, BookEpub book) {
     final File file = File(book.localFullBookUri);
     final metadata = new StorageMetadata(contentType: Constants.CONTENT_TYPE_EPUB);
 
@@ -67,27 +67,32 @@ class EpubFileRepository extends FileRepository {
           .child(file.path.split("/").last)
           .putFile(file, metadata);
 
-      return uploadTask.future;
+      return uploadTask.onComplete;
     } else {
       return null;
     }
   }
 
   Future<void> updateBookFile(
-      {BookEpub originalBook, BookEpub editedBook, EpubDataRepository dataRepository, ProgressStream progressStream}) async {
+      {BookEpub originalBook,
+      BookEpub editedBook,
+      EpubDataRepository dataRepository,
+      ProgressStream progressStream}) async {
     try {
       progressStream.filesTotalNumber = 2;
 
-      UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(editedBook.authorEmailId, editedBook);
+      StorageTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(editedBook.authorEmailId, editedBook);
+      String downloadUriCover = await coverTaskSnapshot.ref.getDownloadURL();
       editedBook.remoteCoverUri =
-          coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
+          downloadUriCover == null ? throw ("Cover upload failed") : downloadUriCover;
 
       progressStream.notifySuccess();
 
       if (editedBook.localFullBookUri != null) {
-        UploadTaskSnapshot fileTaskSnapshot = await _uploadEpubFile(editedBook.authorEmailId, editedBook);
+        StorageTaskSnapshot fileTaskSnapshot = await _uploadEpubFile(editedBook.authorEmailId, editedBook);
+        String downloadUriFile = await fileTaskSnapshot.ref.getDownloadURL();
         editedBook.remoteFullBookUri =
-            fileTaskSnapshot.downloadUrl == null ? throw ("Epub update failed") : fileTaskSnapshot.downloadUrl.toString();
+            downloadUriFile == null ? throw ("Epub update failed") : downloadUriFile;
 
         progressStream.notifySuccess();
 

@@ -94,8 +94,8 @@ class Constants {
   static const BOOK_QUERY_MINIMUM_VAL = -1.0;
   static const ONE_MB_IN_BYTES = 1000000;
 
-  static const MAX_TITLE_LENGTH = 50;
-  static const MAX_SYNOPSIS_LENGTH = 1000;
+  static const MAX_TITLE_LENGTH = 90;
+  static const MAX_SYNOPSIS_LENGTH = 1500;
   static const MIN_SYNOPSIS_LENGTH = 100;
   static const BOOK_COVER_DEFAULT_HEIGHT = 180.0;
   static const BOOK_COVER_DEFAULT_WIDTH = 135.0;
@@ -111,6 +111,9 @@ class Constants {
   static const CONTENT_TYPE_EPUB = "application/epub+zip";
 
   static const SHARED_PREFERENCES_TEXT_SIZE_KEY = "text_size_key";
+  static const SHARED_PREFERENCES_BOOKMARK_INFO_MAP_KEY = "bookmark_info_map_key";
+
+  static const HERO_TAG_BOOK_COVER = "book_cover_tag";
 
   static const PROVIDER_OPTIONS = <ProviderOptions, String>{
     ProviderOptions.GOOGLE: "google.com",

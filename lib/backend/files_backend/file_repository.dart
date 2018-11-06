@@ -5,8 +5,6 @@ import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:http/http.dart' as http;
-import 'package:meta/meta.dart';
 
 class FileRepository {
   FileRepository({this.storageReference});
@@ -61,6 +59,7 @@ class FileRepository {
         int creationTimeOnDatabase = metadata.creationTimeMillis;
         int creationTimeOnLocalCache = file.lastModifiedSync().millisecondsSinceEpoch;
 
+        // Local file either new or is outdated and needs to be downloaded
         if (fileStat.size == 0 || creationTimeOnDatabase > creationTimeOnLocalCache) {
           int maxSize = metadata.sizeBytes;
           await Utility.saveBookFileToLocalCache(file, await reference.getData(maxSize));

@@ -24,7 +24,7 @@ class UserFileRepository extends FileRepository{
             .child(file.path.split('/').last)
             .putFile(file, metadata);
 
-        String newRemotePath = (await uploadTask.future).downloadUrl.toString();
+        String newRemotePath = await (await uploadTask.onComplete).ref.getDownloadURL();
         await dataRepository.updateUserProfilePictureReferences(encodedEmail, newLocalPath, newRemotePath);
 
         return newRemotePath;
@@ -51,7 +51,7 @@ class UserFileRepository extends FileRepository{
             .child(file.path.split('/').last)
             .putFile(file, metadata);
 
-        String newRemotePath = (await uploadTask.future).downloadUrl.toString();
+        String newRemotePath = await (await uploadTask.onComplete).ref.getDownloadURL();
         await dataRepository.updateUserBackgroundPictureReferences(encodedEmail, newLocalPath, newRemotePath);
 
         return newRemotePath;

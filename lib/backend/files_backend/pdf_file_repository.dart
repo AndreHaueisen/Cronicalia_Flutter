@@ -16,8 +16,9 @@ class PdfFileRepository extends FileRepository {
   Future<String> updateBookCoverImage(
       String encodedEmail, BookPdf book, String newLocalPath, PdfDataRepository dataRepository) async {
     try {
-      UploadTaskSnapshot taskSnapshot = (await _uploadBookCoverImage(encodedEmail, book, newLocalPath));
-      String newRemotePath = (taskSnapshot != null) ? taskSnapshot.downloadUrl.toString() : throw ("Cover upload failed");
+      StorageTaskSnapshot taskSnapshot = (await _uploadBookCoverImage(encodedEmail, book, newLocalPath));
+      String newRemotePath =
+          (taskSnapshot != null) ? await taskSnapshot.ref.getDownloadURL() : throw ("Cover upload failed");
       await dataRepository.updateBookCoverPictureReferences(encodedEmail, book, newLocalPath, newRemotePath);
       return newRemotePath;
     } catch (error) {
@@ -54,10 +55,13 @@ class PdfFileRepository extends FileRepository {
       ProgressStream progressStream}) async {
     try {
       if (editedBook.localFullBookUri != null) {
-        UploadTaskSnapshot fileTaskSnapshot =
+        StorageTaskSnapshot fileTaskSnapshot =
             await _uploadPDFFile(editedBook.authorEmailId, editedBook, editedBook.localFullBookUri);
-        editedBook.remoteFullBookUri =
-            fileTaskSnapshot.downloadUrl == null ? throw ("PDF update failed") : fileTaskSnapshot.downloadUrl.toString();
+
+        String downloadUri = await fileTaskSnapshot.ref.getDownloadURL();
+        editedBook.remoteFullBookUri = downloadUri == null
+            ? throw ("PDF update failed")
+            : downloadUri;
 
         progressStream?.notifySuccess();
 
@@ -78,7 +82,7 @@ class PdfFileRepository extends FileRepository {
       @required BookPdf modifiedBook,
       PdfDataRepository dataRepository,
       ProgressStream progressStream}) async {
-    StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
+    StreamController<Future<StorageTaskSnapshot>> streamController = StreamController();
     try {
       int taskCounter = 0;
       int completedTaskCounter = 0;
@@ -86,7 +90,8 @@ class PdfFileRepository extends FileRepository {
         (int index, chapterUri) {
           if (!Utility.isFileRemote(chapterUri)) {
             //save file
-            streamController.add(_uploadPDFFile(modifiedBook.authorEmailId, modifiedBook, modifiedBook.chapterUris[index]));
+            streamController
+                .add(_uploadPDFFile(modifiedBook.authorEmailId, modifiedBook, modifiedBook.chapterUris[index]));
             taskCounter++;
           }
         },
@@ -95,11 +100,13 @@ class PdfFileRepository extends FileRepository {
       if (taskCounter > 0) {
         progressStream.filesTotalNumber = taskCounter;
 
-        streamController.stream.listen((Future<UploadTaskSnapshot> pdfTaskSnapshotFuture) async {
-          UploadTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
+        streamController.stream.listen((Future<StorageTaskSnapshot> pdfTaskSnapshotFuture) async {
+          StorageTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
 
-          String newRemoteUri =
-              pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf update failed") : pdfTaskSnapshot.downloadUrl.toString();
+          String downloadUri = await pdfTaskSnapshot.ref.getDownloadURL();
+          String newRemoteUri = downloadUri == null
+              ? throw ("Pdf update failed")
+              : downloadUri;
 
           int newRemoteUriPosition = modifiedBook.chapterUris.indexWhere((uri) {
             return Utility.resolveFileNameFromLocalFolder(uri) == Utility.resolveFileNameFromUrl(newRemoteUri);
@@ -200,15 +207,19 @@ class PdfFileRepository extends FileRepository {
   Future<void> createNewSingleFilePdfBook(String encodedEmail, BookPdf book, PdfDataRepository dataRepository,
       {ProgressStream progressStream}) async {
     try {
-      UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
-      book.remoteCoverUri =
-          coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
+      StorageTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
+      String downloadUriCover = await coverTaskSnapshot.ref.getDownloadURL();
+      book.remoteCoverUri = downloadUriCover == null
+          ? throw ("Cover upload failed")
+          : downloadUriCover;
 
       progressStream?.notifySuccess();
 
-      UploadTaskSnapshot pdfTaskSnapshot = await _uploadPDFFile(encodedEmail, book, book.localFullBookUri);
-      book.remoteFullBookUri =
-          pdfTaskSnapshot.downloadUrl == null ? throw ("Pdf upload failed") : pdfTaskSnapshot.downloadUrl.toString();
+      StorageTaskSnapshot pdfTaskSnapshot = await _uploadPDFFile(encodedEmail, book, book.localFullBookUri);
+      String downloadUriFullBook = await pdfTaskSnapshot.ref.getDownloadURL();
+      book.remoteFullBookUri = downloadUriFullBook == null
+          ? throw ("Pdf upload failed")
+          : downloadUriFullBook;
 
       progressStream?.notifySuccess();
 
@@ -223,11 +234,13 @@ class PdfFileRepository extends FileRepository {
   Future<void> createNewMultiFilePdfBook(
       String encodedEmail, BookPdf book, List<String> pdfLocalPaths, PdfDataRepository dataRepository,
       {ProgressStream progressStream}) async {
-    StreamController<Future<UploadTaskSnapshot>> streamController = StreamController();
+    StreamController<Future<StorageTaskSnapshot>> streamController = StreamController();
     try {
-      UploadTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
-      book.remoteCoverUri =
-          coverTaskSnapshot.downloadUrl == null ? throw ("Cover upload failed") : coverTaskSnapshot.downloadUrl.toString();
+      StorageTaskSnapshot coverTaskSnapshot = await _uploadBookCoverImage(encodedEmail, book, book.localCoverUri);
+      String downloadUriCover = await coverTaskSnapshot.ref.getDownloadURL();
+      book.remoteCoverUri = downloadUriCover == null
+          ? throw ("Cover upload failed")
+          : downloadUriCover;
 
       progressStream?.notifySuccess();
       int counter = 0;
@@ -236,11 +249,12 @@ class PdfFileRepository extends FileRepository {
         streamController.add(_uploadPDFFile(encodedEmail, book, localPath));
       });
 
-      streamController.stream.listen((Future<UploadTaskSnapshot> pdfTaskSnapshotFuture) async {
-        UploadTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
-        book.chapterUris.add(pdfTaskSnapshot.downloadUrl == null
+      streamController.stream.listen((Future<StorageTaskSnapshot> pdfTaskSnapshotFuture) async {
+        StorageTaskSnapshot pdfTaskSnapshot = await pdfTaskSnapshotFuture;
+        String downloadUriChapter = await pdfTaskSnapshot.ref.getDownloadURL();
+        book.chapterUris.add(downloadUriChapter == null
             ? throw ("Pdf #$counter upload failed")
-            : pdfTaskSnapshot.downloadUrl.toString());
+            : downloadUriChapter);
 
         progressStream?.notifySuccess();
         if (counter == (pdfLocalPaths.length - 1)) {
@@ -265,7 +279,7 @@ class PdfFileRepository extends FileRepository {
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadBookCoverImage(String encodedEmail, BookPdf book, String filePath) {
+  Future<StorageTaskSnapshot> _uploadBookCoverImage(String encodedEmail, BookPdf book, String filePath) {
     final File file = File(filePath);
     final metadata = new StorageMetadata(
         contentType: Constants.CONTENT_TYPE_IMAGE,
@@ -279,13 +293,13 @@ class PdfFileRepository extends FileRepository {
           .child(Constants.FILE_NAME_SUFFIX_COVER_PICTURE)
           .putFile(file, metadata);
 
-      return uploadTask.future;
+      return uploadTask.onComplete;
     } else {
       return null;
     }
   }
 
-  Future<UploadTaskSnapshot> _uploadPDFFile(String encodedEmail, BookPdf book, String filePath) {
+  Future<StorageTaskSnapshot> _uploadPDFFile(String encodedEmail, BookPdf book, String filePath) {
     final File file = File(filePath);
     final metadata = new StorageMetadata(contentType: Constants.CONTENT_TYPE_PDF);
 
@@ -297,7 +311,7 @@ class PdfFileRepository extends FileRepository {
           .child(file.path.split("/").last)
           .putFile(file, metadata);
 
-      return uploadTask.future;
+      return uploadTask.onComplete;
     } else {
       return null;
     }

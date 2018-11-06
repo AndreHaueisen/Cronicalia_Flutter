@@ -62,7 +62,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     ];
   }
 
-  //do not dispose. Flushbar already randles it
+  //do not dispose. Flushbar already handles it
   AnimationController _uploadProgressController;
 
   void _showProgressFlushbar() {
@@ -139,17 +139,17 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
       _rawEpubBookPath = await FlutterDocumentPicker.openDocument(params: params);
       File epubFile = File(_rawEpubBookPath);
 
-      epubLib.EpubBook epubBook = await epubLib.EpubReader.readBook(await epubFile.readAsBytes());
+      epubLib.EpubBook epubBook = await epubLib.EpubReader.readBook(epubFile.readAsBytesSync());
+
+      loadingBookFlushbar.dismiss().then((_) {
+        FlushbarHelper.createSuccess(message: "Book loaded").show(context);
+      });
 
       return EpubParser(epubBook);
     } catch (error) {
       print(error);
       FlushbarHelper.createError(message: "Upload an ePub file").show(context);
       return null;
-    } finally {
-      loadingBookFlushbar.dismiss().then((_) {
-        FlushbarHelper.createSuccess(message: "Book loaded").show(context);
-      });
     }
   }
 
@@ -167,6 +167,9 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     _book.authorTwitterProfile = _userStore.user.twitterProfile;
     _book.publicationDate = DateTime.now().millisecondsSinceEpoch;
     _book.bookPosition = Utility.getNewBookPosition(_userStore.user.booksEpub, _userStore.user.booksPdf);
+
+    if(_book.title != null) _titleController.text = _book.title ;
+    if(_book.synopsis != null) _synopsisController.text = _book.synopsis;
   }
 
   Widget _buildParsedBookWidget() {
@@ -179,12 +182,8 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
             child: _buildCoverPicture(),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
-            child: Text(_book.title, style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
-          ),
-          Padding(
             padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-            child: _buildSynopsisInput(),
+            child: _buildInputForm(),
           ),
           _buildFullBookRadioButton(),
           _buildIncompleteBookRadioButton(),
@@ -217,43 +216,75 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
   }
 
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  final TextEditingController _titleController = new TextEditingController();
   final TextEditingController _synopsisController = new TextEditingController();
+
   bool _isAutoValidating = false;
 
-  Widget _buildSynopsisInput() {
-    _synopsisController.text = _book.synopsis;
-
-    return Form(
-      autovalidate: _isAutoValidating,
-      key: _formKey,
-      child: Column(
-        children: <Widget>[
-          TextFormField(
-            controller: _synopsisController,
-            validator: (value) {
-              if (value.isEmpty) {
-                return 'Your synopsis is empty';
-              } else if (value.length < Constants.MIN_SYNOPSIS_LENGTH) {
-                return '100 characters minimum';
-              } else if (value.length > Constants.MAX_SYNOPSIS_LENGTH) {
-                return '3000 characters maximum';
-              }
-            },
-            maxLength: Constants.MAX_SYNOPSIS_LENGTH,
-            maxLines: 7,
-            textCapitalization: TextCapitalization.sentences,
-            maxLengthEnforced: true,
-            decoration: InputDecoration(
-                fillColor: Colors.black26,
-                filled: true,
-                border: UnderlineInputBorder(),
-                labelText: "Book Synopsis",
-                labelStyle: TextStyle(color: Colors.grey)),
-            onFieldSubmitted: (value) {
-              _book.synopsis = value;
-            },
-          ),
-        ],
+  Widget _buildInputForm() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Form(
+        autovalidate: _isAutoValidating,
+        key: _formKey,
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                controller: _titleController,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Your title is empty';
+                  } else if (value.length > Constants.MAX_TITLE_LENGTH) {
+                    return 'Your title is too long';
+                  }
+                },
+                maxLength: Constants.MAX_TITLE_LENGTH,
+                maxLines: 1,
+                textCapitalization: TextCapitalization.words,
+                maxLengthEnforced: true,
+                decoration: InputDecoration(
+                    fillColor: Colors.black26,
+                    filled: true,
+                    border: UnderlineInputBorder(),
+                    labelText: "Book Title",
+                    labelStyle: TextStyle(color: Colors.grey)),
+                onFieldSubmitted: (value) {
+                  _book.title = value;
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                controller: _synopsisController,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Your synopsis is empty';
+                  } else if (value.length < Constants.MIN_SYNOPSIS_LENGTH) {
+                    return '${Constants.MIN_SYNOPSIS_LENGTH} characters minimum';
+                  } else if (value.length > Constants.MAX_SYNOPSIS_LENGTH) {
+                    return '${Constants.MAX_SYNOPSIS_LENGTH} characters maximum';
+                  }
+                },
+                maxLength: Constants.MAX_SYNOPSIS_LENGTH,
+                maxLines: 7,
+                textCapitalization: TextCapitalization.sentences,
+                maxLengthEnforced: true,
+                decoration: InputDecoration(
+                    fillColor: Colors.black26,
+                    filled: true,
+                    border: UnderlineInputBorder(),
+                    labelText: "Book Synopsis",
+                    labelStyle: TextStyle(color: Colors.grey)),
+                onFieldSubmitted: (value) {
+                  _book.synopsis = value;
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -339,6 +370,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
 
   bool _validateInputForm() {
     if (_formKey.currentState.validate()) {
+      _book.title = _titleController.value.text;
       _book.synopsis = _synopsisController.value.text;
       return true;
     } else {
@@ -346,8 +378,8 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
         _isAutoValidating = true;
       });
       FlushbarHelper.createError(
-        title: "Synopsis invalid",
-        message: "Check your book synopsis",
+        title: "Title or synopsis invalid",
+        message: "Check your book title and synopsis",
         duration: (Duration(seconds: 3)),
       ).show(context);
       return false;

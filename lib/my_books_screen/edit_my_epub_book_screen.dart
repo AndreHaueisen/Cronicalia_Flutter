@@ -71,7 +71,7 @@ class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
     ];
   }
 
-  //do not dispose. Flushbar already randles it
+  //do not dispose. Flushbar already handles it
   AnimationController _uploadProgressController;
 
   void _showProgressFlushbar() {
@@ -107,7 +107,7 @@ class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
     }
   }
 
-  bool _isEpubBeingAnalized = false;
+  bool _isEpubBeingAnalyzed = false;
 
   Widget _buildSelectEpubWidget() {
 
@@ -133,18 +133,18 @@ class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
             child: Text(
               "SELECT UPDATED EPUB FILE",
             ),
-            onPressed: _isEpubBeingAnalized
+            onPressed: _isEpubBeingAnalyzed
                 ? null
                 : () {
                     setState(() {
-                      _isEpubBeingAnalized = true;
+                      _isEpubBeingAnalyzed = true;
                     });
 
                     _getEpubFile().then((EpubParser epubParser) {
                       setState(() {
                         if (epubParser != null) {
                           _convertEpubBookToBookEpub(epubParser);
-                          _isEpubBeingAnalized = false;
+                          _isEpubBeingAnalyzed = false;
                         }
                       });
                     });
@@ -192,7 +192,7 @@ class _EditMyEpubBookScreenState extends State<EditMyEpubBookScreen>
     _book.localFullBookUri = _rawEpubBookPath;
     _book.synopsis = epubParser.extractSynopsis();
     _book.chapterTitles = epubParser.extractChapterTitles();
-    _book.chaptersLaunchDates = epubParser.setLaunchDateOfLatestsChapters(oldBook: _immutableBook, newBook: _book);
+    _book.chaptersLaunchDates = epubParser.setLaunchDateOfLatestChapters(oldBook: _immutableBook, newBook: _book);
   }
 
   Widget _buildParsedBookWidget() {

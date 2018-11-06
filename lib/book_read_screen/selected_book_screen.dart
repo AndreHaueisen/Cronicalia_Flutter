@@ -3,6 +3,7 @@ import 'package:cronicalia_flutter/custom_widgets/book_stats_widget.dart';
 import 'package:cronicalia_flutter/custom_widgets/rounded_button_widget.dart';
 import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
+import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 class SelectedBookScreen extends StatefulWidget {
@@ -55,9 +56,12 @@ class _SelectedBookScreenState extends State<SelectedBookScreen> with SingleTick
       padding: EdgeInsets.only(top: (_coverPictureHeight - 125.0)),
       child: Container(
         constraints: BoxConstraints.tight(Size(135.0, 180.0)),
-        child: Image(
-          image: NetworkImage(widget._book.remoteCoverUri),
-          fit: BoxFit.fill,
+        child: Hero(
+          tag: Constants.HERO_TAG_BOOK_COVER,
+          child: Image(
+            image: NetworkImage(widget._book.remoteCoverUri),
+            fit: BoxFit.fill,
+          ),
         ),
         decoration: BoxDecoration(
           boxShadow: [BoxShadow(color: Colors.black, offset: Offset(0.25, 0.25), blurRadius: 8.0, spreadRadius: 0.0)],
