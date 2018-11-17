@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
+import 'package:cronicalia_flutter/custom_widgets/backdrop_widget.dart';
 import 'package:cronicalia_flutter/models/book_stop_info.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -94,21 +93,27 @@ class BookEpubReadScreen extends StatefulWidget {
   _BookEpubReadScreenState createState() => _BookEpubReadScreenState();
 }
 
-class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatcherMixin {
+class _BookEpubReadScreenState extends State<BookEpubReadScreen>
+    with StoreWatcherMixin<BookEpubReadScreen>, SingleTickerProviderStateMixin {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   BookReadStore _bookReadStore;
   double _textSize;
   BookStopInfo _bookStopInfo;
   bool _isFullScreen = false;
-  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  AnimationController _backdropAnimationController;
 
   @override
   void initState() {
     super.initState();
 
     _bookReadStore = listenToStore(bookReadStoreToken);
-
     _bookStopInfo = BookStopInfo(widget._book.uID, _bookReadStore.currentChapterIndex, 0.0);
+
+    _backdropAnimationController = new AnimationController(
+      vsync: this,
+      duration: new Duration(milliseconds: 500),
+    );
 
     Completer bookReadyCompleter = Completer();
     downloadBookFileAction([widget._book, bookReadyCompleter]);
@@ -123,6 +128,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
   void dispose() {
     _saveBookPosition();
     disposeBookAction();
+    _backdropAnimationController.dispose();
     super.dispose();
   }
 
@@ -135,7 +141,6 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
   }
 
   bool _isBookContentOnDisplay = false;
-
   ScrollController _scrollController = ScrollController();
 
   Future<void> _retrieveSharedPreferences() async {
@@ -198,7 +203,6 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
       child: _bookReadStore.navigationList.isEmpty
           ? Hero(tag: Constants.HERO_TAG_BOOK_COVER, child: Image.network(widget._book.remoteCoverUri))
           : Scaffold(
-              key: _scaffoldKey,
               appBar: _isFullScreen
                   ? null
                   : AppBar(
@@ -206,16 +210,20 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
                         widget._book.title,
                       ),
                     ),
-              body: SingleChildScrollView(
-                controller: _scrollController,
-                child: Container(
-                  child: AnimatedCrossFade(
-                    crossFadeState: _isBookContentOnDisplay ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                    duration: Duration(seconds: 1),
-                    firstChild: _buildNavigationMapWidget(),
-                    secondChild: _buildBookContentWidget(),
+              body: BackdropWidget(
+                controller: _backdropAnimationController,
+                backChild: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Container(
+                    child: AnimatedCrossFade(
+                      crossFadeState: _isBookContentOnDisplay ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                      duration: Duration(seconds: 1),
+                      firstChild: _buildNavigationMapWidget(),
+                      secondChild: _buildBookContentWidget(),
+                    ),
                   ),
                 ),
+                frontChild: _buildBackdropPanel(),
               ),
             ),
     );
@@ -245,53 +253,34 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
     );
   }
 
-  PersistentBottomSheetController _bottomSheetController;
-
-  Widget _buildBookContentWidget() {
-    try {
-      return InkWell(
-        splashColor: AppThemeColors.primaryColorLight,
-        highlightColor: AppThemeColors.primaryColorLight,
-        onLongPress: () {
-          if (_bottomSheetController == null) {
-            _bottomSheetController = _scaffoldKey.currentState.showBottomSheet((context) {
-              return _buildBottomSheetWidget();
-            });
-            _bottomSheetController.closed.whenComplete(() {
-              _bottomSheetController = null;
-            });
-          }
-        },
-        onTap: () {
-          _bottomSheetController?.close();
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
-            child: epubViewer.Html(
-              data: _bookReadStore.showingFileData,
-              backgroundColor: Colors.transparent,
-              defaultTextStyle: TextStyle(color: Colors.white, fontSize: _textSize),
-            ),
-          ),
-        ),
-      );
-    } catch (error) {
-      print("HTML render failed");
-      Timer(Duration(seconds: 2), () {
-        setState(() {
-          _isBookContentOnDisplay = false;
-        });
-      });
-
-      return Center(
-        child: Text("Section data not suported"),
-      );
-    }
+  bool _isBackdropPanelVisible() {
+    final AnimationStatus status = _backdropAnimationController.status;
+    return status == AnimationStatus.completed || status == AnimationStatus.forward;
   }
 
-  Widget _buildBottomSheetWidget() {
+  Widget _buildBookContentWidget() {
+    return Container(
+        child: InkWell(
+      splashColor: AppThemeColors.primaryColorLight,
+      highlightColor: AppThemeColors.primaryColorLight,
+      onTap: () {
+        _isBackdropPanelVisible() ? _backdropAnimationController.reverse() : _backdropAnimationController.forward();
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+          child: epubViewer.Html(
+            data: _bookReadStore.showingFileData,
+            backgroundColor: Colors.transparent,
+            defaultTextStyle: TextStyle(color: Colors.white, fontSize: _textSize),
+          ),
+        ),
+      ),
+    ));
+  }
+
+  Widget _buildBackdropPanel() {
     return Container(
       decoration: BoxDecoration(color: AppThemeColors.cardColor, borderRadius: BorderRadius.circular(8.0)),
       child: Column(
@@ -325,10 +314,12 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             FlatButton.icon(
-              onPressed: () {
-                backwardChapterAction(widget._book);
-                _scrollController.animateTo(0.0, duration: Duration(seconds: 2), curve: Curves.decelerate);
-              },
+              onPressed: _bookReadStore.currentChapterIndex > 0
+                  ? () {
+                      backwardChapterAction(widget._book);
+                      _scrollController.animateTo(0.0, duration: Duration(seconds: 2), curve: Curves.decelerate);
+                    }
+                  : null,
               icon: Icon(Icons.arrow_left),
               label: Text("BACK"),
             ),
@@ -336,7 +327,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
               onPressed: () {
                 setState(() {
                   _isBookContentOnDisplay = false;
-                  _bottomSheetController?.close();
+                  if (_isBackdropPanelVisible()) _backdropAnimationController.reverse();
                 });
               },
               icon: Icon(
@@ -346,10 +337,12 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
               label: Text("CONTENTS"),
             ),
             FlatButton.icon(
-              onPressed: () {
-                forwardChapterAction(widget._book);
-                _scrollController.animateTo(0.0, duration: Duration(seconds: 2), curve: Curves.decelerate);
-              },
+              onPressed: _bookReadStore.currentChapterIndex < (widget._book.chapterTitles.length - 1)
+                  ? () {
+                      forwardChapterAction(widget._book);
+                      _scrollController.animateTo(0.0, duration: Duration(seconds: 2), curve: Curves.decelerate);
+                    }
+                  : null,
               icon: Icon(Icons.arrow_right),
               label: Text("FORWARD"),
             ),
@@ -368,7 +361,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
           child: Padding(
             padding: const EdgeInsets.only(left: 16.0),
             child: Text(
-              "Text Size",
+              "Text Size    ${_textSize.toInt()}",
               style: TextStyle(fontSize: 16.0),
             ),
           ),
@@ -436,8 +429,6 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen> with StoreWatch
                     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
                   });
                 }
-
-                _bottomSheetController?.close();
               }),
         )
       ],
