@@ -7,7 +7,7 @@ import 'package:cronicalia_flutter/main.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:cronicalia_flutter/utils/constants.dart';
 import 'package:cronicalia_flutter/utils/custom_flushbar_helper.dart';
-import 'package:cronicalia_flutter/utils/epub_parser.dart';
+import 'package:cronicalia_flutter/utils/book_parser.dart';
 import 'package:cronicalia_flutter/utils/utility.dart';
 import 'package:epub/epub.dart' as epubLib;
 import 'package:flushbar/flushbar.dart';
@@ -98,7 +98,7 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
     }
   }
 
-  bool _isEpubBeingAnalized = false;
+  bool _isEpubBeingAnalyzed = false;
 
   Widget _buildSelectEpubButton() {
     return Center(
@@ -106,18 +106,18 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
         child: Text(
           "PICK EPUB FILE",
         ),
-        onPressed: _isEpubBeingAnalized
+        onPressed: _isEpubBeingAnalyzed
             ? null
             : () {
                 setState(() {
-                  _isEpubBeingAnalized = true;
+                  _isEpubBeingAnalyzed = true;
                 });
 
                 _getEpubFile().then((EpubParser epubParser) {
                   setState(() {
                     if (epubParser != null) {
                       _convertEpubBookToBookEpub(epubParser);
-                      _isEpubBeingAnalized = false;
+                      _isEpubBeingAnalyzed = false;
                     }
                   });
                 });
@@ -137,15 +137,20 @@ class _CreateEpubMyBookScreenState extends State<CreateEpubMyBookScreen>
           allowedMimeType: Constants.CONTENT_TYPE_EPUB);
 
       _rawEpubBookPath = await FlutterDocumentPicker.openDocument(params: params);
-      File epubFile = File(_rawEpubBookPath);
+      if(_rawEpubBookPath == null || _rawEpubBookPath.isEmpty){
+        loadingBookFlushbar.dismiss();
+        return null;
+      } else {
+        File epubFile = File(_rawEpubBookPath);
 
-      epubLib.EpubBook epubBook = await epubLib.EpubReader.readBook(epubFile.readAsBytesSync());
+        epubLib.EpubBook epubBook = await epubLib.EpubReader.readBook(epubFile.readAsBytesSync());
 
-      loadingBookFlushbar.dismiss().then((_) {
-        FlushbarHelper.createSuccess(message: "Book loaded").show(context);
-      });
+        loadingBookFlushbar.dismiss().then((_) {
+          FlushbarHelper.createSuccess(message: "Book loaded").show(context);
+        });
 
-      return EpubParser(epubBook);
+        return EpubParser(epubBook);
+      }
     } catch (error) {
       print(error);
       FlushbarHelper.createError(message: "Upload an ePub file").show(context);

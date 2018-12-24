@@ -160,4 +160,8 @@ class Utility {
     }
   }
 
+  static String getChapterSectionHtmlContent(){
+
+  }
+
 }

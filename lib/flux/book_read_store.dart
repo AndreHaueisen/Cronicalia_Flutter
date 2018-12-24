@@ -5,60 +5,51 @@ import 'package:cronicalia_flutter/backend/files_backend/file_repository.dart';
 import 'package:cronicalia_flutter/models/book.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_flux/flutter_flux.dart';
-import 'package:cronicalia_flutter/utils/epub_parser.dart';
+import 'package:cronicalia_flutter/utils/book_parser.dart';
 import 'package:epub/epub.dart' as epubLib;
 
-class BookReadStore extends Store {
+// payload[0] contains BookPdf
+// payload[1] contains a Completer that completes when the book is ready for usage
+final Action<List<dynamic>> downloadPdfFileAction = Action<List<dynamic>>();
+
+final Action<void> pdfForwardChapterAction = Action<void>();
+final Action<void> pdfBackwardChapterAction = Action<void>();
+final Action<int> pdfNavigateToChapterAction = Action<int>();
+
+final Action disposePdfBookAction = Action();
+
+class PdfReadStore extends Store {
   final StorageReference _storageReference = FirebaseStorage.instance.ref();
   FileRepository _fileRepository;
 
-  List<File> _currentPdfBookFiles = List<File>();
+  PdfParser _pdfParser;
 
-  EpubParser _epubParser;
-  EpubParser get epubParser => _epubParser;
+  String get showingFilePath => _pdfParser != null ? _pdfParser.showingFilePath : null;
 
-  List<dynamic> _navigationList = [];
-  List<dynamic> get navigationList => _navigationList;
-
-  int _currentChapterIndex = 0;
-  int get currentChapterIndex => _currentChapterIndex;
-
-  // This can contain the file path (for BookPdf) or the html raw data (for BookEpub)
-  String _showingFileData;
-  String get showingFileData => _showingFileData;
-
-  BookReadStore() {
+  PdfReadStore() {
     _fileRepository = FileRepository(storageReference: _storageReference);
 
-    triggerOnConditionalAction(downloadBookFileAction, (List<dynamic> payload) {
+    triggerOnConditionalAction(downloadPdfFileAction, (List<dynamic> payload) {
       assert(payload[0] != null && payload[1] != null, "Book and Completer cannot be null");
       Book book = payload[0];
-      Completer epubBookReadyCompleter = payload[1];
+      Completer pdfBookReadyCompleter = payload[1];
 
       // Book is BookPdf and is launched by chapters
       try {
-        if (book is BookEpub) {
-          _fileRepository.downloadSingleFiledBook(book).then((File epubFile) {
-            if (epubFile != null) {
-              epubLib.EpubReader.readBook(epubFile.readAsBytesSync()).then((epubLib.EpubBook epubBook) {
-                _epubParser = EpubParser(epubBook);
-                epubBookReadyCompleter.complete();
-              });
-            }
-          });
-        } else if (book is BookPdf && !book.isSingleLaunch) {
+        if (!book.isSingleLaunch) {
           _fileRepository.downloadMultiFiledBook(book).then((List<File> filesList) {
             if (filesList.isNotEmpty) {
-              _currentPdfBookFiles = filesList;
-              epubBookReadyCompleter.complete();
+              _pdfParser = PdfParser(book, filesList);
+              pdfBookReadyCompleter.complete();
+              trigger();
             }
           });
         } else {
           _fileRepository.downloadSingleFiledBook(book).then((File pdfFile) {
             if (pdfFile != null) {
-              _currentPdfBookFiles.clear();
-              _currentPdfBookFiles.add(pdfFile);
-              epubBookReadyCompleter.complete();
+              _pdfParser = PdfParser(book, [pdfFile]);
+              pdfBookReadyCompleter.complete();
+              trigger();
             }
           });
         }
@@ -70,85 +61,128 @@ class BookReadStore extends Store {
       }
     });
 
-    triggerOnConditionalAction(generateNavMapAction, (Book book) {
-      if (book is BookEpub) {
-        _navigationList.addAll(book.chapterTitles);
-      } else {
-        // TODO generate navMap to pdf file
-      }
-
-      return true;
+    triggerOnAction(pdfForwardChapterAction, (_) {
+      _pdfParser.readNextChapter();
     });
 
-    triggerOnAction(forwardChapterAction, (Book book) {
-      if (_currentChapterIndex < _navigationList.length - 1) {
-        if (book is BookEpub) {
-          _currentChapterIndex += 1;
-          _showingFileData = _epubParser.readChapter(_currentChapterIndex);
-
-        } // Book is BookPdf and is launched by chapters
-        else if (book is BookPdf && !book.isSingleLaunch) {
-          _showingFileData = _currentPdfBookFiles[_currentChapterIndex].path;
-        } else {
-          _showingFileData = _currentPdfBookFiles[0].path;
-        }
-      }
+    triggerOnAction(pdfBackwardChapterAction, (_) {
+      _pdfParser.readPreviousChapter();
     });
 
-    triggerOnAction(backwardChapterAction, (Book book) {
-
-      if (_currentChapterIndex > 0) {
-        if (book is BookEpub) {
-          _currentChapterIndex -= 1;
-          _showingFileData = _epubParser.readChapter(_currentChapterIndex);
-
-        } // Book is BookPdf and is launched by chapters
-        else if (book is BookPdf && !book.isSingleLaunch) {
-          _showingFileData = _currentPdfBookFiles[_currentChapterIndex].path;
-        } else {
-          _showingFileData = _currentPdfBookFiles[0].path;
-        }
-      }
+    triggerOnAction(pdfNavigateToChapterAction, (int chapterIndex) {
+      _pdfParser.readChapter(chapterIndex);
     });
 
-    triggerOnAction(navigateToChapterAction, (List<dynamic> payload) {
-      Book book = payload[0];
-      int chapterIndex = payload[1];
-      _currentChapterIndex = chapterIndex;
-
-      if (book is BookEpub) {
-        _showingFileData = _epubParser.readChapter(chapterIndex) ?? _epubParser.readChapter(0);
-      } // Book is BookPdf and is launched by chapters
-      else if (book is BookPdf && !book.isSingleLaunch) {
-        _showingFileData = _currentPdfBookFiles[chapterIndex].path;
-      } else {
-        _showingFileData = _currentPdfBookFiles[0].path;
-      }
-    });
-
-    triggerOnConditionalAction(disposeBookAction, (_) {
-      _showingFileData = null;
-      _epubParser = null;
-      _currentChapterIndex = 0;
-      _currentPdfBookFiles.clear();
-      _navigationList.clear();
-
+    triggerOnConditionalAction(disposePdfBookAction, (_) {
+      _pdfParser = null;
       return false;
     });
   }
 }
 
-final StoreToken bookReadStoreToken = StoreToken(BookReadStore());
+class EpubReadStore extends Store {
+  final StorageReference _storageReference = FirebaseStorage.instance.ref();
+  FileRepository _fileRepository;
 
-// payload[0] contains Book
+  EpubParser _epubParser;
+  EpubParser get epubParser => _epubParser;
+
+  List<String> _loadedData = [];
+  List<String> get loadedData => _loadedData;
+
+  int get currentChapterIndex => _epubParser != null ? _epubParser.currentChapterIndex : 0;
+
+  EpubReadStore() {
+    _fileRepository = FileRepository(storageReference: _storageReference);
+
+    triggerOnConditionalAction(downloadEpubFileAction, (List<dynamic> payload) {
+      assert(payload[0] != null && payload[1] != null, "Book and Completer cannot be null");
+      Book book = payload[0];
+      Completer epubBookReadyCompleter = payload[1];
+
+      try {
+        _fileRepository.downloadSingleFiledBook(book).then((File epubFile) {
+          if (epubFile != null) {
+            epubLib.EpubReader.readBook(epubFile.readAsBytesSync()).then((epubLib.EpubBook epubBook) {
+              _epubParser = EpubParser(epubBook, book: book);
+
+              epubBookReadyCompleter.complete();
+            });
+          }
+        });
+
+        return false;
+      } catch (error) {
+        print("Book donwload failed: $error");
+        return false;
+      }
+    });
+
+    triggerOnAction(epubForwardChapterAction, (_) async {
+      List<String> data = await _epubParser.readNextChapter();
+      if(data != null) {
+        _loadedData = data;
+      }
+    });
+
+    triggerOnAction(epubBackwardChapterAction, (_) async {
+      List<String> data = await _epubParser.readPreviousChapter();
+      if(data != null) {
+        _loadedData = data;
+      }
+    });
+
+    triggerOnAction(epubNavigateToChapterAction, (int chapterIndex) async {
+      List<String> data = await _epubParser.readChapter(chapterIndex);
+      if(data != null) {
+        _loadedData = data;
+      }
+    });
+
+    triggerOnConditionalAction(loadNextSubChapterAction, (_) {
+      if(_epubParser.canLoadNextSubChapter()) {
+        List<String> data = _epubParser.loadNextSubChapter();
+        if (data != null) {
+          _loadedData = data;
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    triggerOnAction(loadPreviousSubChapterAction, (_){
+      if(_epubParser.canLoadPreviousSubChapter()) {
+        List<String> data = _epubParser.loadPreviousSubChapter();
+        if (data != null) {
+          _loadedData = data;
+          return true;
+        }
+      }
+      return false;
+    });
+
+    triggerOnConditionalAction(disposeEpubBookAction, (_) {
+      _epubParser = null;
+      _loadedData.clear();
+      return false;
+    });
+  }
+}
+
+final StoreToken epubReadStoreToken = StoreToken(EpubReadStore());
+final StoreToken pdfReadStoreToken = StoreToken(PdfReadStore());
+
+// payload[0] contains BookEpub
 // payload[1] contains a Completer that completes when the book is ready for usage
-final Action<List<dynamic>> downloadBookFileAction = Action<List<dynamic>>();
+final Action<List<dynamic>> downloadEpubFileAction = Action<List<dynamic>>();
 
-final Action<Book> generateNavMapAction = Action<Book>();
-final Action<Book> forwardChapterAction = Action<Book>();
-final Action<Book> backwardChapterAction = Action<Book>();
-// payload[0] contains Book
-// payload[1] contains chapter index to navigate to
-final Action<List<dynamic>> navigateToChapterAction = Action<List<dynamic>>();
+final Action epubForwardChapterAction = Action();
+final Action epubBackwardChapterAction = Action();
 
-final Action disposeBookAction = Action();
+final Action<int> epubNavigateToChapterAction = Action<int>();
+
+final Action disposeEpubBookAction = Action();
+
+final Action loadNextSubChapterAction = Action();
+final Action loadPreviousSubChapterAction = Action();

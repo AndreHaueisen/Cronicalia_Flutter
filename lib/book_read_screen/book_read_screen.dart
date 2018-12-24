@@ -26,32 +26,29 @@ class BookPdfReadScreen extends StatefulWidget {
 }
 
 class _BookPdfReadScreenState extends State<BookPdfReadScreen> with StoreWatcherMixin {
-  BookReadStore _bookReadStore;
+  PdfReadStore _pdfReadStore;
 
   @override
   void initState() {
     super.initState();
 
-    _bookReadStore = listenToStore(bookReadStoreToken);
+    _pdfReadStore = listenToStore(pdfReadStoreToken);
 
     Completer bookReadyCompleter = Completer();
-    downloadBookFileAction([widget._book, bookReadyCompleter]);
-
-    bookReadyCompleter.future.then((_) {
-      generateNavMapAction(widget._book);
-    });
+    // TODO check if completer is necessary
+    downloadPdfFileAction([widget._book, bookReadyCompleter]);
   }
 
   @override
   void dispose() {
-    disposeBookAction();
+    disposePdfBookAction();
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return _bookReadStore.showingFileData == null
+    return _pdfReadStore.showingFilePath == null
         ? Scaffold(
             body: Padding(
               padding: const EdgeInsets.only(
@@ -76,9 +73,9 @@ class _BookPdfReadScreenState extends State<BookPdfReadScreen> with StoreWatcher
           )
         : pdfViewer.PDFViewerScaffold(
             appBar: AppBar(
-              title: Text(widget._book.chapterTitles[0]),
+              title: Text(widget._book.isSingleLaunch ? widget._book.title : widget._book.chapterTitles[0]),
             ),
-            path: _bookReadStore.showingFileData,
+            path: _pdfReadStore.showingFilePath,
           );
   }
 }
@@ -96,18 +93,20 @@ class BookEpubReadScreen extends StatefulWidget {
 class _BookEpubReadScreenState extends State<BookEpubReadScreen>
     with StoreWatcherMixin<BookEpubReadScreen>, SingleTickerProviderStateMixin {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  BookReadStore _bookReadStore;
+  EpubReadStore _bookReadStore;
   double _textSize;
   BookStopInfo _bookStopInfo;
   bool _isFullScreen = false;
 
   AnimationController _backdropAnimationController;
 
+  Completer _bookReadyCompleter;
+
   @override
   void initState() {
     super.initState();
 
-    _bookReadStore = listenToStore(bookReadStoreToken);
+    _bookReadStore = listenToStore(epubReadStoreToken);
     _bookStopInfo = BookStopInfo(widget._book.uID, _bookReadStore.currentChapterIndex, 0.0);
 
     _backdropAnimationController = new AnimationController(
@@ -115,19 +114,33 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
       duration: new Duration(milliseconds: 500),
     );
 
-    Completer bookReadyCompleter = Completer();
-    downloadBookFileAction([widget._book, bookReadyCompleter]);
+    _bookReadyCompleter = Completer();
+    downloadEpubFileAction([widget._book, _bookReadyCompleter]);
 
-    bookReadyCompleter.future.then((_) {
-      generateNavMapAction(widget._book);
+    _bookReadyCompleter.future.then((_) {
       _retrieveSharedPreferences();
     });
+
+    _scrollController.addListener(_scrollListener);
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset >= _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      print("PAGE REACHED BOTTOM");
+      loadNextSubChapterAction();
+    }
+    if (_scrollController.offset <= _scrollController.position.minScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      print("PAGE REACHED TOP");
+      loadPreviousSubChapterAction();
+    }
   }
 
   @override
   void dispose() {
     _saveBookPosition();
-    disposeBookAction();
+    disposeEpubBookAction();
     _backdropAnimationController.dispose();
     super.dispose();
   }
@@ -176,7 +189,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
                       BookStopInfo.generateSharedPreferencesKey(widget._book.uID),
                     ),
                   );
-                  navigateToChapterAction([widget._book, _bookStopInfo.lastChapterIndex]);
+                  epubNavigateToChapterAction(_bookStopInfo.lastChapterIndex);
                   _isBookContentOnDisplay = true;
                   SchedulerBinding.instance.addPostFrameCallback((_) {
                     _scrollController.animateTo(
@@ -200,9 +213,8 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
         _bookStopInfo.lastChapterIndex = _bookReadStore.currentChapterIndex;
         return Future<bool>.value(true);
       },
-      child: _bookReadStore.navigationList.isEmpty
-          ? Hero(tag: Constants.HERO_TAG_BOOK_COVER, child: Image.network(widget._book.remoteCoverUri))
-          : Scaffold(
+      child: _bookReadyCompleter.isCompleted
+          ? Scaffold(
               appBar: _isFullScreen
                   ? null
                   : AppBar(
@@ -212,20 +224,23 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
                     ),
               body: BackdropWidget(
                 controller: _backdropAnimationController,
-                backChild: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Container(
-                    child: AnimatedCrossFade(
-                      crossFadeState: _isBookContentOnDisplay ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                      duration: Duration(seconds: 1),
-                      firstChild: _buildNavigationMapWidget(),
-                      secondChild: _buildBookContentWidget(),
+                backChild: Scrollbar(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Container(
+                      child: AnimatedCrossFade(
+                        crossFadeState: _isBookContentOnDisplay ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                        duration: Duration(seconds: 1),
+                        firstChild: _buildNavigationMapWidget(),
+                        secondChild: _buildBookContentWidget(),
+                      ),
                     ),
                   ),
                 ),
                 frontChild: _buildBackdropPanel(),
               ),
-            ),
+            )
+          : Hero(tag: Constants.HERO_TAG_BOOK_COVER, child: Image.network(widget._book.remoteCoverUri)),
     );
   }
 
@@ -234,18 +249,18 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
       child: ListView.builder(
           physics: PageScrollPhysics(),
           shrinkWrap: true,
-          itemCount: _bookReadStore.navigationList.length,
+          itemCount: widget._book.chapterTitles.length,
           itemBuilder: (BuildContext context, int index) {
             return Padding(
               padding: const EdgeInsets.only(top: 8.0, right: 64.0, left: 64.0),
               child: RoundedButton(
                 color: AppThemeColors.primaryColorLight,
                 onPressed: () {
-                  navigateToChapterAction([widget._book, index]);
+                  epubNavigateToChapterAction(index);
                   _isBookContentOnDisplay = true;
                 },
                 child: Text(
-                  _bookReadStore.navigationList[index].toUpperCase(),
+                  widget._book.chapterTitles[index].toUpperCase(),
                 ),
               ),
             );
@@ -271,7 +286,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
           child: epubViewer.Html(
-            data: _bookReadStore.showingFileData,
+            data: _bookReadStore.loadedData.join(" "),
             backgroundColor: Colors.transparent,
             defaultTextStyle: TextStyle(color: Colors.white, fontSize: _textSize),
           ),
@@ -291,6 +306,9 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
           _buildTextSizeWidget(),
           _buildDivider(),
           _buildFullScreenButton(),
+          Divider(
+            height: 4.0,
+          )
         ],
       ),
     );
@@ -316,7 +334,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
             FlatButton.icon(
               onPressed: _bookReadStore.currentChapterIndex > 0
                   ? () {
-                      backwardChapterAction(widget._book);
+                      epubBackwardChapterAction(widget._book);
                       _scrollController.animateTo(0.0, duration: Duration(seconds: 2), curve: Curves.decelerate);
                     }
                   : null,
@@ -339,7 +357,7 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
             FlatButton.icon(
               onPressed: _bookReadStore.currentChapterIndex < (widget._book.chapterTitles.length - 1)
                   ? () {
-                      forwardChapterAction(widget._book);
+                      epubForwardChapterAction(widget._book);
                       _scrollController.animateTo(0.0, duration: Duration(seconds: 2), curve: Curves.decelerate);
                     }
                   : null,
@@ -434,6 +452,8 @@ class _BookEpubReadScreenState extends State<BookEpubReadScreen>
       ],
     );
   }
+
+  Widget _buildSubSectionsButtons() {}
 }
 
 const double MAX_TEXT_SIZE = 24.0;
